@@ -63,6 +63,22 @@ services:
       timeout: 5s
       retries: 5
 
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: proto-qdrant
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - qdrant-data:/qdrant/storage
+    networks:
+      - proto-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:6333/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 networks:
   proto-net:
     driver: bridge
@@ -72,3 +88,4 @@ volumes:
   odoo-data:
   odoo-addons:
   n8n-data:
+  qdrant-data:

@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-16  # updated by code-review for 0-2
+last_updated: 2026-03-16  # updated by code-review for 0-3
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -46,7 +46,7 @@ development_status:
   epic-0: in-progress
   0-1-setup-environnement-n8n-odoo: done
   0-2-ingestion-catalogue-odoo: done
-  0-3-generation-embeddings-index-vectoriel: backlog
+  0-3-generation-embeddings-index-vectoriel: done
   0-4-recherche-hybride-benchmark-accuracy: backlog
   0-5-reception-email-extraction-donnees: backlog
   0-6-flow-end-to-end-email-matching-devis: backlog

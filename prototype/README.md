@@ -5,7 +5,7 @@ Local Docker environment for validating the n8n ↔ Odoo integration prototype.
 ## Prerequisites
 
 - Docker and Docker Compose (v2+)
-- Python 3.10+ with `requests` (`pip install requests`)
+- Python 3.10+ with dependencies (`pip install -r requirements.txt`)
 - curl (for verification script)
 
 ## Quick Start
@@ -31,6 +31,7 @@ docker compose logs -f odoo   # Watch for "HTTP service (werkzeug) running"
 | Odoo 18 Community | http://localhost:8069 | ERP with demo data (login: admin / admin) |
 | n8n | http://localhost:5678 | Workflow automation |
 | PostgreSQL 16 | localhost:5432 | Odoo database backend |
+| Qdrant | http://localhost:6333/dashboard | Vector search engine (REST API on 6333, gRPC on 6334) |
 
 ## n8n ↔ Odoo Connection
 
@@ -127,6 +128,69 @@ Output: `data/catalog/products_raw.json` (~0.25 MB for ~720 products)
 | Fields | Programmatic selection | UI-dependent columns |
 | Error handling | HTTP status + JSON errors | Parse errors possible |
 | Performance | Fast (0.2s for 700+) | Depends on export tool |
+
+## Embedding Generation & Vector Search (Story 0.3)
+
+### Embedding Model: BAAI/bge-m3
+
+**Why BGE-M3:**
+- Multilingual model (100+ languages) — handles French product catalog and English queries
+- 1024-dimension dense embeddings with strong semantic understanding
+- 568M parameters (~2.3 GB download on first run, cached in `~/.cache/huggingface/`)
+- Recommended in architecture document for production use — prototype validates this choice
+
+**Text construction strategy:**
+Product fields are concatenated as-is with `|` separator: `name | Ref: default_code | category | description_sale | description`. No HTML stripping, no normalization, no deduplication — the embedding model handles the noise.
+
+### Step 1: Generate Embeddings and Index in Qdrant
+
+```bash
+# Install dependencies (includes sentence-transformers and qdrant-client)
+pip install -r requirements.txt
+
+# Start Qdrant (if not already running)
+docker compose up -d qdrant
+
+# Generate embeddings and index (first run downloads ~2.3 GB model)
+python3 scripts/generate-embeddings.py
+```
+
+**Performance (726 products on CPU):**
+- Model load: ~15s
+- Embedding generation: ~109s (batch size 32)
+- Qdrant upsert: <1s
+- Total: ~126s
+
+The script creates a `products` collection in Qdrant with HNSW indexing and cosine distance metric. Each vector point includes the full raw product data as payload.
+
+### Step 2: Test Semantic Search
+
+```bash
+# Run default test queries
+python3 scripts/test-semantic-search.py
+
+# Run a custom query
+python3 scripts/test-semantic-search.py "your search query here"
+```
+
+**Sample search results (5 default queries):**
+
+| Query | Top Result | Score | Response Time |
+|-------|-----------|-------|---------------|
+| "tube acier inoxydable" | Tube carré acier | 0.63 | 111ms |
+| "boulon haute résistance M12" | Boulon tête hexagonale M12x50 | 0.68 | 90ms |
+| "tuyau DN50" | Tuyau acier DN50 | 0.77 | 85ms |
+| "plaque acier sur mesure" | SUR MESURE - Plaque acier découpée | 0.68 | 86ms |
+| "safety helmet" (cross-lingual) | Gilet haute visibilité S | 0.57 | 81ms |
+
+All queries respond in < 500ms. Results demonstrate semantic understanding of abbreviations ("M12"), technical references ("DN50"), custom products ("SUR MESURE"), and cross-lingual capability (English → French catalog).
+
+**Known limitations:**
+- No preprocessing means HTML tags in descriptions add noise (scores may be slightly lower than with cleaned data)
+- Cross-lingual queries (e.g., "safety helmet") match the right category but may not find exact product types (no helmets in catalog — returns closest safety equipment)
+- Model loads ~2.3 GB into RAM — ensure 4 GB+ free memory
+- GPU auto-detected by sentence-transformers if CUDA available (much faster: ~5-10s vs ~109s on CPU)
+- Qdrant collection is recreated on each run (existing data deleted)
 
 ## Useful Commands
 
