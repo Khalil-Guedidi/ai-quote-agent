@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Quote Agent — UX Design Directions</title>
+<style>
+  :root {
+    --primary: #4A6FA5;
+    --primary-dark: #2D4A7A;
+    --primary-light: #E8EEF6;
+    --secondary: #0D9488;
+    --secondary-dark: #0A7A70;
+    --secondary-light: #E0F5F3;
+    --confidence-high: #16A34A;
+    --confidence-medium: #D97706;
+    --confidence-low: #DC2626;
+    --neutral-900: #1A1A2E;
+    --neutral-600: #6B7280;
+    --neutral-300: #D1D5DB;
+    --neutral-100: #F3F4F6;
+    --neutral-50: #FAFAFA;
+    --white: #FFFFFF;
+    --font-sans: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--neutral-100);
+    color: var(--neutral-900);
+    line-height: 1.5;
+  }
+
+  /* === NAV === */
+  .nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: var(--primary-dark);
+    color: white;
+    padding: 12px 32px;
+    display: flex; align-items: center; gap: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .nav-title {
+    font-size: 16px; font-weight: 700;
+    white-space: nowrap;
+  }
+  .nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
+  .nav-links a {
+    color: rgba(255,255,255,0.8); text-decoration: none;
+    padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+    transition: all 0.2s;
+  }
+  .nav-links a:hover, .nav-links a.active {
+    background: rgba(255,255,255,0.15); color: white;
+  }
+
+  /* === SECTIONS === */
+  .section {
+    max-width: 1280px; margin: 0 auto;
+    padding: 80px 32px 48px;
+  }
+  .section:first-of-type { padding-top: 100px; }
+  .section-title {
+    font-size: 30px; font-weight: 700; margin-bottom: 8px;
+    color: var(--primary-dark);
+  }
+  .section-subtitle {
+    font-size: 16px; color: var(--neutral-600); margin-bottom: 32px;
+    max-width: 700px;
+  }
+
+  /* === COLOR PALETTE === */
+  .palette-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 32px;
+  }
+  .color-card {
+    border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    background: white;
+  }
+  .color-swatch { height: 80px; }
+  .color-info { padding: 12px; }
+  .color-name { font-size: 13px; font-weight: 600; }
+  .color-hex { font-size: 12px; color: var(--neutral-600); font-family: var(--font-mono); }
+  .color-usage { font-size: 11px; color: var(--neutral-600); margin-top: 4px; }
+
+  /* === TYPE SCALE === */
+  .type-scale { background: white; border-radius: 12px; padding: 32px; margin-bottom: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .type-row { display: flex; align-items: baseline; gap: 24px; padding: 16px 0; border-bottom: 1px solid var(--neutral-100); }
+  .type-row:last-child { border-bottom: none; }
+  .type-label { width: 100px; flex-shrink: 0; font-size: 12px; color: var(--neutral-600); font-family: var(--font-mono); }
+  .type-sample-h1 { font-size: 30px; font-weight: 700; line-height: 1.2; }
+  .type-sample-h2 { font-size: 24px; font-weight: 600; line-height: 1.25; }
+  .type-sample-h3 { font-size: 20px; font-weight: 600; line-height: 1.3; }
+  .type-sample-h4 { font-size: 16px; font-weight: 600; line-height: 1.4; }
+  .type-sample-body { font-size: 14px; font-weight: 400; line-height: 1.5; }
+  .type-sample-small { font-size: 12px; font-weight: 400; line-height: 1.4; color: var(--neutral-600); }
+  .type-sample-mono { font-size: 13px; font-weight: 400; line-height: 1.6; font-family: var(--font-mono); }
+
+  /* === TEAMS CARDS === */
+  .teams-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 24px; margin-bottom: 32px;
+  }
+  .teams-card-wrapper {
+    background: white; border-radius: 12px; padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .teams-card-label {
+    font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--neutral-600); margin-bottom: 16px;
+  }
+  .teams-card {
+    background: white; border-radius: 8px; overflow: hidden;
+    border: 1px solid var(--neutral-300);
+    font-size: 14px;
+  }
+  .teams-card-accent {
+    height: 4px;
+  }
+  .teams-card-accent.high { background: var(--confidence-high); }
+  .teams-card-accent.medium { background: var(--confidence-medium); }
+  .teams-card-accent.low { background: var(--confidence-low); }
+  .teams-card-accent.batch { background: var(--primary); }
+  .teams-card-body { padding: 16px; }
+  .teams-card-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 12px;
+  }
+  .teams-bot-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; flex-shrink: 0;
+  }
+  .teams-bot-name { font-weight: 600; font-size: 14px; }
+  .teams-bot-time { font-size: 12px; color: var(--neutral-600); }
+  .teams-card-text { color: var(--neutral-900); line-height: 1.5; margin-bottom: 12px; }
+  .teams-card-text strong { font-weight: 600; }
+  .teams-detail-row {
+    display: flex; justify-content: space-between; padding: 6px 0;
+    border-bottom: 1px solid var(--neutral-100); font-size: 13px;
+  }
+  .teams-detail-row:last-child { border-bottom: none; }
+  .teams-detail-label { color: var(--neutral-600); }
+  .teams-detail-value { font-weight: 500; }
+  .teams-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;
+  }
+  .teams-badge.high { background: #DCFCE7; color: #166534; }
+  .teams-badge.medium { background: #FEF3C7; color: #92400E; }
+  .teams-badge.low { background: #FEE2E2; color: #991B1B; }
+  .teams-btn {
+    display: inline-block; padding: 8px 16px; border-radius: 6px;
+    font-size: 13px; font-weight: 500; text-decoration: none;
+    cursor: pointer; border: none; margin-top: 8px; margin-right: 8px;
+    transition: all 0.15s;
+  }
+  .teams-btn-primary {
+    background: var(--primary); color: white;
+  }
+  .teams-btn-primary:hover { background: var(--primary-dark); }
+  .teams-btn-outline {
+    background: white; color: var(--primary); border: 1px solid var(--neutral-300);
+  }
+  .teams-btn-outline:hover { background: var(--primary-light); }
+  .teams-option {
+    padding: 12px; border: 1px solid var(--neutral-300); border-radius: 8px;
+    margin-bottom: 8px; cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: flex-start; gap: 12px;
+  }
+  .teams-option:hover { border-color: var(--primary); background: var(--primary-light); }
+  .teams-option-radio {
+    width: 18px; height: 18px; border: 2px solid var(--neutral-300);
+    border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+    transition: all 0.15s;
+  }
+  .teams-option:hover .teams-option-radio { border-color: var(--primary); }
+  .teams-option-name { font-weight: 600; font-size: 14px; }
+  .teams-option-detail { font-size: 12px; color: var(--neutral-600); }
+  .teams-batch-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--neutral-100);
+  }
+  .teams-batch-row:last-child { border-bottom: none; }
+  .teams-batch-count {
+    font-size: 24px; font-weight: 700; width: 40px; text-align: center;
+  }
+  .teams-batch-label { font-size: 13px; }
+
+  /* === WEB UI MOCKUP === */
+  .webui-frame {
+    background: var(--neutral-100); border-radius: 12px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    border: 1px solid var(--neutral-300);
+  }
+  .webui-titlebar {
+    background: var(--primary-dark); color: white; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px; font-size: 13px;
+  }
+  .webui-dots { display: flex; gap: 6px; }
+  .webui-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .webui-dot.r { background: #FF5F57; }
+  .webui-dot.y { background: #FFBD2E; }
+  .webui-dot.g { background: #28CA42; }
+  .webui-layout { display: flex; min-height: 600px; }
+
+  .webui-sidebar {
+    width: 240px; background: var(--neutral-900); color: white;
+    padding: 24px 0; flex-shrink: 0;
+  }
+  .webui-sidebar-brand {
+    padding: 0 20px 24px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 16px;
+  }
+  .webui-sidebar-brand-name { font-size: 16px; font-weight: 700; }
+  .webui-sidebar-brand-sub { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .webui-nav-item {
+    padding: 10px 20px; font-size: 13px; display: flex; align-items: center; gap: 10px;
+    color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.15s;
+  }
+  .webui-nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
+  .webui-nav-item.active {
+    background: rgba(255,255,255,0.1); color: white;
+    border-left: 3px solid var(--secondary);
+    padding-left: 17px;
+  }
+  .webui-nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .webui-content { flex: 1; padding: 24px; overflow: auto; }
+  .webui-page-title { font-size: 24px; font-weight: 600; margin-bottom: 24px; }
+
+  .webui-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+  .webui-stat-card {
+    background: white; border-radius: 8px; padding: 20px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+  }
+  .webui-stat-label { font-size: 12px; color: var(--neutral-600); font-weight: 500; text-transform: uppercase; letter-spacing: 0.3px; }
+  .webui-stat-value { font-size: 32px; font-weight: 700; margin: 4px 0; }
+  .webui-stat-value.green { color: var(--confidence-high); }
+  .webui-stat-value.amber { color: var(--confidence-medium); }
+  .webui-stat-value.blue { color: var(--primary); }
+  .webui-stat-detail { font-size: 12px; color: var(--neutral-600); }
+
+  .webui-row { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  .webui-panel {
+    background: white; border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  .webui-panel-header {
+    padding: 16px 20px; border-bottom: 1px solid var(--neutral-100);
+    font-size: 14px; font-weight: 600;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .webui-panel-body { padding: 0; }
+
+  .webui-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .webui-table th {
+    text-align: left; padding: 10px 16px; font-weight: 500;
+    color: var(--neutral-600); font-size: 12px; text-transform: uppercase; letter-spacing: 0.3px;
+    background: var(--neutral-50); border-bottom: 1px solid var(--neutral-100);
+  }
+  .webui-table td {
+    padding: 10px 16px; border-bottom: 1px solid var(--neutral-100);
+  }
+  .webui-table tr:last-child td { border-bottom: none; }
+
+  .webui-status {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 500;
+  }
+  .webui-status-dot { width: 6px; height: 6px; border-radius: 50%; }
+  .webui-status.healthy { background: #DCFCE7; color: #166534; }
+  .webui-status.healthy .webui-status-dot { background: var(--confidence-high); }
+  .webui-status.warning { background: #FEF3C7; color: #92400E; }
+  .webui-status.warning .webui-status-dot { background: var(--confidence-medium); }
+  .webui-status.error { background: #FEE2E2; color: #991B1B; }
+  .webui-status.error .webui-status-dot { background: var(--confidence-low); }
+
+  .webui-health-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px; border-bottom: 1px solid var(--neutral-100);
+  }
+  .webui-health-item:last-child { border-bottom: none; }
+  .webui-health-name { font-size: 13px; font-weight: 500; }
+  .webui-health-sub { font-size: 11px; color: var(--neutral-600); }
+
+  /* === CLI MOCKUP === */
+  .cli-frame {
+    background: #1E1E2E; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .cli-titlebar {
+    background: #181825; padding: 10px 16px;
+    display: flex; align-items: center; gap: 12px;
+    color: rgba(255,255,255,0.5); font-size: 12px;
+  }
+  .cli-body { padding: 20px; color: #CDD6F4; }
+  .cli-prompt { color: var(--secondary); }
+  .cli-cmd { color: #F5E0DC; }
+  .cli-comment { color: #6C7086; }
+  .cli-success { color: #A6E3A1; }
+  .cli-warning { color: #F9E2AF; }
+  .cli-error { color: #F38BA8; }
+  .cli-info { color: #89B4FA; }
+  .cli-dim { color: #6C7086; }
+  .cli-line { margin-bottom: 2px; }
+  .cli-gap { margin-bottom: 16px; }
+
+  /* === CONFIDENCE DEMO === */
+  .confidence-demo {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
+    margin-bottom: 32px;
+  }
+  .confidence-card {
+    background: white; border-radius: 12px; overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .confidence-header { padding: 16px 20px; color: white; display: flex; align-items: center; gap: 10px; }
+  .confidence-header.high { background: var(--confidence-high); }
+  .confidence-header.medium { background: var(--confidence-medium); }
+  .confidence-header.low { background: var(--confidence-low); }
+  .confidence-header-icon { font-size: 20px; }
+  .confidence-header-text { font-weight: 600; font-size: 14px; }
+  .confidence-body { padding: 20px; font-size: 13px; }
+  .confidence-label { font-size: 11px; color: var(--neutral-600); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .confidence-value { font-weight: 600; margin-bottom: 12px; }
+  .confidence-desc { color: var(--neutral-600); line-height: 1.5; }
+
+  /* === SPACING === */
+  .spacing-demo { background: white; border-radius: 12px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 32px; }
+  .spacing-row { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+  .spacing-label { width: 80px; font-size: 12px; font-family: var(--font-mono); color: var(--neutral-600); flex-shrink: 0; }
+  .spacing-bar { height: 24px; background: var(--primary-light); border: 1px solid var(--primary); border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 11px; color: var(--primary-dark); font-weight: 500; }
+
+  /* === FOOTER === */
+  .footer {
+    text-align: center; padding: 48px 32px; color: var(--neutral-600); font-size: 13px;
+  }
+
+  /* Scroll margin for anchor links */
+  [id] { scroll-margin-top: 70px; }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-title">AI Quote Agent — Design Directions</div>
+  <div class="nav-links">
+    <a href="#palette" class="active">Palette</a>
+    <a href="#typography">Typography</a>
+    <a href="#confidence">Confidence Tiers</a>
+    <a href="#teams">Teams Cards</a>
+    <a href="#webui">Web UI</a>
+    <a href="#cli">CLI</a>
+  </div>
+</nav>
+
+<!-- === SECTION 1: COLOR PALETTE === -->
+<section class="section" id="palette">
+  <h1 class="section-title">Color Palette</h1>
+  <p class="section-subtitle">Slate Blue primary + Teal accent. Professional trust with a modern edge. Semantic colors consistent across all surfaces.</p>
+
+  <h3 style="font-size:16px; font-weight:600; margin-bottom:16px; color:var(--neutral-600);">Brand Colors</h3>
+  <div class="palette-grid">
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--primary);"></div>
+      <div class="color-info"><div class="color-name">Primary — Slate Blue</div><div class="color-hex">#4A6FA5</div><div class="color-usage">Actions, headers, brand</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--primary-dark);"></div>
+      <div class="color-info"><div class="color-name">Primary Dark</div><div class="color-hex">#2D4A7A</div><div class="color-usage">Hover, emphasis</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--primary-light);"></div>
+      <div class="color-info"><div class="color-name">Primary Light</div><div class="color-hex">#E8EEF6</div><div class="color-usage">Backgrounds, highlights</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--secondary);"></div>
+      <div class="color-info"><div class="color-name">Secondary — Teal</div><div class="color-hex">#0D9488</div><div class="color-usage">Accent, links, active states</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--secondary-dark);"></div>
+      <div class="color-info"><div class="color-name">Secondary Dark</div><div class="color-hex">#0A7A70</div><div class="color-usage">Hover states</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--secondary-light);"></div>
+      <div class="color-info"><div class="color-name">Secondary Light</div><div class="color-hex">#E0F5F3</div><div class="color-usage">Accent backgrounds</div></div>
+    </div>
+  </div>
+
+  <h3 style="font-size:16px; font-weight:600; margin-bottom:16px; color:var(--neutral-600);">Semantic Colors</h3>
+  <div class="palette-grid">
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--confidence-high);"></div>
+      <div class="color-info"><div class="color-name">High Confidence / Success</div><div class="color-hex">#16A34A</div><div class="color-usage">Ready to send, healthy</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--confidence-medium);"></div>
+      <div class="color-info"><div class="color-name">Medium Confidence / Warning</div><div class="color-hex">#D97706</div><div class="color-usage">Needs selection, attention</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--confidence-low);"></div>
+      <div class="color-info"><div class="color-name">Low Confidence / Error</div><div class="color-hex">#DC2626</div><div class="color-usage">Needs review, unhealthy</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--neutral-900);"></div>
+      <div class="color-info"><div class="color-name">Neutral 900</div><div class="color-hex">#1A1A2E</div><div class="color-usage">Primary text</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--neutral-600);"></div>
+      <div class="color-info"><div class="color-name">Neutral 600</div><div class="color-hex">#6B7280</div><div class="color-usage">Secondary text</div></div>
+    </div>
+    <div class="color-card">
+      <div class="color-swatch" style="background: var(--neutral-100); border: 1px solid var(--neutral-300);"></div>
+      <div class="color-info"><div class="color-name">Neutral 100</div><div class="color-hex">#F3F4F6</div><div class="color-usage">Page backgrounds</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- === SECTION 2: TYPOGRAPHY === -->
+<section class="section" id="typography">
+  <h1 class="section-title">Typography</h1>
+  <p class="section-subtitle">Inter for UI, system fallbacks for performance. JetBrains Mono for technical data and logs.</p>
+
+  <div class="type-scale">
+    <div class="type-row"><div class="type-label">h1 / 30px</div><div class="type-sample-h1">System Health Dashboard</div></div>
+    <div class="type-row"><div class="type-label">h2 / 24px</div><div class="type-sample-h2">Quote Processing Activity</div></div>
+    <div class="type-row"><div class="type-label">h3 / 20px</div><div class="type-sample-h3">Recent Agent Decisions</div></div>
+    <div class="type-row"><div class="type-label">h4 / 16px</div><div class="type-sample-h4">ERP Connection Status</div></div>
+    <div class="type-row"><div class="type-label">body / 14px</div><div class="type-sample-body">The agent processed 24 quote requests today with an average confidence score of 87%. Three requests were escalated for manual review.</div></div>
+    <div class="type-row"><div class="type-label">small / 12px</div><div class="type-sample-small">Last updated 2 minutes ago &middot; Next sync in 58 seconds</div></div>
+    <div class="type-row"><div class="type-label">mono / 13px</div><div class="type-sample-mono">2026-03-15 09:14:23 [INFO] quote.process: matched product SKU-4821 for client CL-0093 (confidence: 0.92)</div></div>
+  </div>
+</section>
+
+<!-- === SECTION 3: CONFIDENCE TIERS === -->
+<section class="section" id="confidence">
+  <h1 class="section-title">Confidence Tier Visual Language</h1>
+  <p class="section-subtitle">Consistent across all surfaces: color + icon + text. Triple redundancy for accessibility.</p>
+
+  <div class="confidence-demo">
+    <div class="confidence-card">
+      <div class="confidence-header high">
+        <span class="confidence-header-icon">&#10003;</span>
+        <span class="confidence-header-text">High Confidence (&gt;85%)</span>
+      </div>
+      <div class="confidence-body">
+        <div class="confidence-label">ERP Tag</div>
+        <div class="confidence-value"><span class="webui-status healthy"><span class="webui-status-dot"></span> Ready to send</span></div>
+        <div class="confidence-label">User Action</div>
+        <div class="confidence-value">Review &amp; Send</div>
+        <div class="confidence-desc">Draft quote is complete and accurate. Sophie scans product + quantity, hits send. ~30 seconds.</div>
+      </div>
+    </div>
+    <div class="confidence-card">
+      <div class="confidence-header medium">
+        <span class="confidence-header-icon">?</span>
+        <span class="confidence-header-text">Medium Confidence (50-85%)</span>
+      </div>
+      <div class="confidence-body">
+        <div class="confidence-label">ERP Tag</div>
+        <div class="confidence-value"><span class="webui-status warning"><span class="webui-status-dot"></span> Needs selection</span></div>
+        <div class="confidence-label">User Action</div>
+        <div class="confidence-value">Choose from options</div>
+        <div class="confidence-desc">Agent presents 2-3 product options. Sophie picks one, confirms, sends. ~1-2 minutes.</div>
+      </div>
+    </div>
+    <div class="confidence-card">
+      <div class="confidence-header low">
+        <span class="confidence-header-icon">&#9873;</span>
+        <span class="confidence-header-text">Low Confidence (&lt;50%)</span>
+      </div>
+      <div class="confidence-body">
+        <div class="confidence-label">ERP Tag</div>
+        <div class="confidence-value"><span class="webui-status error"><span class="webui-status-dot"></span> Needs review</span></div>
+        <div class="confidence-label">User Action</div>
+        <div class="confidence-value">Manual with head start</div>
+        <div class="confidence-desc">Agent provides context and partial analysis. Sophie takes over with enriched starting point. ~5-15 min.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === SECTION 4: TEAMS CARDS === -->
+<section class="section" id="teams">
+  <h1 class="section-title">Teams Adaptive Cards</h1>
+  <p class="section-subtitle">Four notification types covering every agent-to-user interaction. Casual tone, actionable, non-intrusive.</p>
+
+  <div class="teams-grid">
+    <!-- HIGH CONFIDENCE -->
+    <div class="teams-card-wrapper">
+      <div class="teams-card-label">High Confidence — Ready to Send</div>
+      <div class="teams-card">
+        <div class="teams-card-accent high"></div>
+        <div class="teams-card-body">
+          <div class="teams-card-header">
+            <div class="teams-bot-avatar">Q</div>
+            <div>
+              <div class="teams-bot-name">Quote Agent</div>
+              <div class="teams-bot-time">Il y a 3 min</div>
+            </div>
+          </div>
+          <div class="teams-card-text">
+            Salut ! J'ai pr&eacute;par&eacute; le devis pour <strong>Durand M&eacute;tallurgie</strong>. Tout a l'air bon, check quand t'as le temps.
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="teams-detail-row">
+              <span class="teams-detail-label">Client</span>
+              <span class="teams-detail-value">Durand M&eacute;tallurgie</span>
+            </div>
+            <div class="teams-detail-row">
+              <span class="teams-detail-label">Produit</span>
+              <span class="teams-detail-value">Tube acier S235 &empty;60x3 — 6m</span>
+            </div>
+            <div class="teams-detail-row">
+              <span class="teams-detail-label">Quantit&eacute;</span>
+              <span class="teams-detail-value">500 unit&eacute;s</span>
+            </div>
+            <div class="teams-detail-row">
+              <span class="teams-detail-label">Confiance</span>
+              <span class="teams-detail-value"><span class="teams-badge high">&#10003; 94%</span></span>
+            </div>
+          </div>
+          <button class="teams-btn teams-btn-primary">Voir dans l'ERP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEDIUM CONFIDENCE -->
+    <div class="teams-card-wrapper">
+      <div class="teams-card-label">Medium Confidence — Multi-Proposals</div>
+      <div class="teams-card">
+        <div class="teams-card-accent medium"></div>
+        <div class="teams-card-body">
+          <div class="teams-card-header">
+            <div class="teams-bot-avatar">Q</div>
+            <div>
+              <div class="teams-bot-name">Quote Agent</div>
+              <div class="teams-bot-time">Il y a 5 min</div>
+            </div>
+          </div>
+          <div class="teams-card-text">
+            Devis pour <strong>Martin Construction</strong> — le client a demand&eacute; des "barres acier 40mm". J'ai 3 options, ton avis ?
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div class="teams-option">
+              <div class="teams-option-radio"></div>
+              <div>
+                <div class="teams-option-name">Rond plein S235 &empty;40 — 6m</div>
+                <div class="teams-option-detail">Client historique pour ce produit &middot; Confiance: 72%</div>
+              </div>
+            </div>
+            <div class="teams-option">
+              <div class="teams-option-radio"></div>
+              <div>
+                <div class="teams-option-name">Tube carr&eacute; S235 40x40x3 — 6m</div>
+                <div class="teams-option-detail">Match "barres 40mm" &middot; Confiance: 61%</div>
+              </div>
+            </div>
+            <div class="teams-option">
+              <div class="teams-option-radio"></div>
+              <div>
+                <div class="teams-option-name">Fer plat S235 40x8 — 6m</div>
+                <div class="teams-option-detail">Alternative possible &middot; Confiance: 54%</div>
+              </div>
+            </div>
+          </div>
+          <button class="teams-btn teams-btn-primary">Voir dans l'ERP</button>
+          <button class="teams-btn teams-btn-outline">Aucun — je gère</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOW CONFIDENCE -->
+    <div class="teams-card-wrapper">
+      <div class="teams-card-label">Low Confidence — Escalation</div>
+      <div class="teams-card">
+        <div class="teams-card-accent low"></div>
+        <div class="teams-card-body">
+          <div class="teams-card-header">
+            <div class="teams-bot-avatar">Q</div>
+            <div>
+              <div class="teams-bot-name">Quote Agent</div>
+              <div class="teams-bot-time">Il y a 8 min</div>
+            </div>
+          </div>
+          <div class="teams-card-text">
+            Celui-l&agrave; est compliqu&eacute; — <strong>Lefebvre Industries</strong> demande un produit que je ne trouve pas dans le catalogue. Voici ce que j'ai compris :
+          </div>
+          <div style="background: var(--neutral-100); border-radius: 6px; padding: 12px; margin-bottom: 12px; font-size: 13px;">
+            <div style="margin-bottom: 8px;"><strong>Ce que j'ai compris :</strong></div>
+            <div style="color: var(--neutral-600);">"Cornière inégale 60x40x5 en inox 304L, longueur 3m, ébavurée"</div>
+            <div style="margin-top: 8px;"><strong>Ce qui me bloque :</strong></div>
+            <div style="color: var(--neutral-600);">Aucun produit inox 304L en cornière inégale dans le catalogue. Possible produit custom ou fournisseur externe.</div>
+          </div>
+          <button class="teams-btn teams-btn-primary">Voir le contexte dans l'ERP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- BATCH MORNING SUMMARY -->
+    <div class="teams-card-wrapper">
+      <div class="teams-card-label">Batch Morning Summary</div>
+      <div class="teams-card">
+        <div class="teams-card-accent batch"></div>
+        <div class="teams-card-body">
+          <div class="teams-card-header">
+            <div class="teams-bot-avatar">Q</div>
+            <div>
+              <div class="teams-bot-name">Quote Agent</div>
+              <div class="teams-bot-time">08:02</div>
+            </div>
+          </div>
+          <div class="teams-card-text">
+            Bonjour Sophie ! Voici ton r&eacute;sum&eacute; du matin. J'ai trait&eacute; <strong>18 demandes</strong> cette nuit.
+          </div>
+          <div style="margin-bottom: 16px;">
+            <div class="teams-batch-row">
+              <div class="teams-batch-count" style="color: var(--confidence-high);">14</div>
+              <div>
+                <div class="teams-batch-label" style="font-weight: 600;">Prêts à envoyer</div>
+                <div class="teams-batch-label" style="font-size: 12px; color: var(--neutral-600);">Vérifie et envoie directement</div>
+              </div>
+            </div>
+            <div class="teams-batch-row">
+              <div class="teams-batch-count" style="color: var(--confidence-medium);">3</div>
+              <div>
+                <div class="teams-batch-label" style="font-weight: 600;">Besoin de ton choix</div>
+                <div class="teams-batch-label" style="font-size: 12px; color: var(--neutral-600);">Plusieurs produits possibles</div>
+              </div>
+            </div>
+            <div class="teams-batch-row">
+              <div class="teams-batch-count" style="color: var(--confidence-low);">1</div>
+              <div>
+                <div class="teams-batch-label" style="font-weight: 600;">Besoin de ton expertise</div>
+                <div class="teams-batch-label" style="font-size: 12px; color: var(--neutral-600);">Cas complexe, contexte enrichi</div>
+              </div>
+            </div>
+          </div>
+          <button class="teams-btn teams-btn-primary">Ouvrir la file dans l'ERP</button>
+          <button class="teams-btn teams-btn-outline">Voir les détails</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANAGER WEEKLY REPORT -->
+    <div class="teams-card-wrapper">
+      <div class="teams-card-label">Manager — Weekly Report (Marc)</div>
+      <div class="teams-card">
+        <div class="teams-card-accent batch"></div>
+        <div class="teams-card-body">
+          <div class="teams-card-header">
+            <div class="teams-bot-avatar">Q</div>
+            <div>
+              <div class="teams-bot-name">Quote Agent</div>
+              <div class="teams-bot-time">Lundi 08:00</div>
+            </div>
+          </div>
+          <div class="teams-card-text">
+            Bonjour Marc ! Voici le bilan de la semaine pour l'agence <strong>Lyon-Est</strong>.
+          </div>
+          <div style="margin-bottom: 16px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+              <div style="background: var(--primary-light); border-radius: 8px; padding: 12px; text-align: center;">
+                <div style="font-size: 28px; font-weight: 700; color: var(--primary);">142</div>
+                <div style="font-size: 12px; color: var(--neutral-600);">Devis trait&eacute;s</div>
+                <div style="font-size: 11px; color: var(--confidence-high);">&#9650; +12% vs sem. pr&eacute;c.</div>
+              </div>
+              <div style="background: var(--secondary-light); border-radius: 8px; padding: 12px; text-align: center;">
+                <div style="font-size: 28px; font-weight: 700; color: var(--secondary);">14h</div>
+                <div style="font-size: 12px; color: var(--neutral-600);">Temps &eacute;conomis&eacute;</div>
+                <div style="font-size: 11px; color: var(--neutral-600);">~2.8h / commercial</div>
+              </div>
+            </div>
+            <div style="margin-bottom: 12px;">
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Pr&eacute;cision produit</span>
+                <span class="teams-detail-value"><span class="teams-badge high">96.2%</span></span>
+              </div>
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Devis sans correction</span>
+                <span class="teams-detail-value"><span class="teams-badge high">91.5%</span></span>
+              </div>
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Temps moyen de traitement</span>
+                <span class="teams-detail-value">52s</span>
+              </div>
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Escalades</span>
+                <span class="teams-detail-value">8 <span style="font-size:11px; color:var(--neutral-600);">(5.6%)</span></span>
+              </div>
+            </div>
+            <div style="font-size: 13px; font-weight: 600; margin-bottom: 8px;">Par commercial :</div>
+            <div style="font-size: 12px;">
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Sophie M.</span>
+                <span class="teams-detail-value">38 devis &middot; <span class="teams-badge high">97%</span></span>
+              </div>
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Thomas D.</span>
+                <span class="teams-detail-value">35 devis &middot; <span class="teams-badge high">95%</span></span>
+              </div>
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Julie R.</span>
+                <span class="teams-detail-value">32 devis &middot; <span class="teams-badge high">96%</span></span>
+              </div>
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Karim B.</span>
+                <span class="teams-detail-value">22 devis &middot; <span class="teams-badge medium">89%</span></span>
+              </div>
+              <div class="teams-detail-row">
+                <span class="teams-detail-label">Am&eacute;lie P.</span>
+                <span class="teams-detail-value">15 devis &middot; <span class="teams-badge high">94%</span> <span style="font-size:10px; color:var(--neutral-600);">nouvelle</span></span>
+              </div>
+            </div>
+          </div>
+          <button class="teams-btn teams-btn-primary">Voir le d&eacute;tail complet</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANAGER BOT COMMAND RESPONSE -->
+    <div class="teams-card-wrapper">
+      <div class="teams-card-label">Manager — Bot Command Response (Marc)</div>
+      <div class="teams-card">
+        <div class="teams-card-accent batch"></div>
+        <div class="teams-card-body">
+          <div style="background: var(--neutral-100); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; font-size: 13px;">
+            <span style="font-weight: 600;">Marc D.</span> <span style="color: var(--neutral-600);">@QuoteAgent stats aujourd'hui</span>
+          </div>
+          <div class="teams-card-header">
+            <div class="teams-bot-avatar">Q</div>
+            <div>
+              <div class="teams-bot-name">Quote Agent</div>
+              <div class="teams-bot-time">&Agrave; l'instant</div>
+            </div>
+          </div>
+          <div style="margin-bottom: 12px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px;">
+              <div style="background: var(--neutral-100); border-radius: 6px; padding: 10px; text-align: center;">
+                <div style="font-size: 22px; font-weight: 700; color: var(--primary);">24</div>
+                <div style="font-size: 11px; color: var(--neutral-600);">Trait&eacute;s</div>
+              </div>
+              <div style="background: var(--neutral-100); border-radius: 6px; padding: 10px; text-align: center;">
+                <div style="font-size: 22px; font-weight: 700; color: var(--confidence-high);">87%</div>
+                <div style="font-size: 11px; color: var(--neutral-600);">Pr&eacute;cision</div>
+              </div>
+              <div style="background: var(--neutral-100); border-radius: 6px; padding: 10px; text-align: center;">
+                <div style="font-size: 22px; font-weight: 700; color: var(--secondary);">47s</div>
+                <div style="font-size: 11px; color: var(--neutral-600);">Temps moy.</div>
+              </div>
+            </div>
+            <div style="font-size: 12px; color: var(--neutral-600); line-height: 1.5;">
+              18 envoy&eacute;s &middot; 4 en attente de validation &middot; 2 escalad&eacute;s<br>
+              <span style="color: var(--confidence-high);">&#9650;</span> +3% pr&eacute;cision vs hier
+            </div>
+          </div>
+          <div style="font-size: 11px; color: var(--neutral-600);">
+            Commandes : <span style="font-family: var(--font-mono); background: var(--neutral-100); padding: 1px 4px; border-radius: 3px;">stats semaine</span>
+            <span style="font-family: var(--font-mono); background: var(--neutral-100); padding: 1px 4px; border-radius: 3px;">stats mois</span>
+            <span style="font-family: var(--font-mono); background: var(--neutral-100); padding: 1px 4px; border-radius: 3px;">top erreurs</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === SECTION 5: WEB UI === -->
+<section class="section" id="webui">
+  <h1 class="section-title">Web UI — Diagnostic Dashboard</h1>
+  <p class="section-subtitle">Laurent's diagnostic tool. Balanced density: enough info to be useful, enough whitespace to be readable. Not a daily tool — opened when needed.</p>
+
+  <div class="webui-frame">
+    <div class="webui-titlebar">
+      <div class="webui-dots">
+        <div class="webui-dot r"></div>
+        <div class="webui-dot y"></div>
+        <div class="webui-dot g"></div>
+      </div>
+      AI Quote Agent — Admin &middot; https://agent.internal:8443
+    </div>
+    <div class="webui-layout">
+      <div class="webui-sidebar">
+        <div class="webui-sidebar-brand">
+          <div class="webui-sidebar-brand-name">AI Quote Agent</div>
+          <div class="webui-sidebar-brand-sub">v1.0.0 &middot; Odoo Community</div>
+        </div>
+        <div class="webui-nav-item active"><span class="webui-nav-icon">&#9632;</span> Dashboard</div>
+        <div class="webui-nav-item"><span class="webui-nav-icon">&#9776;</span> Logs</div>
+        <div class="webui-nav-item"><span class="webui-nav-icon">&#9881;</span> Configuration</div>
+        <div class="webui-nav-item"><span class="webui-nav-icon">&#9826;</span> Connections</div>
+        <div class="webui-nav-item"><span class="webui-nav-icon">&#9733;</span> Performance</div>
+      </div>
+      <div class="webui-content">
+        <div class="webui-page-title">System Health</div>
+
+        <div class="webui-cards">
+          <div class="webui-stat-card">
+            <div class="webui-stat-label">Quotes Today</div>
+            <div class="webui-stat-value blue">24</div>
+            <div class="webui-stat-detail">18 sent &middot; 4 pending &middot; 2 escalated</div>
+          </div>
+          <div class="webui-stat-card">
+            <div class="webui-stat-label">Avg. Confidence</div>
+            <div class="webui-stat-value green">87%</div>
+            <div class="webui-stat-detail">+3% vs. last week</div>
+          </div>
+          <div class="webui-stat-card">
+            <div class="webui-stat-label">Avg. Processing Time</div>
+            <div class="webui-stat-value green">47s</div>
+            <div class="webui-stat-detail">Target: &lt; 120s</div>
+          </div>
+        </div>
+
+        <div class="webui-row">
+          <div class="webui-panel">
+            <div class="webui-panel-header">
+              Recent Activity
+              <span style="font-size: 12px; color: var(--neutral-600); font-weight: 400;">Last 1 hour</span>
+            </div>
+            <div class="webui-panel-body">
+              <table class="webui-table">
+                <thead>
+                  <tr>
+                    <th>Time</th>
+                    <th>Client</th>
+                    <th>Product</th>
+                    <th>Confidence</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px; color: var(--neutral-600);">09:14</td>
+                    <td>Durand M&eacute;tallurgie</td>
+                    <td>Tube S235 &empty;60x3</td>
+                    <td><span class="teams-badge high">94%</span></td>
+                    <td><span class="webui-status healthy"><span class="webui-status-dot"></span> Sent</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px; color: var(--neutral-600);">09:11</td>
+                    <td>Martin Construction</td>
+                    <td>Rond plein &empty;40</td>
+                    <td><span class="teams-badge medium">72%</span></td>
+                    <td><span class="webui-status warning"><span class="webui-status-dot"></span> Pending</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px; color: var(--neutral-600);">09:08</td>
+                    <td>Lefebvre Industries</td>
+                    <td>Corni&egrave;re in&eacute;gale inox</td>
+                    <td><span class="teams-badge low">31%</span></td>
+                    <td><span class="webui-status error"><span class="webui-status-dot"></span> Escalated</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px; color: var(--neutral-600);">09:03</td>
+                    <td>Roche BTP</td>
+                    <td>IPE 200 S275</td>
+                    <td><span class="teams-badge high">97%</span></td>
+                    <td><span class="webui-status healthy"><span class="webui-status-dot"></span> Sent</span></td>
+                  </tr>
+                  <tr>
+                    <td style="font-family: var(--font-mono); font-size: 12px; color: var(--neutral-600);">08:58</td>
+                    <td>Petit Fr&egrave;res</td>
+                    <td>T&ocirc;le galva 2mm</td>
+                    <td><span class="teams-badge high">91%</span></td>
+                    <td><span class="webui-status healthy"><span class="webui-status-dot"></span> Sent</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="webui-panel">
+            <div class="webui-panel-header">System Status</div>
+            <div class="webui-panel-body">
+              <div class="webui-health-item">
+                <div>
+                  <div class="webui-health-name">Email Connector</div>
+                  <div class="webui-health-sub">IMAP &middot; Last poll: 12s ago</div>
+                </div>
+                <span class="webui-status healthy"><span class="webui-status-dot"></span> Healthy</span>
+              </div>
+              <div class="webui-health-item">
+                <div>
+                  <div class="webui-health-name">Odoo ERP</div>
+                  <div class="webui-health-sub">API v17 &middot; Latency: 84ms</div>
+                </div>
+                <span class="webui-status healthy"><span class="webui-status-dot"></span> Healthy</span>
+              </div>
+              <div class="webui-health-item">
+                <div>
+                  <div class="webui-health-name">Vector Store</div>
+                  <div class="webui-health-sub">5,247 products indexed</div>
+                </div>
+                <span class="webui-status healthy"><span class="webui-status-dot"></span> Healthy</span>
+              </div>
+              <div class="webui-health-item">
+                <div>
+                  <div class="webui-health-name">LLM Provider</div>
+                  <div class="webui-health-sub">Claude API &middot; Latency: 1.2s</div>
+                </div>
+                <span class="webui-status healthy"><span class="webui-status-dot"></span> Healthy</span>
+              </div>
+              <div class="webui-health-item">
+                <div>
+                  <div class="webui-health-name">Teams Bot</div>
+                  <div class="webui-health-sub">Webhook &middot; Last msg: 3m ago</div>
+                </div>
+                <span class="webui-status healthy"><span class="webui-status-dot"></span> Healthy</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === SECTION 6: CLI === -->
+<section class="section" id="cli">
+  <h1 class="section-title">CLI Experience</h1>
+  <p class="section-subtitle">Docker-style verb commands. Color-coded output. Laurent's primary interface for deployment and daily ops.</p>
+
+  <div class="cli-frame">
+    <div class="cli-titlebar">
+      <div class="webui-dots">
+        <div class="webui-dot r"></div>
+        <div class="webui-dot y"></div>
+        <div class="webui-dot g"></div>
+      </div>
+      Terminal &mdash; agent CLI
+    </div>
+    <div class="cli-body">
+      <div class="cli-line cli-comment"># Deployment</div>
+      <div class="cli-line"><span class="cli-prompt">$ </span><span class="cli-cmd">agent deploy --erp odoo --host erp.internal:8069</span></div>
+      <div class="cli-line"><span class="cli-info">&#x25B6;</span> Connecting to Odoo at erp.internal:8069...</div>
+      <div class="cli-line"><span class="cli-success">&#10003;</span> ERP connection verified (API v17, 5247 products)</div>
+      <div class="cli-line"><span class="cli-info">&#x25B6;</span> Indexing product catalog...</div>
+      <div class="cli-line"><span class="cli-success">&#10003;</span> Vector store built (5247 products, 23s)</div>
+      <div class="cli-line"><span class="cli-info">&#x25B6;</span> Connecting email (IMAP)...</div>
+      <div class="cli-line"><span class="cli-success">&#10003;</span> Email connector ready (quotes@company.fr)</div>
+      <div class="cli-line"><span class="cli-info">&#x25B6;</span> Connecting Teams webhook...</div>
+      <div class="cli-line"><span class="cli-success">&#10003;</span> Teams bot registered</div>
+      <div class="cli-line">&nbsp;</div>
+      <div class="cli-line"><span class="cli-success">&#10003; Agent deployed and running.</span></div>
+      <div class="cli-line cli-dim">   Dashboard: https://agent.internal:8443</div>
+      <div class="cli-line cli-dim">   Logs:      agent logs --follow</div>
+      <div class="cli-gap"></div>
+
+      <div class="cli-line cli-comment"># Health check</div>
+      <div class="cli-line"><span class="cli-prompt">$ </span><span class="cli-cmd">agent status</span></div>
+      <div class="cli-line">&nbsp;</div>
+      <div class="cli-line">  AI Quote Agent <span class="cli-dim">v1.0.0</span></div>
+      <div class="cli-line">  Status: <span class="cli-success">running</span> <span class="cli-dim">(uptime: 14d 3h 22m)</span></div>
+      <div class="cli-line">&nbsp;</div>
+      <div class="cli-line">  <span class="cli-success">&#9679;</span> Email       <span class="cli-dim">IMAP connected, last poll 8s ago</span></div>
+      <div class="cli-line">  <span class="cli-success">&#9679;</span> ERP         <span class="cli-dim">Odoo v17, latency 84ms</span></div>
+      <div class="cli-line">  <span class="cli-success">&#9679;</span> Vector DB   <span class="cli-dim">5,247 products indexed</span></div>
+      <div class="cli-line">  <span class="cli-success">&#9679;</span> LLM         <span class="cli-dim">Claude API, latency 1.2s</span></div>
+      <div class="cli-line">  <span class="cli-success">&#9679;</span> Teams       <span class="cli-dim">Webhook active</span></div>
+      <div class="cli-line">&nbsp;</div>
+      <div class="cli-line">  Today: <span class="cli-info">24 quotes</span> processed <span class="cli-dim">(18 sent, 4 pending, 2 escalated)</span></div>
+      <div class="cli-line">  Avg confidence: <span class="cli-success">87%</span> <span class="cli-dim">| Avg time: 47s</span></div>
+      <div class="cli-gap"></div>
+
+      <div class="cli-line cli-comment"># Live logs</div>
+      <div class="cli-line"><span class="cli-prompt">$ </span><span class="cli-cmd">agent logs --follow --level info</span></div>
+      <div class="cli-line"><span class="cli-dim">09:14:23</span> <span class="cli-info">[INFO]</span> quote.receive: new request from durand@durand-metal.fr</div>
+      <div class="cli-line"><span class="cli-dim">09:14:24</span> <span class="cli-info">[INFO]</span> quote.classify: simple (clear client, single product)</div>
+      <div class="cli-line"><span class="cli-dim">09:14:25</span> <span class="cli-info">[INFO]</span> quote.search: matched "Tube acier S235 60x3 6m" (score: 0.94)</div>
+      <div class="cli-line"><span class="cli-dim">09:14:26</span> <span class="cli-info">[INFO]</span> quote.review: self-review passed (product: ok, qty: ok)</div>
+      <div class="cli-line"><span class="cli-dim">09:14:27</span> <span class="cli-success">[INFO]</span> quote.create: draft QO-2026-0847 created in Odoo</div>
+      <div class="cli-line"><span class="cli-dim">09:14:27</span> <span class="cli-info">[INFO]</span> notify.teams: sent notification to sophie.martin</div>
+      <div class="cli-line"><span class="cli-dim">09:14:28</span> <span class="cli-warning">[WARN]</span> quote.receive: request from martin-construction unclear product ref</div>
+      <div class="cli-line"><span class="cli-dim">09:14:29</span> <span class="cli-info">[INFO]</span> quote.classify: ambiguous (unclear product, known client)</div>
+      <div class="cli-line"><span class="cli-dim">09:14:31</span> <span class="cli-info">[INFO]</span> quote.search: 3 candidates (0.72, 0.61, 0.54)</div>
+      <div class="cli-line"><span class="cli-dim">09:14:32</span> <span class="cli-warning">[INFO]</span> quote.create: multi-proposal draft QO-2026-0848</div>
+    </div>
+  </div>
+</section>
+
+<div class="footer">
+  AI Quote Agent &mdash; UX Design Directions &middot; Generated 2026-03-15 &middot; Author: Khalil + BMAD UX Facilitator
+</div>
+
+<script>
+  // Simple nav active state on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('.nav-links a');
+  window.addEventListener('scroll', () => {
+    let current = '';
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 100) current = s.id;
+    });
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+    });
+  });
+</script>
+
+</body>
+</html>
