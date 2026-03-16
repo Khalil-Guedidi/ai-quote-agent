@@ -1,0 +1,72 @@
+services:
+  postgres-odoo:
+    image: postgres:16
+    container_name: proto-postgres-odoo
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    volumes:
+      - pgdata-odoo:/var/lib/postgresql/data
+    networks:
+      - proto-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:18.0
+    container_name: proto-odoo
+    depends_on:
+      postgres-odoo:
+        condition: service_healthy
+    ports:
+      - "${ODOO_PORT:-8069}:8069"
+    environment:
+      HOST: postgres-odoo
+      PORT: 5432
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo_secret}
+      ODOO_DB: ${ODOO_DB:-odoo_db}
+    command: ["--database=${ODOO_DB:-odoo_db}", "--init=sale", "--without-demo="]
+    volumes:
+      - odoo-data:/var/lib/odoo
+      - odoo-addons:/mnt/extra-addons
+    networks:
+      - proto-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL http://localhost:8069/web/login || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      start_period: 60s
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: proto-n8n
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      N8N_BASIC_AUTH_ACTIVE: ${N8N_BASIC_AUTH_ACTIVE:-false}
+      WEBHOOK_URL: http://localhost:${N8N_PORT:-5678}/
+    volumes:
+      - n8n-data:/home/node/.n8n
+    networks:
+      - proto-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  proto-net:
+    driver: bridge
+
+volumes:
+  pgdata-odoo:
+  odoo-data:
+  odoo-addons:
+  n8n-data:
