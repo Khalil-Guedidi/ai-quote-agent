@@ -1,0 +1,118 @@
+{
+  "name": "Ingest Odoo Catalog",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://odoo:8069/web/session/authenticate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"jsonrpc\":\"2.0\",\"params\":{\"db\":\"odoo_db\",\"login\":\"admin\",\"password\":\"admin\"}}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true
+            }
+          }
+        }
+      },
+      "id": "auth",
+      "name": "Authenticate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract session cookie and uid from authentication response\nconst authData = $input.first().json;\nconst setCookie = authData.headers['set-cookie'];\nconst cookie = Array.isArray(setCookie)\n  ? setCookie[0].split(';')[0]\n  : setCookie.split(';')[0];\nconst uid = authData.body.result.uid;\n\n// Paginated fetch of ALL products from Odoo\nconst LIMIT = 200;\nlet offset = 0;\nlet allProducts = [];\n\nwhile (true) {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'http://odoo:8069/jsonrpc',\n    headers: { 'Cookie': cookie, 'Content-Type': 'application/json' },\n    body: {\n      jsonrpc: '2.0',\n      method: 'call',\n      params: {\n        service: 'object',\n        method: 'execute_kw',\n        args: [\n          'odoo_db',\n          uid,\n          'admin',\n          'product.product',\n          'search_read',\n          [[]],\n          {\n            fields: [\n              'id', 'name', 'default_code', 'barcode',\n              'list_price', 'categ_id', 'type', 'sale_ok',\n              'description', 'description_sale',\n              'active'\n            ],\n            limit: LIMIT,\n            offset: offset,\n            context: { active_test: false }\n          }\n        ]\n      }\n    }\n  });\n\n  const products = response.result;\n  allProducts = allProducts.concat(products);\n\n  if (products.length < LIMIT) {\n    break;\n  }\n  offset += LIMIT;\n}\n\nreturn [{ json: { products: allProducts, count: allProducts.length, fetchedAt: new Date().toISOString() } }];"
+      },
+      "id": "fetch-all",
+      "name": "Fetch All Products (Paginated)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {
+          "fileName": "products_raw.json"
+        }
+      },
+      "id": "convert-file",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/data/catalog/products_raw.json",
+        "options": {}
+      },
+      "id": "write-file",
+      "name": "Write to Disk",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1080, 300]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Authenticate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticate": {
+      "main": [
+        [
+          {
+            "node": "Fetch All Products (Paginated)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch All Products (Paginated)": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Write to Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
