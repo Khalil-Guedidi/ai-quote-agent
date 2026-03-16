@@ -1,0 +1,3566 @@
+{
+  "benchmark_date": "2026-03-16 22:20:05",
+  "top_k": 10,
+  "total_queries": 26,
+  "collection_points": 726,
+  "summary": {
+    "dense": {
+      "hit_at_1": 0.7692307692307693,
+      "hit_at_5": 0.9615384615384616,
+      "mrr": 0.8589743589743589,
+      "avg_ms": 85.51155603848972,
+      "p95_ms": 97.11861610412598
+    },
+    "sparse": {
+      "hit_at_1": 0.6923076923076923,
+      "hit_at_5": 0.9230769230769231,
+      "mrr": 0.7705128205128206,
+      "avg_ms": 19.91105079650879,
+      "p95_ms": 21.54850959777832
+    },
+    "hybrid": {
+      "hit_at_1": 0.7692307692307693,
+      "hit_at_5": 0.9615384615384616,
+      "mrr": 0.8589743589743589,
+      "avg_ms": 74.95799431434044,
+      "p95_ms": 96.85039520263672
+    }
+  },
+  "category_summary": {
+    "abbreviation": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    },
+    "cross-lingual": {
+      "dense": 0.5,
+      "sparse": 0.0,
+      "hybrid": 0.5
+    },
+    "custom-product": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    },
+    "exact-ref": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    },
+    "jargon": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    },
+    "multi-word": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    },
+    "standard": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    },
+    "technical-spec": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    },
+    "typo": {
+      "dense": 1.0,
+      "sparse": 1.0,
+      "hybrid": 1.0
+    }
+  },
+  "go_threshold": 0.8,
+  "go_decision": "GO",
+  "per_query_results": {
+    "dense": [
+      {
+        "query": "boulon tête hexagonale M12",
+        "category": "standard",
+        "expected_ids": [
+          397,
+          398,
+          400
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 97.11861610412598,
+        "top_results": [
+          {
+            "id": 397,
+            "name": "Boulon tête hexagonale M12x50",
+            "default_code": "BHM-M12x50",
+            "score": 0.83532107
+          },
+          {
+            "id": 400,
+            "name": "Boulon tête hexagonale M12x80",
+            "default_code": "BHM-M12x80",
+            "score": 0.809742
+          },
+          {
+            "id": 398,
+            "name": "Boulon tête hexagonale M12x60",
+            "default_code": "BHM-M12x60",
+            "score": 0.79933465
+          },
+          {
+            "id": 395,
+            "name": "Boulon tête hexagonale M10x50",
+            "default_code": "BHM-M10x50",
+            "score": 0.7352526
+          },
+          {
+            "id": 403,
+            "name": "Boulon tête hexagonale M16x80",
+            "default_code": "BHM-M16x80",
+            "score": 0.7281058
+          }
+        ]
+      },
+      {
+        "query": "tuyau acier DN50",
+        "category": "standard",
+        "expected_ids": [
+          563
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 81.34031295776367,
+        "top_results": [
+          {
+            "id": 563,
+            "name": "Tuyau acier DN50",
+            "default_code": "TUY-DN50",
+            "score": 0.84455466
+          },
+          {
+            "id": 575,
+            "name": "Coude acier 90° DN50",
+            "default_code": "COU-DN50",
+            "score": 0.7443981
+          },
+          {
+            "id": 567,
+            "name": "Tuyau acier DN150",
+            "default_code": "TUY-DN150",
+            "score": 0.7361384
+          },
+          {
+            "id": 642,
+            "name": "Manchon acier DN50",
+            "default_code": "MAN-DN50",
+            "score": 0.733761
+          },
+          {
+            "id": 566,
+            "name": "Tuyau acier DN100",
+            "default_code": "TUY-DN100",
+            "score": 0.732147
+          }
+        ]
+      },
+      {
+        "query": "joint plat DN32",
+        "category": "standard",
+        "expected_ids": [
+          821,
+          822
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 83.73856544494629,
+        "top_results": [
+          {
+            "id": 821,
+            "name": "Joint plat NBR DN32",
+            "default_code": "JPN-DN32",
+            "score": 0.7663666
+          },
+          {
+            "id": 822,
+            "name": "Joint plat NBR DN32",
+            "default_code": "JPN-DN32-DUP",
+            "score": 0.7572504
+          },
+          {
+            "id": 820,
+            "name": "Joint plat NBR DN25",
+            "default_code": "JPN-DN25",
+            "score": 0.6812239
+          },
+          {
+            "id": 823,
+            "name": "Joint plat NBR DN40",
+            "default_code": "JPN-DN40",
+            "score": 0.67110014
+          },
+          {
+            "id": 824,
+            "name": "Joint plat NBR DN50",
+            "default_code": "JPN-DN50",
+            "score": 0.6560547
+          }
+        ]
+      },
+      {
+        "query": "Boul. HM M12",
+        "category": "abbreviation",
+        "expected_ids": [
+          397,
+          398,
+          399,
+          400
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 86.04311943054199,
+        "top_results": [
+          {
+            "id": 399,
+            "name": "Boul. HM 8.8 M12x60",
+            "default_code": "BHM-ABR-M12x60",
+            "score": 0.6325028
+          },
+          {
+            "id": 400,
+            "name": "Boulon tête hexagonale M12x80",
+            "default_code": "BHM-M12x80",
+            "score": 0.6003808
+          },
+          {
+            "id": 397,
+            "name": "Boulon tête hexagonale M12x50",
+            "default_code": "BHM-M12x50",
+            "score": 0.5985326
+          },
+          {
+            "id": 398,
+            "name": "Boulon tête hexagonale M12x60",
+            "default_code": "BHM-M12x60",
+            "score": 0.5836912
+          },
+          {
+            "id": 420,
+            "name": "Écrou hexagonal M12x80",
+            "default_code": "EHM-M12x80",
+            "score": 0.55596656
+          }
+        ]
+      },
+      {
+        "query": "Gouj. anc. M16",
+        "category": "abbreviation",
+        "expected_ids": [
+          508,
+          509
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 92.26441383361816,
+        "top_results": [
+          {
+            "id": 509,
+            "name": "Gouj. anc. 4.8 M16x60",
+            "default_code": "GA-ABR-M16x60",
+            "score": 0.71342945
+          },
+          {
+            "id": 510,
+            "name": "Goujon d'ancrage M16x80",
+            "default_code": "GA-M16x80",
+            "score": 0.6375811
+          },
+          {
+            "id": 512,
+            "name": "Goujon d'ancrage M16x100",
+            "default_code": "GA-M16x100",
+            "score": 0.63531387
+          },
+          {
+            "id": 508,
+            "name": "Goujon d'ancrage M16x60",
+            "default_code": "GA-M16x60",
+            "score": 0.6289568
+          },
+          {
+            "id": 511,
+            "name": "Goujon d'ancrage M16x80",
+            "default_code": "",
+            "score": 0.62271416
+          }
+        ]
+      },
+      {
+        "query": "Vis CHC M10",
+        "category": "abbreviation",
+        "expected_ids": [
+          456,
+          457,
+          458,
+          459
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 86.94672584533691,
+        "top_results": [
+          {
+            "id": 456,
+            "name": "Vis à tête cylindrique M10x40",
+            "default_code": "VCHC-M10x40",
+            "score": 0.68539083
+          },
+          {
+            "id": 458,
+            "name": "Vis CHC 10.9 M10x50",
+            "default_code": "VCHC-ABR-M10x50",
+            "score": 0.6524664
+          },
+          {
+            "id": 452,
+            "name": "Vis CHC 12.9 M6x30",
+            "default_code": "VCHC-ABR-M6x30",
+            "score": 0.6179281
+          },
+          {
+            "id": 450,
+            "name": "Vis CHC 4.8 M6x20",
+            "default_code": "VCHC-ABR-M6x20",
+            "score": 0.616081
+          },
+          {
+            "id": 459,
+            "name": "Vis à tête cylindrique M10x60",
+            "default_code": "VCHC-M10x60",
+            "score": 0.6062554
+          }
+        ]
+      },
+      {
+        "query": "rondelle plate M12",
+        "category": "standard",
+        "expected_ids": [
+          439
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 77.11410522460938,
+        "top_results": [
+          {
+            "id": 439,
+            "name": "Rondelle plate M12x50",
+            "default_code": "RPL-M12x50",
+            "score": 0.7868582
+          },
+          {
+            "id": 442,
+            "name": "Rondelle plate M12x80",
+            "default_code": "",
+            "score": 0.7841892
+          },
+          {
+            "id": 440,
+            "name": "Rondelle plate M12x60",
+            "default_code": "RPL-M12x60",
+            "score": 0.77447236
+          },
+          {
+            "id": 441,
+            "name": "Rondelle plate M12x80",
+            "default_code": "RPL-M12x80",
+            "score": 0.7736887
+          },
+          {
+            "id": 446,
+            "name": "Rondelle plate M16x100",
+            "default_code": "",
+            "score": 0.6980018
+          }
+        ]
+      },
+      {
+        "query": "cornière acier 10",
+        "category": "jargon",
+        "expected_ids": [
+          321
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 75.88362693786621,
+        "top_results": [
+          {
+            "id": 321,
+            "name": "Cornière acier 10mm",
+            "default_code": "COR-10mm",
+            "score": 0.8619132
+          },
+          {
+            "id": 325,
+            "name": "Cornière acier 20mm",
+            "default_code": "COR-20mm",
+            "score": 0.7035054
+          },
+          {
+            "id": 322,
+            "name": "Cornière acier 12mm",
+            "default_code": "COR-12mm",
+            "score": 0.68082356
+          },
+          {
+            "id": 326,
+            "name": "Cornière acier 20mm",
+            "default_code": "COR-20mm-DUP",
+            "score": 0.6740922
+          },
+          {
+            "id": 317,
+            "name": "Cornière acier 5mm",
+            "default_code": "COR-5mm",
+            "score": 0.67312175
+          }
+        ]
+      },
+      {
+        "query": "poutrelle IPE",
+        "category": "jargon",
+        "expected_ids": [
+          327,
+          328,
+          329,
+          330,
+          331,
+          332,
+          334,
+          335,
+          336,
+          337
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 124.5272159576416,
+        "top_results": [
+          {
+            "id": 338,
+            "name": "Profilé IPE",
+            "default_code": "",
+            "score": 0.6427581
+          },
+          {
+            "id": 329,
+            "name": "Profilé IPE 4mm",
+            "default_code": "IPE-4mm",
+            "score": 0.57335186
+          },
+          {
+            "id": 337,
+            "name": "Profilé IPE 20mm",
+            "default_code": "IPE-20mm",
+            "score": 0.57274073
+          },
+          {
+            "id": 328,
+            "name": "Profilé IPE 3mm",
+            "default_code": "IPE-3mm",
+            "score": 0.57186306
+          },
+          {
+            "id": 335,
+            "name": "Profilé IPE 12mm",
+            "default_code": "IPE-12mm",
+            "score": 0.5639273
+          }
+        ]
+      },
+      {
+        "query": "BHM-M12x50",
+        "category": "exact-ref",
+        "expected_ids": [
+          397
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 88.3784294128418,
+        "top_results": [
+          {
+            "id": 397,
+            "name": "Boulon tête hexagonale M12x50",
+            "default_code": "BHM-M12x50",
+            "score": 0.7087284
+          },
+          {
+            "id": 418,
+            "name": "Écrou hexagonal M12x50",
+            "default_code": "EHM-M12x50",
+            "score": 0.69287884
+          },
+          {
+            "id": 526,
+            "name": "Cheville métallique M12x50",
+            "default_code": "CHM-M12x50",
+            "score": 0.64647335
+          },
+          {
+            "id": 503,
+            "name": "Goujon d'ancrage M12x50",
+            "default_code": "GA-M12x50",
+            "score": 0.6383335
+          },
+          {
+            "id": 460,
+            "name": "Vis à tête cylindrique M12x50",
+            "default_code": "VCHC-M12x50",
+            "score": 0.6228555
+          }
+        ]
+      },
+      {
+        "query": "TPVC-DN100",
+        "category": "exact-ref",
+        "expected_ids": [
+          632
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 86.50851249694824,
+        "top_results": [
+          {
+            "id": 617,
+            "name": "Vanne BS  DN100",
+            "default_code": "VBS-ABR-DN100",
+            "score": 0.65917444
+          },
+          {
+            "id": 632,
+            "name": "Tuyau PVC pression DN100",
+            "default_code": "TPVC-DN100",
+            "score": 0.6441953
+          },
+          {
+            "id": 616,
+            "name": "Vanne à boisseau sphérique DN100",
+            "default_code": "VBS-DN100",
+            "score": 0.63922495
+          },
+          {
+            "id": 634,
+            "name": "Tuyau PVC pression DN200",
+            "default_code": "TPVC-DN200",
+            "score": 0.6368744
+          },
+          {
+            "id": 628,
+            "name": "Tuyau PVC pression DN40",
+            "default_code": "TPVC-DN40",
+            "score": 0.62543184
+          }
+        ]
+      },
+      {
+        "query": "CRO-5L",
+        "category": "exact-ref",
+        "expected_ids": [
+          908
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 83.55283737182617,
+        "top_results": [
+          {
+            "id": 908,
+            "name": "Convertisseur de rouille 5L",
+            "default_code": "CRO-5L",
+            "score": 0.7151976
+          },
+          {
+            "id": 905,
+            "name": "Convertisseur de rouille 0.5L",
+            "default_code": "CRO-0.5L",
+            "score": 0.63013786
+          },
+          {
+            "id": 907,
+            "name": "Convertisseur de rouille 2.5L",
+            "default_code": "CRO-2.5L",
+            "score": 0.61655354
+          },
+          {
+            "id": 906,
+            "name": "Convertisseur de rouille 1L",
+            "default_code": "CRO-1L",
+            "score": 0.57224965
+          },
+          {
+            "id": 909,
+            "name": "Convertisseur de rouille 20L",
+            "default_code": "CRO-20L",
+            "score": 0.521871
+          }
+        ]
+      },
+      {
+        "query": "boullon hexagonale M8",
+        "category": "typo",
+        "expected_ids": [
+          390,
+          391,
+          393
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 88.67287635803223,
+        "top_results": [
+          {
+            "id": 390,
+            "name": "Boulon tête hexagonale M8x30",
+            "default_code": "BHM-M8x30",
+            "score": 0.75697756
+          },
+          {
+            "id": 391,
+            "name": "Boulon tête hexagonale M8x40",
+            "default_code": "BHM-M8x40",
+            "score": 0.72149545
+          },
+          {
+            "id": 393,
+            "name": "Boulon tête hexagonale M8x50",
+            "default_code": "BHM-M8x50",
+            "score": 0.71197075
+          },
+          {
+            "id": 392,
+            "name": "BOULON TÊTE HEXAGONALE M8X40",
+            "default_code": "BHM-M8x40-DUP",
+            "score": 0.69778425
+          },
+          {
+            "id": 400,
+            "name": "Boulon tête hexagonale M12x80",
+            "default_code": "BHM-M12x80",
+            "score": 0.6916893
+          }
+        ]
+      },
+      {
+        "query": "tuyeau PVC pression",
+        "category": "typo",
+        "expected_ids": [
+          623,
+          624,
+          626,
+          627,
+          628,
+          629,
+          630,
+          631,
+          632,
+          633,
+          634
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 75.27828216552734,
+        "top_results": [
+          {
+            "id": 635,
+            "name": "Tuyau PVC pression",
+            "default_code": "",
+            "score": 0.8660717
+          },
+          {
+            "id": 628,
+            "name": "Tuyau PVC pression DN40",
+            "default_code": "TPVC-DN40",
+            "score": 0.73849064
+          },
+          {
+            "id": 626,
+            "name": "Tuyau PVC pression DN25",
+            "default_code": "TPVC-DN25",
+            "score": 0.73605776
+          },
+          {
+            "id": 623,
+            "name": "Tuyau PVC pression DN15",
+            "default_code": "TPVC-DN15",
+            "score": 0.7356377
+          },
+          {
+            "id": 627,
+            "name": "Tuyau PVC pression DN32",
+            "default_code": "TPVC-DN32",
+            "score": 0.73525196
+          }
+        ]
+      },
+      {
+        "query": "stainless steel bolt M16",
+        "category": "cross-lingual",
+        "expected_ids": [
+          401,
+          402,
+          403,
+          404
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 77.12125778198242,
+        "top_results": [
+          {
+            "id": 446,
+            "name": "Rondelle plate M16x100",
+            "default_code": "",
+            "score": 0.58605045
+          },
+          {
+            "id": 403,
+            "name": "Boulon tête hexagonale M16x80",
+            "default_code": "BHM-M16x80",
+            "score": 0.56602603
+          },
+          {
+            "id": 533,
+            "name": "Cheville métallique M16x100",
+            "default_code": "CHM-M16x100",
+            "score": 0.5541669
+          },
+          {
+            "id": 445,
+            "name": "Rondelle plate M16x100",
+            "default_code": "RPL-M16x100",
+            "score": 0.5528141
+          },
+          {
+            "id": 401,
+            "name": "Boulon tête hexagonale M16x60",
+            "default_code": "BHM-M16x60",
+            "score": 0.5522988
+          }
+        ]
+      },
+      {
+        "query": "angle iron steel",
+        "category": "cross-lingual",
+        "expected_ids": [
+          314,
+          315,
+          316,
+          317,
+          318,
+          319,
+          321,
+          322,
+          324,
+          325
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 0,
+        "mrr": 0.0,
+        "rank": -1,
+        "elapsed_ms": 74.4621753692627,
+        "top_results": [
+          {
+            "id": 382,
+            "name": "Tôle aluminium 10mm",
+            "default_code": "TAL-10mm",
+            "score": 0.52650917
+          },
+          {
+            "id": 929,
+            "name": "REF CLIENT - Pièce spéciale #4587-B",
+            "default_code": "",
+            "score": 0.5194715
+          },
+          {
+            "id": 334,
+            "name": "Profilé IPE 10mm",
+            "default_code": "IPE-10mm",
+            "score": 0.5122099
+          },
+          {
+            "id": 248,
+            "name": "Tôle acier laminée à chaud 2mm",
+            "default_code": "TOL-2mm",
+            "score": 0.5088646
+          },
+          {
+            "id": 281,
+            "name": "Rond plein acier 3mm",
+            "default_code": "RPA-3mm",
+            "score": 0.49975026
+          }
+        ]
+      },
+      {
+        "query": "plaque acier découpée sur mesure",
+        "category": "custom-product",
+        "expected_ids": [
+          922
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 77.89421081542969,
+        "top_results": [
+          {
+            "id": 922,
+            "name": "SUR MESURE - Plaque acier découpée",
+            "default_code": "",
+            "score": 0.73089325
+          },
+          {
+            "id": 373,
+            "name": "Barre filetée acier zingué 15mm",
+            "default_code": "BFZ-15mm",
+            "score": 0.55082697
+          },
+          {
+            "id": 278,
+            "name": "Plaque acier S235 15mm",
+            "default_code": "PLA-15mm",
+            "score": 0.5425426
+          },
+          {
+            "id": 929,
+            "name": "REF CLIENT - Pièce spéciale #4587-B",
+            "default_code": "",
+            "score": 0.54045135
+          },
+          {
+            "id": 364,
+            "name": "Barre filetée acier zingué 2mm",
+            "default_code": "BFZ-2mm",
+            "score": 0.53689134
+          }
+        ]
+      },
+      {
+        "query": "bride spéciale sur mesure",
+        "category": "custom-product",
+        "expected_ids": [
+          923
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 75.46830177307129,
+        "top_results": [
+          {
+            "id": 923,
+            "name": "SUR MESURE - Bride spéciale",
+            "default_code": "",
+            "score": 0.6671003
+          },
+          {
+            "id": 586,
+            "name": "Bride plate DN32",
+            "default_code": "BRP-DN32",
+            "score": 0.52240354
+          },
+          {
+            "id": 592,
+            "name": "Bride plate DN100",
+            "default_code": "BRP-DN100-DUP",
+            "score": 0.5185478
+          },
+          {
+            "id": 591,
+            "name": "Bride plate DN100",
+            "default_code": "BRP-DN100",
+            "score": 0.5123449
+          },
+          {
+            "id": 587,
+            "name": "Bride plate DN40",
+            "default_code": "BRP-DN40",
+            "score": 0.50837827
+          }
+        ]
+      },
+      {
+        "query": "disjoncteur modulaire protection 10mm²",
+        "category": "multi-word",
+        "expected_ids": [
+          686
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 86.94839477539062,
+        "top_results": [
+          {
+            "id": 686,
+            "name": "Disjoncteur modulaire 10mm²",
+            "default_code": "DJM-10mm²",
+            "score": 0.81989694
+          },
+          {
+            "id": 690,
+            "name": "Disjoncteur modulaire",
+            "default_code": "",
+            "score": 0.69862866
+          },
+          {
+            "id": 683,
+            "name": "Disjoncteur modulaire 2.5mm²",
+            "default_code": "DJM-2.5mm²",
+            "score": 0.69757915
+          },
+          {
+            "id": 688,
+            "name": "Disjoncteur modulaire 16mm²",
+            "default_code": "DJM-16mm²-DUP",
+            "score": 0.6832114
+          },
+          {
+            "id": 684,
+            "name": "Disjoncteur modulaire 4mm²",
+            "default_code": "DJM-4mm²",
+            "score": 0.68273807
+          }
+        ]
+      },
+      {
+        "query": "vanne boisseau sphérique DN40 robinetterie",
+        "category": "multi-word",
+        "expected_ids": [
+          612
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.3333333333333333,
+        "rank": 3,
+        "elapsed_ms": 81.06446266174316,
+        "top_results": [
+          {
+            "id": 613,
+            "name": "Vanne à boisseau sphérique DN50",
+            "default_code": "VBS-DN50",
+            "score": 0.77125674
+          },
+          {
+            "id": 615,
+            "name": "Vanne à boisseau sphérique DN80",
+            "default_code": "VBS-DN80",
+            "score": 0.7695104
+          },
+          {
+            "id": 612,
+            "name": "Vanne à boisseau sphérique DN40",
+            "default_code": "VBS-DN40",
+            "score": 0.7618506
+          },
+          {
+            "id": 609,
+            "name": "Vanne à boisseau sphérique DN20",
+            "default_code": "VBS-DN20",
+            "score": 0.7568664
+          },
+          {
+            "id": 616,
+            "name": "Vanne à boisseau sphérique DN100",
+            "default_code": "VBS-DN100",
+            "score": 0.73691255
+          }
+        ]
+      },
+      {
+        "query": "tube carré acier 8mm soudure",
+        "category": "multi-word",
+        "expected_ids": [
+          295,
+          296
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 88.9899730682373,
+        "top_results": [
+          {
+            "id": 295,
+            "name": "Tube carré acier 8mm",
+            "default_code": "TCA-8mm",
+            "score": 0.7981026
+          },
+          {
+            "id": 296,
+            "name": "Tube carré acier 8mm",
+            "default_code": "TCA-8mm-DUP",
+            "score": 0.78007925
+          },
+          {
+            "id": 301,
+            "name": "Tube carré acier",
+            "default_code": "",
+            "score": 0.7277198
+          },
+          {
+            "id": 254,
+            "name": "Tôle acier laminée à chaud 8mm",
+            "default_code": "TOL-8mm",
+            "score": 0.6696949
+          },
+          {
+            "id": 381,
+            "name": "Tôle aluminium 8mm",
+            "default_code": "TAL-8mm",
+            "score": 0.66058683
+          }
+        ]
+      },
+      {
+        "query": "profilé HEA poutre acier construction",
+        "category": "technical-spec",
+        "expected_ids": [
+          339,
+          341,
+          342,
+          343,
+          344,
+          345,
+          346,
+          348,
+          349,
+          350
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 89.9801254272461,
+        "top_results": [
+          {
+            "id": 343,
+            "name": "Profilé HEA 5mm",
+            "default_code": "HEA-5mm",
+            "score": 0.6831935
+          },
+          {
+            "id": 341,
+            "name": "Profilé HEA 3mm",
+            "default_code": "HEA-3mm",
+            "score": 0.6813916
+          },
+          {
+            "id": 350,
+            "name": "Profilé HEA 20mm",
+            "default_code": "HEA-20mm",
+            "score": 0.6764136
+          },
+          {
+            "id": 344,
+            "name": "Profilé HEA 6mm",
+            "default_code": "HEA-6mm",
+            "score": 0.6754161
+          },
+          {
+            "id": 342,
+            "name": "Profilé HEA 4mm",
+            "default_code": "HEA-4mm",
+            "score": 0.67442787
+          }
+        ]
+      },
+      {
+        "query": "relais thermique protection moteur 4mm²",
+        "category": "technical-spec",
+        "expected_ids": [
+          702
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 90.99483489990234,
+        "top_results": [
+          {
+            "id": 702,
+            "name": "Relais thermique 4mm²",
+            "default_code": "RTH-4mm²",
+            "score": 0.7375281
+          },
+          {
+            "id": 703,
+            "name": "Rel. therm.  4mm²",
+            "default_code": "RTH-ABR-4mm²",
+            "score": 0.66904014
+          },
+          {
+            "id": 693,
+            "name": "Contacteur tripolaire 4mm²",
+            "default_code": "CTR-4mm²",
+            "score": 0.62469155
+          },
+          {
+            "id": 701,
+            "name": "Relais thermique 2.5mm²",
+            "default_code": "RTH-2.5mm²",
+            "score": 0.61646265
+          },
+          {
+            "id": 704,
+            "name": "Relais thermique 6mm²",
+            "default_code": "RTH-6mm²",
+            "score": 0.60756445
+          }
+        ]
+      },
+      {
+        "query": "joint torique Viton haute température",
+        "category": "technical-spec",
+        "expected_ids": [
+          827,
+          828,
+          829,
+          830,
+          832,
+          834,
+          835,
+          836
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 88.47427368164062,
+        "top_results": [
+          {
+            "id": 836,
+            "name": "Joint torique Viton DN100",
+            "default_code": "JTV-DN100",
+            "score": 0.63168013
+          },
+          {
+            "id": 837,
+            "name": "JOINT TORIQUE VITON DN100",
+            "default_code": "",
+            "score": 0.6304762
+          },
+          {
+            "id": 832,
+            "name": "Joint torique Viton DN40",
+            "default_code": "JTV-DN40",
+            "score": 0.6231961
+          },
+          {
+            "id": 834,
+            "name": "Joint torique Viton DN50",
+            "default_code": "JTV-DN50",
+            "score": 0.62307906
+          },
+          {
+            "id": 835,
+            "name": "Joint torique Viton DN80",
+            "default_code": "JTV-DN80",
+            "score": 0.6210621
+          }
+        ]
+      },
+      {
+        "query": "galva spray 5 litres",
+        "category": "jargon",
+        "expected_ids": [
+          894,
+          896
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 85.42513847351074,
+        "top_results": [
+          {
+            "id": 896,
+            "name": "Galvanisation à froid spray 5L",
+            "default_code": "GSP-5L",
+            "score": 0.64496744
+          },
+          {
+            "id": 894,
+            "name": "Galva spray  1L",
+            "default_code": "GSP-ABR-1L",
+            "score": 0.6390312
+          },
+          {
+            "id": 892,
+            "name": "Galvanisation à froid spray 0.5L",
+            "default_code": "GSP-0.5L",
+            "score": 0.6264711
+          },
+          {
+            "id": 895,
+            "name": "Galvanisation à froid spray 2.5L",
+            "default_code": "GSP-2.5L",
+            "score": 0.61285543
+          },
+          {
+            "id": 893,
+            "name": "Galvanisation à froid spray 1L",
+            "default_code": "GSP-1L",
+            "score": 0.58438826
+          }
+        ]
+      },
+      {
+        "query": "meuleuse 125",
+        "category": "abbreviation",
+        "expected_ids": [
+          808,
+          809
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 79.10966873168945,
+        "top_results": [
+          {
+            "id": 808,
+            "name": "Meuleuse d'angle 125mm",
+            "default_code": "MEU",
+            "score": 0.7374282
+          },
+          {
+            "id": 809,
+            "name": "Meul. 125",
+            "default_code": "MEU-ABR",
+            "score": 0.6627962
+          },
+          {
+            "id": 439,
+            "name": "Rondelle plate M12x50",
+            "default_code": "RPL-M12x50",
+            "score": 0.4533319
+          },
+          {
+            "id": 505,
+            "name": "Gouj. anc. 10.9 M12x50",
+            "default_code": "GA-ABR-M12x50",
+            "score": 0.4404112
+          },
+          {
+            "id": 504,
+            "name": "Goujon d'ancrage M12x50",
+            "default_code": "GA-M12x50-DUP",
+            "score": 0.43875405
+          }
+        ]
+      }
+    ],
+    "sparse": [
+      {
+        "query": "boulon tête hexagonale M12",
+        "category": "standard",
+        "expected_ids": [
+          397,
+          398,
+          400
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.3333333333333333,
+        "rank": 3,
+        "elapsed_ms": 15.994787216186523,
+        "top_results": [
+          {
+            "id": 403,
+            "name": "Boulon tête hexagonale M16x80",
+            "default_code": "BHM-M16x80",
+            "score": 28.435436
+          },
+          {
+            "id": 394,
+            "name": "Boulon tête hexagonale M10x40",
+            "default_code": "BHM-M10x40",
+            "score": 28.435436
+          },
+          {
+            "id": 397,
+            "name": "Boulon tête hexagonale M12x50",
+            "default_code": "BHM-M12x50",
+            "score": 28.435436
+          },
+          {
+            "id": 406,
+            "name": "Boulon tête hexagonale M20x100",
+            "default_code": "BHM-M20x100",
+            "score": 28.435436
+          },
+          {
+            "id": 387,
+            "name": "Boulon tête hexagonale M6x20",
+            "default_code": "BHM-M6x20",
+            "score": 28.435436
+          }
+        ]
+      },
+      {
+        "query": "tuyau acier DN50",
+        "category": "standard",
+        "expected_ids": [
+          563
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 15.196800231933594,
+        "top_results": [
+          {
+            "id": 563,
+            "name": "Tuyau acier DN50",
+            "default_code": "TUY-DN50",
+            "score": 24.50783
+          },
+          {
+            "id": 629,
+            "name": "Tuyau PVC pression DN50",
+            "default_code": "TPVC-DN50",
+            "score": 20.682697
+          },
+          {
+            "id": 642,
+            "name": "Manchon acier DN50",
+            "default_code": "MAN-DN50",
+            "score": 15.191801
+          },
+          {
+            "id": 655,
+            "name": "Té égal acier DN50",
+            "default_code": "TEE-DN50",
+            "score": 15.165081
+          },
+          {
+            "id": 575,
+            "name": "Coude acier 90° DN50",
+            "default_code": "COU-DN50",
+            "score": 15.165081
+          }
+        ]
+      },
+      {
+        "query": "joint plat DN32",
+        "category": "standard",
+        "expected_ids": [
+          821,
+          822
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 18.972158432006836,
+        "top_results": [
+          {
+            "id": 821,
+            "name": "Joint plat NBR DN32",
+            "default_code": "JPN-DN32",
+            "score": 28.804018
+          },
+          {
+            "id": 822,
+            "name": "Joint plat NBR DN32",
+            "default_code": "JPN-DN32-DUP",
+            "score": 28.749641
+          },
+          {
+            "id": 830,
+            "name": "Joint torique Viton DN32",
+            "default_code": "JTV-DN32",
+            "score": 19.03938
+          },
+          {
+            "id": 831,
+            "name": "JOINT TORIQUE VITON DN32",
+            "default_code": "JTV-DN32-DUP",
+            "score": 19.010714
+          },
+          {
+            "id": 852,
+            "name": "Tresse d'étanchéité PTFE DN32",
+            "default_code": "TPT-DN32",
+            "score": 18.09592
+          }
+        ]
+      },
+      {
+        "query": "Boul. HM M12",
+        "category": "abbreviation",
+        "expected_ids": [
+          397,
+          398,
+          399,
+          400
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 19.42276954650879,
+        "top_results": [
+          {
+            "id": 399,
+            "name": "Boul. HM 8.8 M12x60",
+            "default_code": "BHM-ABR-M12x60",
+            "score": 28.663166
+          },
+          {
+            "id": 402,
+            "name": "Boul. HM A2-70 M16x60",
+            "default_code": "BHM-ABR-M16x60",
+            "score": 27.716892
+          },
+          {
+            "id": 414,
+            "name": "Écr. HM 4.8 M10x40",
+            "default_code": "EHM-ABR-M10x40",
+            "score": 13.0135565
+          },
+          {
+            "id": 410,
+            "name": "Écr. HM A2-70 M8x30",
+            "default_code": "EHM-ABR-M8x30",
+            "score": 13.0135565
+          },
+          {
+            "id": 417,
+            "name": "Écr. HM A2-70 M10x60",
+            "default_code": "EHM-ABR-M10x60",
+            "score": 13.0135565
+          }
+        ]
+      },
+      {
+        "query": "Gouj. anc. M16",
+        "category": "abbreviation",
+        "expected_ids": [
+          508,
+          509
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.25,
+        "rank": 4,
+        "elapsed_ms": 19.211292266845703,
+        "top_results": [
+          {
+            "id": 505,
+            "name": "Gouj. anc. 10.9 M12x50",
+            "default_code": "GA-ABR-M12x50",
+            "score": 28.05606
+          },
+          {
+            "id": 514,
+            "name": "Gouj. anc. 4.8 M20x80",
+            "default_code": "GA-ABR-M20x80",
+            "score": 28.05606
+          },
+          {
+            "id": 498,
+            "name": "Gouj. anc. A2-70 M8x40",
+            "default_code": "GA-ABR-M8x40",
+            "score": 28.05606
+          },
+          {
+            "id": 509,
+            "name": "Gouj. anc. 4.8 M16x60",
+            "default_code": "GA-ABR-M16x60",
+            "score": 28.05606
+          }
+        ]
+      },
+      {
+        "query": "Vis CHC M10",
+        "category": "abbreviation",
+        "expected_ids": [
+          456,
+          457,
+          458,
+          459
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.2,
+        "rank": 5,
+        "elapsed_ms": 19.42300796508789,
+        "top_results": [
+          {
+            "id": 450,
+            "name": "Vis CHC 4.8 M6x20",
+            "default_code": "VCHC-ABR-M6x20",
+            "score": 20.45214
+          },
+          {
+            "id": 452,
+            "name": "Vis CHC 12.9 M6x30",
+            "default_code": "VCHC-ABR-M6x30",
+            "score": 20.45214
+          },
+          {
+            "id": 472,
+            "name": "Vis CHC A4-80 M20x100",
+            "default_code": "VCHC-ABR-M20x100",
+            "score": 20.45214
+          },
+          {
+            "id": 468,
+            "name": "Vis CHC A4-80 M16x100",
+            "default_code": "VCHC-ABR-M16x100",
+            "score": 20.134872
+          },
+          {
+            "id": 458,
+            "name": "Vis CHC 10.9 M10x50",
+            "default_code": "VCHC-ABR-M10x50",
+            "score": 19.877903
+          }
+        ]
+      },
+      {
+        "query": "rondelle plate M12",
+        "category": "standard",
+        "expected_ids": [
+          439
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.25,
+        "rank": 4,
+        "elapsed_ms": 19.23823356628418,
+        "top_results": [
+          {
+            "id": 442,
+            "name": "Rondelle plate M12x80",
+            "default_code": "",
+            "score": 19.17883
+          },
+          {
+            "id": 446,
+            "name": "Rondelle plate M16x100",
+            "default_code": "",
+            "score": 19.17883
+          },
+          {
+            "id": 434,
+            "name": "Rondelle plate M8x40",
+            "default_code": "RPL-M8x40",
+            "score": 19.026525
+          },
+          {
+            "id": 439,
+            "name": "Rondelle plate M12x50",
+            "default_code": "RPL-M12x50",
+            "score": 19.026525
+          },
+          {
+            "id": 436,
+            "name": "Rondelle plate M10x40",
+            "default_code": "RPL-M10x40",
+            "score": 19.026525
+          }
+        ]
+      },
+      {
+        "query": "cornière acier 10",
+        "category": "jargon",
+        "expected_ids": [
+          321
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 20.567655563354492,
+        "top_results": [
+          {
+            "id": 321,
+            "name": "Cornière acier 10mm",
+            "default_code": "COR-10mm",
+            "score": 14.927616
+          },
+          {
+            "id": 318,
+            "name": "Cornière acier 6mm",
+            "default_code": "COR-6mm",
+            "score": 14.927616
+          },
+          {
+            "id": 314,
+            "name": "Cornière acier 2mm",
+            "default_code": "COR-2mm",
+            "score": 14.927616
+          },
+          {
+            "id": 317,
+            "name": "Cornière acier 5mm",
+            "default_code": "COR-5mm",
+            "score": 14.927616
+          },
+          {
+            "id": 324,
+            "name": "Cornière acier 15mm",
+            "default_code": "COR-15mm",
+            "score": 14.927616
+          }
+        ]
+      },
+      {
+        "query": "poutrelle IPE",
+        "category": "jargon",
+        "expected_ids": [
+          327,
+          328,
+          329,
+          330,
+          331,
+          332,
+          334,
+          335,
+          336,
+          337
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 21.074295043945312,
+        "top_results": [
+          {
+            "id": 331,
+            "name": "Profilé IPE 6mm",
+            "default_code": "IPE-6mm",
+            "score": 12.925609
+          },
+          {
+            "id": 330,
+            "name": "Profilé IPE 5mm",
+            "default_code": "IPE-5mm",
+            "score": 12.925609
+          },
+          {
+            "id": 327,
+            "name": "Profilé IPE 2mm",
+            "default_code": "IPE-2mm",
+            "score": 12.925609
+          },
+          {
+            "id": 335,
+            "name": "Profilé IPE 12mm",
+            "default_code": "IPE-12mm",
+            "score": 12.925609
+          },
+          {
+            "id": 328,
+            "name": "Profilé IPE 3mm",
+            "default_code": "IPE-3mm",
+            "score": 12.925609
+          }
+        ]
+      },
+      {
+        "query": "BHM-M12x50",
+        "category": "exact-ref",
+        "expected_ids": [
+          397
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 20.2178955078125,
+        "top_results": [
+          {
+            "id": 397,
+            "name": "Boulon tête hexagonale M12x50",
+            "default_code": "BHM-M12x50",
+            "score": 23.094318
+          },
+          {
+            "id": 439,
+            "name": "Rondelle plate M12x50",
+            "default_code": "RPL-M12x50",
+            "score": 13.190858
+          },
+          {
+            "id": 503,
+            "name": "Goujon d'ancrage M12x50",
+            "default_code": "GA-M12x50",
+            "score": 13.190858
+          },
+          {
+            "id": 526,
+            "name": "Cheville métallique M12x50",
+            "default_code": "CHM-M12x50",
+            "score": 13.190858
+          },
+          {
+            "id": 483,
+            "name": "Tige filetée M12x50",
+            "default_code": "TF-M12x50",
+            "score": 13.190858
+          }
+        ]
+      },
+      {
+        "query": "TPVC-DN100",
+        "category": "exact-ref",
+        "expected_ids": [
+          632
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 20.7369327545166,
+        "top_results": [
+          {
+            "id": 632,
+            "name": "Tuyau PVC pression DN100",
+            "default_code": "TPVC-DN100",
+            "score": 21.842943
+          },
+          {
+            "id": 630,
+            "name": "Tuyau PVC pression DN65",
+            "default_code": "TPVC-DN65",
+            "score": 11.530876
+          },
+          {
+            "id": 634,
+            "name": "Tuyau PVC pression DN200",
+            "default_code": "TPVC-DN200",
+            "score": 11.530876
+          },
+          {
+            "id": 626,
+            "name": "Tuyau PVC pression DN25",
+            "default_code": "TPVC-DN25",
+            "score": 11.530876
+          },
+          {
+            "id": 627,
+            "name": "Tuyau PVC pression DN32",
+            "default_code": "TPVC-DN32",
+            "score": 11.530876
+          }
+        ]
+      },
+      {
+        "query": "CRO-5L",
+        "category": "exact-ref",
+        "expected_ids": [
+          908
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 21.235942840576172,
+        "top_results": [
+          {
+            "id": 908,
+            "name": "Convertisseur de rouille 5L",
+            "default_code": "CRO-5L",
+            "score": 25.136467
+          },
+          {
+            "id": 905,
+            "name": "Convertisseur de rouille 0.5L",
+            "default_code": "CRO-0.5L",
+            "score": 25.031029
+          },
+          {
+            "id": 907,
+            "name": "Convertisseur de rouille 2.5L",
+            "default_code": "CRO-2.5L",
+            "score": 25.031029
+          },
+          {
+            "id": 906,
+            "name": "Convertisseur de rouille 1L",
+            "default_code": "CRO-1L",
+            "score": 13.510667
+          },
+          {
+            "id": 909,
+            "name": "Convertisseur de rouille 20L",
+            "default_code": "CRO-20L",
+            "score": 13.510667
+          }
+        ]
+      },
+      {
+        "query": "boullon hexagonale M8",
+        "category": "typo",
+        "expected_ids": [
+          390,
+          391,
+          393
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 20.461082458496094,
+        "top_results": [
+          {
+            "id": 390,
+            "name": "Boulon tête hexagonale M8x30",
+            "default_code": "BHM-M8x30",
+            "score": 10.181425
+          },
+          {
+            "id": 403,
+            "name": "Boulon tête hexagonale M16x80",
+            "default_code": "BHM-M16x80",
+            "score": 10.181425
+          },
+          {
+            "id": 394,
+            "name": "Boulon tête hexagonale M10x40",
+            "default_code": "BHM-M10x40",
+            "score": 10.181425
+          },
+          {
+            "id": 406,
+            "name": "Boulon tête hexagonale M20x100",
+            "default_code": "BHM-M20x100",
+            "score": 10.181425
+          },
+          {
+            "id": 387,
+            "name": "Boulon tête hexagonale M6x20",
+            "default_code": "BHM-M6x20",
+            "score": 10.181425
+          }
+        ]
+      },
+      {
+        "query": "tuyeau PVC pression",
+        "category": "typo",
+        "expected_ids": [
+          623,
+          624,
+          626,
+          627,
+          628,
+          629,
+          630,
+          631,
+          632,
+          633,
+          634
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 19.892454147338867,
+        "top_results": [
+          {
+            "id": 635,
+            "name": "Tuyau PVC pression",
+            "default_code": "",
+            "score": 22.3465
+          },
+          {
+            "id": 628,
+            "name": "Tuyau PVC pression DN40",
+            "default_code": "TPVC-DN40",
+            "score": 22.110514
+          },
+          {
+            "id": 623,
+            "name": "Tuyau PVC pression DN15",
+            "default_code": "TPVC-DN15",
+            "score": 22.110514
+          },
+          {
+            "id": 630,
+            "name": "Tuyau PVC pression DN65",
+            "default_code": "TPVC-DN65",
+            "score": 22.110514
+          },
+          {
+            "id": 627,
+            "name": "Tuyau PVC pression DN32",
+            "default_code": "TPVC-DN32",
+            "score": 22.110514
+          }
+        ]
+      },
+      {
+        "query": "stainless steel bolt M16",
+        "category": "cross-lingual",
+        "expected_ids": [
+          401,
+          402,
+          403,
+          404
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 0,
+        "mrr": 0.0,
+        "rank": -1,
+        "elapsed_ms": 19.394397735595703,
+        "top_results": [
+          {
+            "id": 36,
+            "name": "Three-Seat Sofa",
+            "default_code": "FURN_8999",
+            "score": 16.83637
+          }
+        ]
+      },
+      {
+        "query": "angle iron steel",
+        "category": "cross-lingual",
+        "expected_ids": [
+          314,
+          315,
+          316,
+          317,
+          318,
+          319,
+          321,
+          322,
+          324,
+          325
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 0,
+        "mrr": 0.0,
+        "rank": -1,
+        "elapsed_ms": 19.0274715423584,
+        "top_results": [
+          {
+            "id": 808,
+            "name": "Meuleuse d'angle 125mm",
+            "default_code": "MEU",
+            "score": 17.239973
+          },
+          {
+            "id": 36,
+            "name": "Three-Seat Sofa",
+            "default_code": "FURN_8999",
+            "score": 16.881533
+          }
+        ]
+      },
+      {
+        "query": "plaque acier découpée sur mesure",
+        "category": "custom-product",
+        "expected_ids": [
+          922
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 21.681785583496094,
+        "top_results": [
+          {
+            "id": 922,
+            "name": "SUR MESURE - Plaque acier découpée",
+            "default_code": "",
+            "score": 57.27247
+          },
+          {
+            "id": 923,
+            "name": "SUR MESURE - Bride spéciale",
+            "default_code": "",
+            "score": 26.297415
+          },
+          {
+            "id": 277,
+            "name": "Plaque acier S235 12mm",
+            "default_code": "PLA-12mm",
+            "score": 15.255396
+          },
+          {
+            "id": 275,
+            "name": "Plaque acier S235 8mm",
+            "default_code": "PLA-8mm",
+            "score": 15.255396
+          },
+          {
+            "id": 276,
+            "name": "Plaque acier S235 10mm",
+            "default_code": "PLA-10mm",
+            "score": 15.255396
+          }
+        ]
+      },
+      {
+        "query": "bride spéciale sur mesure",
+        "category": "custom-product",
+        "expected_ids": [
+          923
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 21.452665328979492,
+        "top_results": [
+          {
+            "id": 923,
+            "name": "SUR MESURE - Bride spéciale",
+            "default_code": "",
+            "score": 51.43987
+          },
+          {
+            "id": 922,
+            "name": "SUR MESURE - Plaque acier découpée",
+            "default_code": "",
+            "score": 26.163252
+          },
+          {
+            "id": 929,
+            "name": "REF CLIENT - Pièce spéciale #4587-B",
+            "default_code": "",
+            "score": 14.416937
+          },
+          {
+            "id": 928,
+            "name": "À CONFIRMER - Tube spécial alliage Inconel 625",
+            "default_code": "",
+            "score": 14.379854
+          },
+          {
+            "id": 789,
+            "name": "Masque respiratoire FFP2 M",
+            "default_code": "MAS-M",
+            "score": 10.769784
+          }
+        ]
+      },
+      {
+        "query": "disjoncteur modulaire protection 10mm²",
+        "category": "multi-word",
+        "expected_ids": [
+          686
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 21.291255950927734,
+        "top_results": [
+          {
+            "id": 686,
+            "name": "Disjoncteur modulaire 10mm²",
+            "default_code": "DJM-10mm²",
+            "score": 38.135498
+          },
+          {
+            "id": 690,
+            "name": "Disjoncteur modulaire",
+            "default_code": "",
+            "score": 24.316235
+          },
+          {
+            "id": 687,
+            "name": "Disjoncteur modulaire 16mm²",
+            "default_code": "DJM-16mm²",
+            "score": 24.058765
+          },
+          {
+            "id": 685,
+            "name": "Disjoncteur modulaire 6mm²",
+            "default_code": "DJM-6mm²",
+            "score": 24.058765
+          },
+          {
+            "id": 689,
+            "name": "Disjoncteur modulaire 25mm²",
+            "default_code": "DJM-25mm²",
+            "score": 24.058765
+          }
+        ]
+      },
+      {
+        "query": "vanne boisseau sphérique DN40 robinetterie",
+        "category": "multi-word",
+        "expected_ids": [
+          612
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 20.120859146118164,
+        "top_results": [
+          {
+            "id": 612,
+            "name": "Vanne à boisseau sphérique DN40",
+            "default_code": "VBS-DN40",
+            "score": 42.990364
+          },
+          {
+            "id": 614,
+            "name": "Vanne à boisseau sphérique DN65",
+            "default_code": "VBS-DN65",
+            "score": 32.611412
+          },
+          {
+            "id": 610,
+            "name": "Vanne à boisseau sphérique DN25",
+            "default_code": "VBS-DN25",
+            "score": 32.611412
+          },
+          {
+            "id": 620,
+            "name": "Vanne à boisseau sphérique DN200",
+            "default_code": "VBS-DN200",
+            "score": 32.611412
+          },
+          {
+            "id": 616,
+            "name": "Vanne à boisseau sphérique DN100",
+            "default_code": "VBS-DN100",
+            "score": 32.611412
+          }
+        ]
+      },
+      {
+        "query": "tube carré acier 8mm soudure",
+        "category": "multi-word",
+        "expected_ids": [
+          295,
+          296
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 21.54850959777832,
+        "top_results": [
+          {
+            "id": 295,
+            "name": "Tube carré acier 8mm",
+            "default_code": "TCA-8mm",
+            "score": 37.752537
+          },
+          {
+            "id": 296,
+            "name": "Tube carré acier 8mm",
+            "default_code": "TCA-8mm-DUP",
+            "score": 37.670883
+          },
+          {
+            "id": 301,
+            "name": "Tube carré acier",
+            "default_code": "",
+            "score": 26.08257
+          },
+          {
+            "id": 291,
+            "name": "Tube carré acier 3mm",
+            "default_code": "TCA-3mm",
+            "score": 25.82452
+          },
+          {
+            "id": 290,
+            "name": "Tube carré acier 2mm",
+            "default_code": "TCA-2mm",
+            "score": 25.82452
+          }
+        ]
+      },
+      {
+        "query": "profilé HEA poutre acier construction",
+        "category": "technical-spec",
+        "expected_ids": [
+          339,
+          341,
+          342,
+          343,
+          344,
+          345,
+          346,
+          348,
+          349,
+          350
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 20.140647888183594,
+        "top_results": [
+          {
+            "id": 343,
+            "name": "Profilé HEA 5mm",
+            "default_code": "HEA-5mm",
+            "score": 25.43884
+          },
+          {
+            "id": 345,
+            "name": "Profilé HEA 8mm",
+            "default_code": "HEA-8mm",
+            "score": 25.43884
+          },
+          {
+            "id": 348,
+            "name": "Profilé HEA 12mm",
+            "default_code": "HEA-12mm",
+            "score": 25.43884
+          },
+          {
+            "id": 339,
+            "name": "Profilé HEA 2mm",
+            "default_code": "HEA-2mm",
+            "score": 25.43884
+          },
+          {
+            "id": 342,
+            "name": "Profilé HEA 4mm",
+            "default_code": "HEA-4mm",
+            "score": 25.43884
+          }
+        ]
+      },
+      {
+        "query": "relais thermique protection moteur 4mm²",
+        "category": "technical-spec",
+        "expected_ids": [
+          702
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 19.6225643157959,
+        "top_results": [
+          {
+            "id": 702,
+            "name": "Relais thermique 4mm²",
+            "default_code": "RTH-4mm²",
+            "score": 37.982185
+          },
+          {
+            "id": 708,
+            "name": "Relais thermique",
+            "default_code": "",
+            "score": 24.873203
+          },
+          {
+            "id": 706,
+            "name": "Relais thermique 16mm²",
+            "default_code": "RTH-16mm²",
+            "score": 24.609838
+          },
+          {
+            "id": 705,
+            "name": "Relais thermique 10mm²",
+            "default_code": "RTH-10mm²",
+            "score": 24.609838
+          },
+          {
+            "id": 704,
+            "name": "Relais thermique 6mm²",
+            "default_code": "RTH-6mm²",
+            "score": 24.609838
+          }
+        ]
+      },
+      {
+        "query": "joint torique Viton haute température",
+        "category": "technical-spec",
+        "expected_ids": [
+          827,
+          828,
+          829,
+          830,
+          832,
+          834,
+          835,
+          836
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 20.40863037109375,
+        "top_results": [
+          {
+            "id": 837,
+            "name": "JOINT TORIQUE VITON DN100",
+            "default_code": "",
+            "score": 30.630163
+          },
+          {
+            "id": 832,
+            "name": "Joint torique Viton DN40",
+            "default_code": "JTV-DN40",
+            "score": 30.41328
+          },
+          {
+            "id": 827,
+            "name": "Joint torique Viton DN15",
+            "default_code": "JTV-DN15",
+            "score": 30.41328
+          },
+          {
+            "id": 828,
+            "name": "Joint torique Viton DN20",
+            "default_code": "JTV-DN20",
+            "score": 30.41328
+          },
+          {
+            "id": 834,
+            "name": "Joint torique Viton DN50",
+            "default_code": "JTV-DN50",
+            "score": 30.41328
+          }
+        ]
+      },
+      {
+        "query": "galva spray 5 litres",
+        "category": "jargon",
+        "expected_ids": [
+          894,
+          896
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 21.173715591430664,
+        "top_results": [
+          {
+            "id": 894,
+            "name": "Galva spray  1L",
+            "default_code": "GSP-ABR-1L",
+            "score": 28.586483
+          },
+          {
+            "id": 911,
+            "name": "Câble 3G1.5 ANCIENNE REF",
+            "default_code": "",
+            "score": 15.77344
+          },
+          {
+            "id": 914,
+            "name": "Tube acier galva DN25 (ne plus vendre)",
+            "default_code": "",
+            "score": 15.690154
+          },
+          {
+            "id": 40,
+            "name": "Desk Organizer",
+            "default_code": "FURN_0001",
+            "score": 15.092476
+          },
+          {
+            "id": 897,
+            "name": "Galvanisation à froid spray 20L",
+            "default_code": "GSP-20L",
+            "score": 12.944744
+          }
+        ]
+      },
+      {
+        "query": "meuleuse 125",
+        "category": "abbreviation",
+        "expected_ids": [
+          808,
+          809
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 20.17951011657715,
+        "top_results": [
+          {
+            "id": 809,
+            "name": "Meul. 125",
+            "default_code": "MEU-ABR",
+            "score": 17.286346
+          },
+          {
+            "id": 808,
+            "name": "Meuleuse d'angle 125mm",
+            "default_code": "MEU",
+            "score": 17.286346
+          }
+        ]
+      }
+    ],
+    "hybrid": [
+      {
+        "query": "boulon tête hexagonale M12",
+        "category": "standard",
+        "expected_ids": [
+          397,
+          398,
+          400
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 136.95836067199707,
+        "top_results": [
+          {
+            "id": 398,
+            "name": "Boulon tête hexagonale M12x60",
+            "default_code": "BHM-M12x60",
+            "score": 0.75
+          },
+          {
+            "id": 397,
+            "name": "Boulon tête hexagonale M12x50",
+            "default_code": "BHM-M12x50",
+            "score": 0.6666667
+          },
+          {
+            "id": 400,
+            "name": "Boulon tête hexagonale M12x80",
+            "default_code": "BHM-M12x80",
+            "score": 0.53333336
+          },
+          {
+            "id": 403,
+            "name": "Boulon tête hexagonale M16x80",
+            "default_code": "BHM-M16x80",
+            "score": 0.5
+          },
+          {
+            "id": 394,
+            "name": "Boulon tête hexagonale M10x40",
+            "default_code": "BHM-M10x40",
+            "score": 0.39285713
+          }
+        ]
+      },
+      {
+        "query": "tuyau acier DN50",
+        "category": "standard",
+        "expected_ids": [
+          563
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 88.41443061828613,
+        "top_results": [
+          {
+            "id": 563,
+            "name": "Tuyau acier DN50",
+            "default_code": "TUY-DN50",
+            "score": 1.0
+          },
+          {
+            "id": 575,
+            "name": "Coude acier 90° DN50",
+            "default_code": "COU-DN50",
+            "score": 0.5
+          },
+          {
+            "id": 642,
+            "name": "Manchon acier DN50",
+            "default_code": "MAN-DN50",
+            "score": 0.45
+          },
+          {
+            "id": 629,
+            "name": "Tuyau PVC pression DN50",
+            "default_code": "TPVC-DN50",
+            "score": 0.33333334
+          },
+          {
+            "id": 655,
+            "name": "Té égal acier DN50",
+            "default_code": "TEE-DN50",
+            "score": 0.325
+          }
+        ]
+      },
+      {
+        "query": "joint plat DN32",
+        "category": "standard",
+        "expected_ids": [
+          821,
+          822
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 84.28287506103516,
+        "top_results": [
+          {
+            "id": 821,
+            "name": "Joint plat NBR DN32",
+            "default_code": "JPN-DN32",
+            "score": 1.0
+          },
+          {
+            "id": 822,
+            "name": "Joint plat NBR DN32",
+            "default_code": "JPN-DN32-DUP",
+            "score": 0.6666667
+          },
+          {
+            "id": 820,
+            "name": "Joint plat NBR DN25",
+            "default_code": "JPN-DN25",
+            "score": 0.32142857
+          },
+          {
+            "id": 830,
+            "name": "Joint torique Viton DN32",
+            "default_code": "JTV-DN32",
+            "score": 0.32142857
+          },
+          {
+            "id": 831,
+            "name": "JOINT TORIQUE VITON DN32",
+            "default_code": "JTV-DN32-DUP",
+            "score": 0.2909091
+          }
+        ]
+      },
+      {
+        "query": "Boul. HM M12",
+        "category": "abbreviation",
+        "expected_ids": [
+          397,
+          398,
+          399,
+          400
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 84.20348167419434,
+        "top_results": [
+          {
+            "id": 399,
+            "name": "Boul. HM 8.8 M12x60",
+            "default_code": "BHM-ABR-M12x60",
+            "score": 1.0
+          },
+          {
+            "id": 402,
+            "name": "Boul. HM A2-70 M16x60",
+            "default_code": "BHM-ABR-M16x60",
+            "score": 0.3809524
+          },
+          {
+            "id": 400,
+            "name": "Boulon tête hexagonale M12x80",
+            "default_code": "BHM-M12x80",
+            "score": 0.33333334
+          },
+          {
+            "id": 423,
+            "name": "Écr. HM 12.9 M16x60",
+            "default_code": "EHM-ABR-M16x60",
+            "score": 0.2857143
+          },
+          {
+            "id": 414,
+            "name": "Écr. HM 4.8 M10x40",
+            "default_code": "EHM-ABR-M10x40",
+            "score": 0.25
+          }
+        ]
+      },
+      {
+        "query": "Gouj. anc. M16",
+        "category": "abbreviation",
+        "expected_ids": [
+          508,
+          509
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 78.47189903259277,
+        "top_results": [
+          {
+            "id": 509,
+            "name": "Gouj. anc. 4.8 M16x60",
+            "default_code": "GA-ABR-M16x60",
+            "score": 0.7
+          },
+          {
+            "id": 505,
+            "name": "Gouj. anc. 10.9 M12x50",
+            "default_code": "GA-ABR-M12x50",
+            "score": 0.625
+          },
+          {
+            "id": 514,
+            "name": "Gouj. anc. 4.8 M20x80",
+            "default_code": "GA-ABR-M20x80",
+            "score": 0.4761905
+          },
+          {
+            "id": 510,
+            "name": "Goujon d'ancrage M16x80",
+            "default_code": "GA-M16x80",
+            "score": 0.33333334
+          },
+          {
+            "id": 498,
+            "name": "Gouj. anc. A2-70 M8x40",
+            "default_code": "GA-ABR-M8x40",
+            "score": 0.25
+          }
+        ]
+      },
+      {
+        "query": "Vis CHC M10",
+        "category": "abbreviation",
+        "expected_ids": [
+          456,
+          457,
+          458,
+          459
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 77.58927345275879,
+        "top_results": [
+          {
+            "id": 452,
+            "name": "Vis CHC 12.9 M6x30",
+            "default_code": "VCHC-ABR-M6x30",
+            "score": 0.75
+          },
+          {
+            "id": 456,
+            "name": "Vis à tête cylindrique M10x40",
+            "default_code": "VCHC-M10x40",
+            "score": 0.5555556
+          },
+          {
+            "id": 450,
+            "name": "Vis CHC 4.8 M6x20",
+            "default_code": "VCHC-ABR-M6x20",
+            "score": 0.53333336
+          },
+          {
+            "id": 458,
+            "name": "Vis CHC 10.9 M10x50",
+            "default_code": "VCHC-ABR-M10x50",
+            "score": 0.5
+          },
+          {
+            "id": 472,
+            "name": "Vis CHC A4-80 M20x100",
+            "default_code": "VCHC-ABR-M20x100",
+            "score": 0.375
+          }
+        ]
+      },
+      {
+        "query": "rondelle plate M12",
+        "category": "standard",
+        "expected_ids": [
+          439
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 76.2937068939209,
+        "top_results": [
+          {
+            "id": 439,
+            "name": "Rondelle plate M12x50",
+            "default_code": "RPL-M12x50",
+            "score": 0.7
+          },
+          {
+            "id": 442,
+            "name": "Rondelle plate M12x80",
+            "default_code": "",
+            "score": 0.6666667
+          },
+          {
+            "id": 446,
+            "name": "Rondelle plate M16x100",
+            "default_code": "",
+            "score": 0.6666667
+          },
+          {
+            "id": 440,
+            "name": "Rondelle plate M12x60",
+            "default_code": "RPL-M12x60",
+            "score": 0.4166667
+          },
+          {
+            "id": 443,
+            "name": "Rondelle plate M16x60",
+            "default_code": "RPL-M16x60",
+            "score": 0.39285713
+          }
+        ]
+      },
+      {
+        "query": "cornière acier 10",
+        "category": "jargon",
+        "expected_ids": [
+          321
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 76.00164413452148,
+        "top_results": [
+          {
+            "id": 321,
+            "name": "Cornière acier 10mm",
+            "default_code": "COR-10mm",
+            "score": 1.0
+          },
+          {
+            "id": 325,
+            "name": "Cornière acier 20mm",
+            "default_code": "COR-20mm",
+            "score": 0.5
+          },
+          {
+            "id": 314,
+            "name": "Cornière acier 2mm",
+            "default_code": "COR-2mm",
+            "score": 0.42424244
+          },
+          {
+            "id": 317,
+            "name": "Cornière acier 5mm",
+            "default_code": "COR-5mm",
+            "score": 0.4166667
+          },
+          {
+            "id": 322,
+            "name": "Cornière acier 12mm",
+            "default_code": "COR-12mm",
+            "score": 0.375
+          }
+        ]
+      },
+      {
+        "query": "poutrelle IPE",
+        "category": "jargon",
+        "expected_ids": [
+          327,
+          328,
+          329,
+          330,
+          331,
+          332,
+          334,
+          335,
+          336,
+          337
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 76.50613784790039,
+        "top_results": [
+          {
+            "id": 335,
+            "name": "Profilé IPE 12mm",
+            "default_code": "IPE-12mm",
+            "score": 0.6666667
+          },
+          {
+            "id": 338,
+            "name": "Profilé IPE",
+            "default_code": "",
+            "score": 0.5769231
+          },
+          {
+            "id": 328,
+            "name": "Profilé IPE 3mm",
+            "default_code": "IPE-3mm",
+            "score": 0.53333336
+          },
+          {
+            "id": 329,
+            "name": "Profilé IPE 4mm",
+            "default_code": "IPE-4mm",
+            "score": 0.4761905
+          },
+          {
+            "id": 337,
+            "name": "Profilé IPE 20mm",
+            "default_code": "IPE-20mm",
+            "score": 0.35
+          }
+        ]
+      },
+      {
+        "query": "BHM-M12x50",
+        "category": "exact-ref",
+        "expected_ids": [
+          397
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 16.568660736083984,
+        "top_results": [
+          {
+            "id": 397,
+            "name": "Boulon tête hexagonale M12x50",
+            "default_code": "BHM-M12x50",
+            "score": 1.0
+          }
+        ]
+      },
+      {
+        "query": "TPVC-DN100",
+        "category": "exact-ref",
+        "expected_ids": [
+          632
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 17.73524284362793,
+        "top_results": [
+          {
+            "id": 632,
+            "name": "Tuyau PVC pression DN100",
+            "default_code": "TPVC-DN100",
+            "score": 1.0
+          }
+        ]
+      },
+      {
+        "query": "CRO-5L",
+        "category": "exact-ref",
+        "expected_ids": [
+          908
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 22.206783294677734,
+        "top_results": [
+          {
+            "id": 908,
+            "name": "Convertisseur de rouille 5L",
+            "default_code": "CRO-5L",
+            "score": 1.0
+          }
+        ]
+      },
+      {
+        "query": "boullon hexagonale M8",
+        "category": "typo",
+        "expected_ids": [
+          390,
+          391,
+          393
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 96.85039520263672,
+        "top_results": [
+          {
+            "id": 390,
+            "name": "Boulon tête hexagonale M8x30",
+            "default_code": "BHM-M8x30",
+            "score": 0.625
+          },
+          {
+            "id": 398,
+            "name": "Boulon tête hexagonale M12x60",
+            "default_code": "BHM-M12x60",
+            "score": 0.5555556
+          },
+          {
+            "id": 403,
+            "name": "Boulon tête hexagonale M16x80",
+            "default_code": "BHM-M16x80",
+            "score": 0.42424244
+          },
+          {
+            "id": 391,
+            "name": "Boulon tête hexagonale M8x40",
+            "default_code": "BHM-M8x40",
+            "score": 0.4047619
+          },
+          {
+            "id": 394,
+            "name": "Boulon tête hexagonale M10x40",
+            "default_code": "BHM-M10x40",
+            "score": 0.33333334
+          }
+        ]
+      },
+      {
+        "query": "tuyeau PVC pression",
+        "category": "typo",
+        "expected_ids": [
+          623,
+          624,
+          626,
+          627,
+          628,
+          629,
+          630,
+          631,
+          632,
+          633,
+          634
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 76.24292373657227,
+        "top_results": [
+          {
+            "id": 635,
+            "name": "Tuyau PVC pression",
+            "default_code": "",
+            "score": 1.0
+          },
+          {
+            "id": 628,
+            "name": "Tuyau PVC pression DN40",
+            "default_code": "TPVC-DN40",
+            "score": 0.53333336
+          },
+          {
+            "id": 630,
+            "name": "Tuyau PVC pression DN65",
+            "default_code": "TPVC-DN65",
+            "score": 0.45833334
+          },
+          {
+            "id": 623,
+            "name": "Tuyau PVC pression DN15",
+            "default_code": "TPVC-DN15",
+            "score": 0.45
+          },
+          {
+            "id": 626,
+            "name": "Tuyau PVC pression DN25",
+            "default_code": "TPVC-DN25",
+            "score": 0.375
+          }
+        ]
+      },
+      {
+        "query": "stainless steel bolt M16",
+        "category": "cross-lingual",
+        "expected_ids": [
+          401,
+          402,
+          403,
+          404
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.3333333333333333,
+        "rank": 3,
+        "elapsed_ms": 77.7902603149414,
+        "top_results": [
+          {
+            "id": 36,
+            "name": "Three-Seat Sofa",
+            "default_code": "FURN_8999",
+            "score": 0.5
+          },
+          {
+            "id": 446,
+            "name": "Rondelle plate M16x100",
+            "default_code": "",
+            "score": 0.5
+          },
+          {
+            "id": 403,
+            "name": "Boulon tête hexagonale M16x80",
+            "default_code": "BHM-M16x80",
+            "score": 0.33333334
+          },
+          {
+            "id": 533,
+            "name": "Cheville métallique M16x100",
+            "default_code": "CHM-M16x100",
+            "score": 0.25
+          },
+          {
+            "id": 445,
+            "name": "Rondelle plate M16x100",
+            "default_code": "RPL-M16x100",
+            "score": 0.2
+          }
+        ]
+      },
+      {
+        "query": "angle iron steel",
+        "category": "cross-lingual",
+        "expected_ids": [
+          314,
+          315,
+          316,
+          317,
+          318,
+          319,
+          321,
+          322,
+          324,
+          325
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 0,
+        "mrr": 0.0,
+        "rank": -1,
+        "elapsed_ms": 76.46870613098145,
+        "top_results": [
+          {
+            "id": 808,
+            "name": "Meuleuse d'angle 125mm",
+            "default_code": "MEU",
+            "score": 0.5
+          },
+          {
+            "id": 382,
+            "name": "Tôle aluminium 10mm",
+            "default_code": "TAL-10mm",
+            "score": 0.5
+          },
+          {
+            "id": 929,
+            "name": "REF CLIENT - Pièce spéciale #4587-B",
+            "default_code": "",
+            "score": 0.33333334
+          },
+          {
+            "id": 36,
+            "name": "Three-Seat Sofa",
+            "default_code": "FURN_8999",
+            "score": 0.33333334
+          },
+          {
+            "id": 334,
+            "name": "Profilé IPE 10mm",
+            "default_code": "IPE-10mm",
+            "score": 0.25
+          }
+        ]
+      },
+      {
+        "query": "plaque acier découpée sur mesure",
+        "category": "custom-product",
+        "expected_ids": [
+          922
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 77.72302627563477,
+        "top_results": [
+          {
+            "id": 922,
+            "name": "SUR MESURE - Plaque acier découpée",
+            "default_code": "",
+            "score": 1.0
+          },
+          {
+            "id": 278,
+            "name": "Plaque acier S235 15mm",
+            "default_code": "PLA-15mm",
+            "score": 0.33333334
+          },
+          {
+            "id": 923,
+            "name": "SUR MESURE - Bride spéciale",
+            "default_code": "",
+            "score": 0.33333334
+          },
+          {
+            "id": 373,
+            "name": "Barre filetée acier zingué 15mm",
+            "default_code": "BFZ-15mm",
+            "score": 0.33333334
+          },
+          {
+            "id": 279,
+            "name": "Plaque acier S235 20mm",
+            "default_code": "PLA-20mm",
+            "score": 0.25
+          }
+        ]
+      },
+      {
+        "query": "bride spéciale sur mesure",
+        "category": "custom-product",
+        "expected_ids": [
+          923
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 77.42476463317871,
+        "top_results": [
+          {
+            "id": 923,
+            "name": "SUR MESURE - Bride spéciale",
+            "default_code": "",
+            "score": 1.0
+          },
+          {
+            "id": 922,
+            "name": "SUR MESURE - Plaque acier découpée",
+            "default_code": "",
+            "score": 0.3888889
+          },
+          {
+            "id": 586,
+            "name": "Bride plate DN32",
+            "default_code": "BRP-DN32",
+            "score": 0.33333334
+          },
+          {
+            "id": 929,
+            "name": "REF CLIENT - Pièce spéciale #4587-B",
+            "default_code": "",
+            "score": 0.3125
+          },
+          {
+            "id": 592,
+            "name": "Bride plate DN100",
+            "default_code": "BRP-DN100-DUP",
+            "score": 0.25
+          }
+        ]
+      },
+      {
+        "query": "disjoncteur modulaire protection 10mm²",
+        "category": "multi-word",
+        "expected_ids": [
+          686
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 79.57005500793457,
+        "top_results": [
+          {
+            "id": 686,
+            "name": "Disjoncteur modulaire 10mm²",
+            "default_code": "DJM-10mm²",
+            "score": 1.0
+          },
+          {
+            "id": 690,
+            "name": "Disjoncteur modulaire",
+            "default_code": "",
+            "score": 0.6666667
+          },
+          {
+            "id": 685,
+            "name": "Disjoncteur modulaire 6mm²",
+            "default_code": "DJM-6mm²",
+            "score": 0.39285713
+          },
+          {
+            "id": 683,
+            "name": "Disjoncteur modulaire 2.5mm²",
+            "default_code": "DJM-2.5mm²",
+            "score": 0.3611111
+          },
+          {
+            "id": 684,
+            "name": "Disjoncteur modulaire 4mm²",
+            "default_code": "DJM-4mm²",
+            "score": 0.33333334
+          }
+        ]
+      },
+      {
+        "query": "vanne boisseau sphérique DN40 robinetterie",
+        "category": "multi-word",
+        "expected_ids": [
+          612
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 81.98189735412598,
+        "top_results": [
+          {
+            "id": 613,
+            "name": "Vanne à boisseau sphérique DN50",
+            "default_code": "VBS-DN50",
+            "score": 0.8333334
+          },
+          {
+            "id": 612,
+            "name": "Vanne à boisseau sphérique DN40",
+            "default_code": "VBS-DN40",
+            "score": 0.75
+          },
+          {
+            "id": 615,
+            "name": "Vanne à boisseau sphérique DN80",
+            "default_code": "VBS-DN80",
+            "score": 0.4761905
+          },
+          {
+            "id": 609,
+            "name": "Vanne à boisseau sphérique DN20",
+            "default_code": "VBS-DN20",
+            "score": 0.36666667
+          },
+          {
+            "id": 610,
+            "name": "Vanne à boisseau sphérique DN25",
+            "default_code": "VBS-DN25",
+            "score": 0.3409091
+          }
+        ]
+      },
+      {
+        "query": "tube carré acier 8mm soudure",
+        "category": "multi-word",
+        "expected_ids": [
+          295,
+          296
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 79.3313980102539,
+        "top_results": [
+          {
+            "id": 295,
+            "name": "Tube carré acier 8mm",
+            "default_code": "TCA-8mm",
+            "score": 1.0
+          },
+          {
+            "id": 296,
+            "name": "Tube carré acier 8mm",
+            "default_code": "TCA-8mm-DUP",
+            "score": 0.6666667
+          },
+          {
+            "id": 301,
+            "name": "Tube carré acier",
+            "default_code": "",
+            "score": 0.5
+          },
+          {
+            "id": 297,
+            "name": "Tube carré acier 10mm",
+            "default_code": "TCA-10mm",
+            "score": 0.34285715
+          },
+          {
+            "id": 291,
+            "name": "Tube carré acier 3mm",
+            "default_code": "TCA-3mm",
+            "score": 0.25757575
+          }
+        ]
+      },
+      {
+        "query": "profilé HEA poutre acier construction",
+        "category": "technical-spec",
+        "expected_ids": [
+          339,
+          341,
+          342,
+          343,
+          344,
+          345,
+          346,
+          348,
+          349,
+          350
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 79.27870750427246,
+        "top_results": [
+          {
+            "id": 341,
+            "name": "Profilé HEA 3mm",
+            "default_code": "HEA-3mm",
+            "score": 0.8333334
+          },
+          {
+            "id": 343,
+            "name": "Profilé HEA 5mm",
+            "default_code": "HEA-5mm",
+            "score": 0.6111111
+          },
+          {
+            "id": 344,
+            "name": "Profilé HEA 6mm",
+            "default_code": "HEA-6mm",
+            "score": 0.53333336
+          },
+          {
+            "id": 350,
+            "name": "Profilé HEA 20mm",
+            "default_code": "HEA-20mm",
+            "score": 0.375
+          },
+          {
+            "id": 339,
+            "name": "Profilé HEA 2mm",
+            "default_code": "HEA-2mm",
+            "score": 0.375
+          }
+        ]
+      },
+      {
+        "query": "relais thermique protection moteur 4mm²",
+        "category": "technical-spec",
+        "expected_ids": [
+          702
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 80.15680313110352,
+        "top_results": [
+          {
+            "id": 702,
+            "name": "Relais thermique 4mm²",
+            "default_code": "RTH-4mm²",
+            "score": 1.0
+          },
+          {
+            "id": 703,
+            "name": "Rel. therm.  4mm²",
+            "default_code": "RTH-ABR-4mm²",
+            "score": 0.39583334
+          },
+          {
+            "id": 705,
+            "name": "Relais thermique 10mm²",
+            "default_code": "RTH-10mm²",
+            "score": 0.34285715
+          },
+          {
+            "id": 693,
+            "name": "Contacteur tripolaire 4mm²",
+            "default_code": "CTR-4mm²",
+            "score": 0.3409091
+          },
+          {
+            "id": 706,
+            "name": "Relais thermique 16mm²",
+            "default_code": "RTH-16mm²",
+            "score": 0.33333334
+          }
+        ]
+      },
+      {
+        "query": "joint torique Viton haute température",
+        "category": "technical-spec",
+        "expected_ids": [
+          827,
+          828,
+          829,
+          830,
+          832,
+          834,
+          835,
+          836
+        ],
+        "hit_at_1": 0,
+        "hit_at_5": 1,
+        "mrr": 0.5,
+        "rank": 2,
+        "elapsed_ms": 78.02915573120117,
+        "top_results": [
+          {
+            "id": 837,
+            "name": "JOINT TORIQUE VITON DN100",
+            "default_code": "",
+            "score": 0.8333334
+          },
+          {
+            "id": 836,
+            "name": "Joint torique Viton DN100",
+            "default_code": "JTV-DN100",
+            "score": 0.75
+          },
+          {
+            "id": 827,
+            "name": "Joint torique Viton DN15",
+            "default_code": "JTV-DN15",
+            "score": 0.43333334
+          },
+          {
+            "id": 832,
+            "name": "Joint torique Viton DN40",
+            "default_code": "JTV-DN40",
+            "score": 0.4166667
+          },
+          {
+            "id": 835,
+            "name": "Joint torique Viton DN80",
+            "default_code": "JTV-DN80",
+            "score": 0.36666667
+          }
+        ]
+      },
+      {
+        "query": "galva spray 5 litres",
+        "category": "jargon",
+        "expected_ids": [
+          894,
+          896
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 76.49588584899902,
+        "top_results": [
+          {
+            "id": 894,
+            "name": "Galva spray  1L",
+            "default_code": "GSP-ABR-1L",
+            "score": 0.8333334
+          },
+          {
+            "id": 896,
+            "name": "Galvanisation à froid spray 5L",
+            "default_code": "GSP-5L",
+            "score": 0.6111111
+          },
+          {
+            "id": 892,
+            "name": "Galvanisation à froid spray 0.5L",
+            "default_code": "GSP-0.5L",
+            "score": 0.35
+          },
+          {
+            "id": 911,
+            "name": "Câble 3G1.5 ANCIENNE REF",
+            "default_code": "",
+            "score": 0.33333334
+          },
+          {
+            "id": 895,
+            "name": "Galvanisation à froid spray 2.5L",
+            "default_code": "GSP-2.5L",
+            "score": 0.325
+          }
+        ]
+      },
+      {
+        "query": "meuleuse 125",
+        "category": "abbreviation",
+        "expected_ids": [
+          808,
+          809
+        ],
+        "hit_at_1": 1,
+        "hit_at_5": 1,
+        "mrr": 1.0,
+        "rank": 1,
+        "elapsed_ms": 76.33137702941895,
+        "top_results": [
+          {
+            "id": 808,
+            "name": "Meuleuse d'angle 125mm",
+            "default_code": "MEU",
+            "score": 0.8333334
+          },
+          {
+            "id": 809,
+            "name": "Meul. 125",
+            "default_code": "MEU-ABR",
+            "score": 0.8333334
+          },
+          {
+            "id": 439,
+            "name": "Rondelle plate M12x50",
+            "default_code": "RPL-M12x50",
+            "score": 0.25
+          },
+          {
+            "id": 505,
+            "name": "Gouj. anc. 10.9 M12x50",
+            "default_code": "GA-ABR-M12x50",
+            "score": 0.2
+          },
+          {
+            "id": 504,
+            "name": "Goujon d'ancrage M12x50",
+            "default_code": "GA-M12x50-DUP",
+            "score": 0.16666667
+          }
+        ]
+      }
+    ]
+  }
+}

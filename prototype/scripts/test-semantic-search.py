@@ -43,6 +43,7 @@ def run_search(client: QdrantClient, model: SentenceTransformer, query: str):
     results = client.query_points(
         collection_name=COLLECTION_NAME,
         query=query_embedding.tolist(),
+        using="dense",
         limit=TOP_K,
     )
     elapsed_ms = (time.time() - start) * 1000

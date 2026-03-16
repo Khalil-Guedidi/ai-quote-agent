@@ -1,0 +1,160 @@
+[
+  {
+    "query": "boulon tête hexagonale M12",
+    "expected_default_codes": ["BHM-M12x50", "BHM-M12x60", "BHM-M12x80"],
+    "category": "standard",
+    "notes": "Standard query for hex head bolts M12 — multiple size variants acceptable"
+  },
+  {
+    "query": "tuyau acier DN50",
+    "expected_default_codes": ["TUY-DN50"],
+    "category": "standard",
+    "notes": "Standard query matching specific pipe diameter"
+  },
+  {
+    "query": "joint plat DN32",
+    "expected_default_codes": ["JPN-DN32", "JPN-DN32-DUP"],
+    "category": "standard",
+    "notes": "Standard gasket query — includes duplicate variant"
+  },
+  {
+    "query": "Boul. HM M12",
+    "expected_default_codes": ["BHM-ABR-M12x60", "BHM-M12x50", "BHM-M12x60", "BHM-M12x80"],
+    "category": "abbreviation",
+    "notes": "Abbreviated bolt name as found in catalog (Boul. HM = Boulon tête hexagonale)"
+  },
+  {
+    "query": "Gouj. anc. M16",
+    "expected_default_codes": ["GA-ABR-M16x60", "GA-M16x60"],
+    "category": "abbreviation",
+    "notes": "Abbreviated anchor stud — matches abbreviated catalog entries"
+  },
+  {
+    "query": "Vis CHC M10",
+    "expected_default_codes": ["VCHC-ABR-M10x50", "VCHC-M10x40", "VCHC-M10x50", "VCHC-M10x60"],
+    "category": "abbreviation",
+    "notes": "CHC abbreviation for socket head cap screw — matches both abbreviated and full names"
+  },
+  {
+    "query": "rondelle plate M12",
+    "expected_default_codes": ["RPL-M12x50"],
+    "category": "standard",
+    "notes": "Flat washer M12 — standard query"
+  },
+  {
+    "query": "cornière acier 10",
+    "expected_default_codes": ["COR-10mm"],
+    "category": "jargon",
+    "notes": "Industrial jargon — 'cornière' (angle iron), size without unit"
+  },
+  {
+    "query": "poutrelle IPE",
+    "expected_default_codes": ["IPE-2mm", "IPE-3mm", "IPE-4mm", "IPE-5mm", "IPE-6mm", "IPE-8mm", "IPE-10mm", "IPE-12mm", "IPE-15mm", "IPE-20mm"],
+    "category": "jargon",
+    "notes": "Jargon 'poutrelle' (small beam) for IPE steel profile — any IPE is correct"
+  },
+  {
+    "query": "BHM-M12x50",
+    "expected_default_codes": ["BHM-M12x50"],
+    "category": "exact-ref",
+    "notes": "Exact product reference code"
+  },
+  {
+    "query": "TPVC-DN100",
+    "expected_default_codes": ["TPVC-DN100"],
+    "category": "exact-ref",
+    "notes": "Exact PVC pipe reference"
+  },
+  {
+    "query": "CRO-5L",
+    "expected_default_codes": ["CRO-5L"],
+    "category": "exact-ref",
+    "notes": "Exact rust converter reference"
+  },
+  {
+    "query": "boullon hexagonale M8",
+    "expected_default_codes": ["BHM-M8x30", "BHM-M8x40", "BHM-M8x50"],
+    "category": "typo",
+    "notes": "Typo: 'boullon' instead of 'boulon' + 'hexagonale' (fem) instead of 'hexagonal'"
+  },
+  {
+    "query": "tuyeau PVC pression",
+    "expected_default_codes": ["TPVC-DN15", "TPVC-DN20", "TPVC-DN25", "TPVC-DN32", "TPVC-DN40", "TPVC-DN50", "TPVC-DN65", "TPVC-DN80", "TPVC-DN100", "TPVC-DN150", "TPVC-DN200"],
+    "category": "typo",
+    "notes": "Typo: 'tuyeau' instead of 'tuyau' — should still find PVC pressure pipes"
+  },
+  {
+    "query": "stainless steel bolt M16",
+    "expected_default_codes": ["BHM-ABR-M16x60", "BHM-M16x60", "BHM-M16x80", "BHM-M16x100"],
+    "category": "cross-lingual",
+    "notes": "English query for French catalog — stainless steel bolt should find boulon M16"
+  },
+  {
+    "query": "angle iron steel",
+    "expected_default_codes": ["COR-2mm", "COR-3mm", "COR-4mm", "COR-5mm", "COR-6mm", "COR-8mm", "COR-10mm", "COR-12mm", "COR-15mm", "COR-20mm"],
+    "category": "cross-lingual",
+    "notes": "English term for cornière acier"
+  },
+  {
+    "query": "plaque acier découpée sur mesure",
+    "expected_default_codes": [],
+    "expected_names": ["SUR MESURE - Plaque acier découpée"],
+    "category": "custom-product",
+    "notes": "Custom product without default_code — match by name (ID 922)"
+  },
+  {
+    "query": "bride spéciale sur mesure",
+    "expected_default_codes": [],
+    "expected_names": ["SUR MESURE - Bride spéciale"],
+    "category": "custom-product",
+    "notes": "Custom product without default_code — match by name (ID 923)"
+  },
+  {
+    "query": "disjoncteur modulaire protection 10mm²",
+    "expected_default_codes": ["DJM-10mm²"],
+    "category": "multi-word",
+    "notes": "Multi-word query with extra descriptor 'protection' not in product name"
+  },
+  {
+    "query": "vanne boisseau sphérique DN40 robinetterie",
+    "expected_default_codes": ["VBS-DN40"],
+    "category": "multi-word",
+    "notes": "Multi-word with extra term 'robinetterie' (plumbing jargon)"
+  },
+  {
+    "query": "tube carré acier 8mm soudure",
+    "expected_default_codes": ["TCA-8mm", "TCA-8mm-DUP"],
+    "category": "multi-word",
+    "notes": "Multi-word query — 'soudure' is extra context not in product name"
+  },
+  {
+    "query": "profilé HEA poutre acier construction",
+    "expected_default_codes": ["HEA-2mm", "HEA-3mm", "HEA-4mm", "HEA-5mm", "HEA-6mm", "HEA-8mm", "HEA-10mm", "HEA-12mm", "HEA-15mm", "HEA-20mm"],
+    "category": "technical-spec",
+    "notes": "Technical spec query mixing profile type HEA with construction context"
+  },
+  {
+    "query": "relais thermique protection moteur 4mm²",
+    "expected_default_codes": ["RTH-4mm²"],
+    "category": "technical-spec",
+    "notes": "Technical spec — thermal relay with motor protection context"
+  },
+  {
+    "query": "joint torique Viton haute température",
+    "expected_default_codes": ["JTV-DN15", "JTV-DN20", "JTV-DN25", "JTV-DN32", "JTV-DN40", "JTV-DN50", "JTV-DN80", "JTV-DN100"],
+    "category": "technical-spec",
+    "notes": "Technical spec — Viton o-ring with 'haute température' context (Viton is for high temp)"
+  },
+  {
+    "query": "galva spray 5 litres",
+    "expected_default_codes": ["GSP-5L", "GSP-ABR-1L"],
+    "category": "jargon",
+    "notes": "Jargon 'galva spray' for galvanisation à froid spray — '5 litres' for 5L variant"
+  },
+  {
+    "query": "meuleuse 125",
+    "expected_default_codes": ["MEU", "MEU-ABR"],
+    "category": "abbreviation",
+    "notes": "Short form of meuleuse d'angle 125mm"
+  }
+]

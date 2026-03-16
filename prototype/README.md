@@ -161,7 +161,7 @@ python3 scripts/generate-embeddings.py
 - Qdrant upsert: <1s
 - Total: ~126s
 
-The script creates a `products` collection in Qdrant with HNSW indexing and cosine distance metric. Each vector point includes the full raw product data as payload.
+The script creates a `products` collection in Qdrant with HNSW indexing. Since Story 0.4, the collection stores both dense (cosine) and sparse (BM25/IDF) vectors. Each vector point includes the full raw product data as payload.
 
 ### Step 2: Test Semantic Search
 
@@ -191,6 +191,103 @@ All queries respond in < 500ms. Results demonstrate semantic understanding of ab
 - Model loads ~2.3 GB into RAM — ensure 4 GB+ free memory
 - GPU auto-detected by sentence-transformers if CUDA available (much faster: ~5-10s vs ~109s on CPU)
 - Qdrant collection is recreated on each run (existing data deleted)
+
+## Story 0.4 — Hybrid Search Benchmark
+
+### Hybrid Search: Dense + Sparse with RRF Fusion
+
+Story 0.4 extends the search system from dense-only (Story 0.3) to **hybrid search** combining:
+
+- **Dense search** (BGE-M3 semantic embeddings, 1024 dims) — captures meaning
+- **Sparse search** (Qdrant/bm25 via fastembed) — captures exact keyword matching
+- **Hybrid search** (dense + sparse with Reciprocal Rank Fusion) — best of both
+
+Additionally, **exact reference matching** is supported: if a query looks like a product code (e.g., "BHM-M12x50"), a direct payload filter search runs before vector search.
+
+### Step 1: Generate Dense + Sparse Embeddings
+
+```bash
+# Install dependencies (now includes fastembed for BM25 sparse vectors)
+pip install -r requirements.txt
+
+# Generate both dense and sparse vectors (recreates Qdrant collection)
+python3 scripts/generate-embeddings.py
+```
+
+The collection now stores both `dense` (1024-dim COSINE) and `sparse` (BM25 with server-side IDF) vectors per product.
+
+### Step 2: Test Hybrid Search
+
+```bash
+# Run all 3 methods on a query
+python3 scripts/hybrid-search.py "boulon hexagonal M12"
+
+# Single method
+python3 scripts/hybrid-search.py --method hybrid "tuyau PVC DN50"
+
+# Exact reference
+python3 scripts/hybrid-search.py --method hybrid "BHM-M12x50"
+```
+
+### Step 3: Run Benchmark
+
+```bash
+python3 scripts/run-benchmark.py
+```
+
+The benchmark runs 26 test queries across 9 categories against all 3 search methods and computes Hit@1, Hit@5, and MRR metrics.
+
+### Benchmark Results & Decision
+
+#### Summary Results
+
+| Method | Hit@1 | Hit@5 | MRR | Avg Latency | P95 Latency |
+|--------|-------|-------|-----|-------------|-------------|
+| Dense (semantic) | 76.9% | 96.2% | 85.9% | 85ms | 96ms |
+| Sparse (BM25) | 69.2% | 92.3% | 77.1% | 18ms | 21ms |
+| **Hybrid (RRF)** | **76.9%** | **96.2%** | **85.9%** | **80ms** | **98ms** |
+
+#### Per-Category Analysis
+
+| Category | Dense | Sparse | Hybrid | Winner |
+|----------|-------|--------|--------|--------|
+| standard | 100% | 100% | 100% | Tie |
+| abbreviation | 100% | 100% | 100% | Tie |
+| jargon | 100% | 100% | 100% | Tie |
+| exact-ref | 100% | 100% | 100% | Tie |
+| typo | 100% | 100% | 100% | Tie |
+| custom-product | 100% | 100% | 100% | Tie |
+| multi-word | 100% | 100% | 100% | Tie |
+| technical-spec | 100% | 100% | 100% | Tie |
+| cross-lingual | 50% | 0% | 50% | Dense/Hybrid |
+
+**Strong categories**: Standard, abbreviation, jargon, exact-ref, typo, custom-product, multi-word, and technical-spec all achieve 100% Hit@5 across all methods.
+
+**Weak category**: Cross-lingual (English → French) is the only challenge. The query "angle iron steel" maps to "meuleuse d'angle" (angle grinder) instead of "cornière acier" (angle iron). This is expected — the English term "angle" is ambiguous. Dense search still handles "stainless steel bolt" → French bolts correctly.
+
+#### GO/NO-GO Decision
+
+**Decision: GO** ✅
+
+- **Hybrid Hit@5 = 96.2%** — significantly above the 80% threshold
+- Hybrid search works on raw, uncleaned catalog data (zero-preprocessing validated)
+- All 8/9 categories achieve 100% accuracy; only cross-lingual has one edge case
+- Latency is well within the 3s architecture target (avg 80ms, p95 98ms)
+
+#### Recommended Search Strategy for Production
+
+1. **Primary**: Hybrid search (dense BGE-M3 + sparse BM25 with RRF fusion)
+2. **Exact match fallback**: Payload filter on `default_code` for reference-like queries
+3. **Fusion method**: RRF (Reciprocal Rank Fusion) — robust and score-agnostic
+4. **Top-K**: Return 10 candidates, re-rank with LLM reasoning for final selection
+
+#### Known Limitations and Production Considerations
+
+- **Cross-lingual**: English queries with ambiguous terms may match wrong products. Production LLM layer can add translation/disambiguation
+- **Production stack differs**: Prototype uses Qdrant; production will use pgvector (dense) + PostgreSQL tsvector (sparse). Core hybrid approach transfers
+- **BM25 model**: Using `Qdrant/bm25` (fastembed) instead of BGE-M3 sparse mode due to FlagEmbedding compatibility issues. Production should evaluate both options
+- **Catalog size**: Tested on 726 products. Performance should scale linearly for typical industrial catalogs (10K-100K products)
+- **No proposability filter in search**: Production search should filter on `sale_ok=True` and `active=True` post-retrieval
 
 ## Useful Commands
 
