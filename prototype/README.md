@@ -289,6 +289,124 @@ The benchmark runs 26 test queries across 9 categories against all 3 search meth
 - **Catalog size**: Tested on 726 products. Performance should scale linearly for typical industrial catalogs (10K-100K products)
 - **No proposability filter in search**: Production search should filter on `sale_ok=True` and `active=True` post-retrieval
 
+## Story 0.5 — Email Reception & Structured Data Extraction
+
+### Extraction Approach
+
+**Method:** Code node in n8n calling OpenAI GPT-4o API with structured JSON output (`response_format: json_object`).
+
+**Why Code node (not Information Extractor):** Maximum control over the extraction prompt, which requires domain-specific instructions for French industrial B2B terminology, abbreviations, and multi-product handling.
+
+### Extraction JSON Schema
+
+```json
+{
+  "client_name": "string or null — company name preferred, person name as fallback",
+  "client_email": "string or null — sender email address",
+  "products": [
+    {
+      "description": "product description as written by client",
+      "reference": "product code/reference if mentioned, else null",
+      "quantity": "quantity with unit as written (e.g. '500', '20 barres'), null if unspecified",
+      "specs": "specifications (dimensions, material, grade, finish) or null"
+    }
+  ],
+  "delivery_date": "delivery date if mentioned, else null",
+  "notes": "additional context or requirements, else null"
+}
+```
+
+**Alignment with production `ParsedRequest` model:**
+
+| Prototype field | Production direction | Notes |
+|----------------|---------------------|-------|
+| `client_name` | `ParsedRequest.client.name` | Will be richer (company, contact, account ID) |
+| `client_email` | `ParsedRequest.client.email` | Used for client history lookup |
+| `products[]` | `ParsedRequest.line_items[]` | More fields in production |
+| `products[].description` | `line_items[].raw_description` | Preserved for audit trail |
+| `products[].reference` | `line_items[].reference_code` | Triggers exact-ref search path |
+| `products[].quantity` | `line_items[].quantity` + `.unit` | Separate quantity and unit in production |
+| `products[].specs` | `line_items[].specifications` | Structured specs object in production |
+| `delivery_date` | `ParsedRequest.delivery_date` | ISO 8601 in production |
+| `notes` | `ParsedRequest.additional_context` | Free text |
+
+### n8n Workflow
+
+Import `n8n-workflows/extract-quote-request.json` into n8n:
+
+1. Open n8n at http://localhost:5678
+2. Go to Workflows → Import from File
+3. Select `n8n-workflows/extract-quote-request.json`
+4. Ensure `OPENAI_API_KEY` is set in `prototype/.env` (passed to n8n container via docker-compose)
+5. Execute the workflow — it processes all 5 embedded email fixtures through GPT-4o extraction
+
+> **Note (n8n 2.12+):** Code nodes require `N8N_RUNNERS_ENABLED=false` and `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` to access `$env` variables. These are already configured in `docker-compose.yml`.
+
+**Workflow structure:**
+```
+[Manual Trigger] → [Load Email Fixtures] → [LLM Extract Structured Data] → [Results Summary]
+```
+
+The extraction node calls GPT-4o with `temperature: 0` and `response_format: json_object` for deterministic, structured output. It validates the response (handles malformed JSON, missing fields) before passing to the summary node.
+
+**For future IMAP integration** (Story 0.6 or production): replace Manual Trigger + Load Email Fixtures with an Email Trigger (IMAP) node. The extraction and summary nodes stay the same.
+
+### Test Script (Local)
+
+```bash
+# Install dependency (if not already)
+pip install python-dotenv
+
+# Run all 5 test fixtures
+python3 scripts/test-email-extraction.py
+
+# Run a single fixture
+python3 scripts/test-email-extraction.py email_jargon
+```
+
+Requires `OPENAI_API_KEY` in environment or `prototype/.env`.
+
+### Test Results (GPT-4o, temperature=0)
+
+| Fixture | Scenario | Products | Reference | Delivery | Latency | Status |
+|---------|----------|----------|-----------|----------|---------|--------|
+| `email_simple_ref` | Single product with exact ref | 1/1 ✓ | BHM-M12x50 ✓ | N/A ✓ | 2.3s | PASS |
+| `email_multi_products` | 4 products, delivery date | 4/4 ✓ | — ✓ | 15 avril ✓ | 3.8s | PASS |
+| `email_jargon` | Industrial French jargon (DN, lg, certif) | 3/3 ✓ | — ✓ | N/A ✓ | 3.1s | PASS |
+| `email_previous_order` | References past order | 3/3 ✓ | — ✓ | N/A ✓ | 2.0s | PASS |
+| `email_vague` | Minimal detail, vague descriptions | 2/2 ✓ | — ✓ | N/A ✓ | 1.7s | PASS |
+
+**Summary: 5/5 passed** | Average latency: 2.6s
+
+**Key observations:**
+- GPT-4o handles French industrial jargon well (DN, lg, inox, certif 3.1)
+- Multi-product extraction is reliable (4 products in one email)
+- Vague descriptions are handled correctly (null quantity when unspecified)
+- Client name extraction prefers company name over person name
+- Reference codes (BHM-M12x50) are correctly identified and extracted
+
+### Edge Cases
+
+| Case | Handling |
+|------|----------|
+| Non-quote email | Extraction returns empty products array, notes describe content |
+| Empty body | Products array empty, all fields null |
+| Attachments only | Not handled in prototype (production Epic 2 will parse attachments) |
+| Multiple languages | GPT-4o handles French/English mix; prompt instructs French context |
+| Malformed LLM output | Code node catches JSON parse errors, returns error status |
+
+### Email Fixtures
+
+Sample emails in `data/emails/`:
+
+| File | Scenario |
+|------|----------|
+| `email_simple_ref.json` | Single product with exact reference code |
+| `email_multi_products.json` | 4 products in one email with delivery date |
+| `email_jargon.json` | Industrial French jargon and abbreviations |
+| `email_previous_order.json` | References to past orders |
+| `email_vague.json` | Minimal detail, vague product descriptions |
+
 ## Useful Commands
 
 ```bash

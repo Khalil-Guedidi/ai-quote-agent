@@ -1,0 +1,7 @@
+{
+  "id": "email-001",
+  "from": "sophie.martin@acme-metal.fr",
+  "subject": "Demande de devis - boulons hexagonaux",
+  "date": "2026-03-10T09:15:00+01:00",
+  "body": "Bonjour,\n\nPourriez-vous me faire un devis pour :\n- 500 boulons tête hexagonale M12x50, réf BHM-M12x50\n\nMerci de me confirmer le délai de livraison.\n\nCordialement,\nSophie Martin\nAcme Métallurgie\nTél: 04 72 33 12 00"
+}

@@ -1,0 +1,190 @@
+[
+  {
+    "file": "email_jargon.json",
+    "status": "PASS",
+    "latency_s": 3.08,
+    "extraction": {
+      "client_name": "Sideral Industrie",
+      "client_email": "p.lefevre@sideral-industrie.com",
+      "products": [
+        {
+          "description": "100 manchons acier DN200",
+          "reference": null,
+          "quantity": "100",
+          "specs": "acier, DN200, certif 3.1"
+        },
+        {
+          "description": "50 tuyaux PVC pression DN20",
+          "reference": null,
+          "quantity": "50",
+          "specs": "PVC, pression, DN20"
+        },
+        {
+          "description": "20 fers plats 2mm lg 6m",
+          "reference": null,
+          "quantity": "20",
+          "specs": "2mm, lg 6m"
+        }
+      ],
+      "delivery_date": null,
+      "notes": null
+    },
+    "checks": {
+      "client_email_match": true,
+      "product_count_match": true,
+      "product_count_actual": 3,
+      "product_count_expected": 3,
+      "reference_extracted": true,
+      "delivery_date_match": true,
+      "all_passed": true
+    }
+  },
+  {
+    "file": "email_multi_products.json",
+    "status": "PASS",
+    "latency_s": 3.83,
+    "extraction": {
+      "client_name": "Constructions Bernard SAS",
+      "client_email": "j.dupont@constructions-bernard.fr",
+      "products": [
+        {
+          "description": "boulons tête hexagonale M8x40",
+          "reference": null,
+          "quantity": "200",
+          "specs": "M8x40"
+        },
+        {
+          "description": "chevilles métalliques M10x50",
+          "reference": null,
+          "quantity": "100",
+          "specs": "M10x50"
+        },
+        {
+          "description": "tés égal acier DN32",
+          "reference": null,
+          "quantity": "50",
+          "specs": "acier DN32"
+        },
+        {
+          "description": "vannes à boisseau sphérique DN50",
+          "reference": null,
+          "quantity": "30",
+          "specs": "DN50"
+        }
+      ],
+      "delivery_date": "2026-04-15",
+      "notes": "Livraison souhaitée avant le 15 avril 2026."
+    },
+    "checks": {
+      "client_email_match": true,
+      "product_count_match": true,
+      "product_count_actual": 4,
+      "product_count_expected": 4,
+      "reference_extracted": true,
+      "delivery_date_match": true,
+      "all_passed": true
+    }
+  },
+  {
+    "file": "email_previous_order.json",
+    "status": "PASS",
+    "latency_s": 2.01,
+    "extraction": {
+      "client_name": "Ferrotec SARL",
+      "client_email": "m.garcia@ferrotec.fr",
+      "products": [
+        {
+          "description": "goujons d'ancrage M10x50",
+          "reference": null,
+          "quantity": "300",
+          "specs": "M10x50"
+        },
+        {
+          "description": "chevilles métalliques M12x80",
+          "reference": null,
+          "quantity": "150",
+          "specs": "M12x80"
+        },
+        {
+          "description": "rondelles plates M12",
+          "reference": null,
+          "quantity": "500",
+          "specs": "M12"
+        }
+      ],
+      "delivery_date": null,
+      "notes": "Livraison sur site à Lyon si possible."
+    },
+    "checks": {
+      "client_email_match": true,
+      "product_count_match": true,
+      "product_count_actual": 3,
+      "product_count_expected": 3,
+      "reference_extracted": true,
+      "delivery_date_match": true,
+      "all_passed": true
+    }
+  },
+  {
+    "file": "email_simple_ref.json",
+    "status": "PASS",
+    "latency_s": 2.28,
+    "extraction": {
+      "client_name": "Acme Métallurgie",
+      "client_email": "sophie.martin@acme-metal.fr",
+      "products": [
+        {
+          "description": "boulons tête hexagonale M12x50",
+          "reference": "BHM-M12x50",
+          "quantity": "500",
+          "specs": "M12x50"
+        }
+      ],
+      "delivery_date": null,
+      "notes": "Merci de me confirmer le délai de livraison."
+    },
+    "checks": {
+      "client_email_match": true,
+      "product_count_match": true,
+      "product_count_actual": 1,
+      "product_count_expected": 1,
+      "reference_extracted": true,
+      "delivery_date_match": true,
+      "all_passed": true
+    }
+  },
+  {
+    "file": "email_vague.json",
+    "status": "PASS",
+    "latency_s": 1.72,
+    "extraction": {
+      "client_name": "Petit Atelier",
+      "client_email": "contact@petit-atelier.fr",
+      "products": [
+        {
+          "description": "tôle acier",
+          "reference": null,
+          "quantity": null,
+          "specs": "assez épais"
+        },
+        {
+          "description": "barres filetées",
+          "reference": null,
+          "quantity": null,
+          "specs": "pour du M10"
+        }
+      ],
+      "delivery_date": null,
+      "notes": "Client requests a callback at 06 12 34 56 78 to discuss details."
+    },
+    "checks": {
+      "client_email_match": true,
+      "product_count_match": true,
+      "product_count_actual": 2,
+      "product_count_expected": 2,
+      "reference_extracted": true,
+      "delivery_date_match": true,
+      "all_passed": true
+    }
+  }
+]

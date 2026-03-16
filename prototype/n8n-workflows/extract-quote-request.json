@@ -1,0 +1,81 @@
+{
+  "name": "Extract Quote Request from Email",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Sample email fixtures embedded directly (n8n sandboxed Code nodes cannot use require('fs'))\n// Source of truth: prototype/data/emails/*.json\nconst emails = [\n  {\n    id: 'email-001',\n    from: 'sophie.martin@acme-metal.fr',\n    subject: 'Demande de devis - boulons hexagonaux',\n    date: '2026-03-10T09:15:00+01:00',\n    body: 'Bonjour,\\n\\nPourriez-vous me faire un devis pour :\\n- 500 boulons tête hexagonale M12x50, réf BHM-M12x50\\n\\nMerci de me confirmer le délai de livraison.\\n\\nCordialement,\\nSophie Martin\\nAcme Métallurgie\\nTél: 04 72 33 12 00',\n    _fixture_file: 'email_simple_ref.json'\n  },\n  {\n    id: 'email-002',\n    from: 'j.dupont@constructions-bernard.fr',\n    subject: 'Devis urgent - chantier Bordeaux',\n    date: '2026-03-11T14:30:00+01:00',\n    body: 'Bonjour,\\n\\nPour notre chantier de Bordeaux, nous aurions besoin de :\\n1. 200 boulons tête hexagonale M8x40\\n2. 100 chevilles métalliques M10x50\\n3. 50 tés égal acier DN32\\n4. 30 vannes à boisseau sphérique DN50\\n\\nLivraison souhaitée avant le 15 avril 2026.\\n\\nCordialement,\\nJean Dupont\\nConstructions Bernard SAS\\n05 56 78 90 12',\n    _fixture_file: 'email_multi_products.json'\n  },\n  {\n    id: 'email-003',\n    from: 'p.lefevre@sideral-industrie.com',\n    subject: 'Re: tuyaux et raccords',\n    date: '2026-03-12T08:45:00+01:00',\n    body: 'Il me faudrait :\\n- 100 manchons acier DN200\\n- 50 tuyaux PVC pression DN20\\n- 20 fers plats 2mm lg 6m\\n- Qualité certif 3.1 pour les manchons\\n\\nMerci\\nPL',\n    _fixture_file: 'email_jargon.json'\n  },\n  {\n    id: 'email-004',\n    from: 'm.garcia@ferrotec.fr',\n    subject: 'Renouvellement commande boulonnerie',\n    date: '2026-03-13T11:00:00+01:00',\n    body: \"Bonjour,\\n\\nOn aimerait refaire la même commande que la dernière fois pour les goujons d'ancrage M10x50.\\nIl nous en faudrait 300 cette fois, plus 150 chevilles métalliques M12x80.\\n\\nEst-ce que vous avez aussi des rondelles plates M12 ? Si oui, ajoutez-en 500 au devis.\\n\\nLivraison sur site à Lyon si possible.\\n\\nMerci,\\nMarc Garcia\\nFerrotec SARL\",\n    _fixture_file: 'email_previous_order.json'\n  },\n  {\n    id: 'email-005',\n    from: 'contact@petit-atelier.fr',\n    subject: 'Besoin de matériel',\n    date: '2026-03-14T16:20:00+01:00',\n    body: \"Bonjour,\\n\\nOn aurait besoin de tôle acier pour un projet, quelque chose d'assez épais. Aussi des barres filetées, je sais plus la taille exacte mais c'est pour du M10 je crois.\\n\\nVous pouvez me rappeler au 06 12 34 56 78 pour en discuter ?\\n\\nMerci\",\n    _fixture_file: 'email_vague.json'\n  }\n];\n\nreturn emails.map(e => ({ json: e }));"
+      },
+      "id": "load-emails",
+      "name": "Load Email Fixtures",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $input.first().json;\n\nconst EXTRACTION_PROMPT = `You are an expert B2B quote request parser for an industrial steel and metals distributor.\nExtract structured data from the following quote request email.\n\nIMPORTANT RULES:\n- The email is in French (industrial B2B context)\n- Product descriptions may contain jargon: \"inox\" = stainless steel, \"Ø\" = diameter, \"lg\" = length\n- Common abbreviations: 304L, 316L (steel grades), HM (hexagonal), BLN (bolt), DN (nominal diameter)\n- Quantities may use French notation: \"200 pcs\", \"5 barres\", \"10 ml\" (mètres linéaires)\n- If information is not mentioned, use null (do NOT invent data)\n- Extract ALL products mentioned, even if descriptions are vague\n- References may look like: \"TUBE-INOX-304L-25x1.5-6M\" or \"BHM-M12x50\"\n- For client_name, extract the company name if available, otherwise the person name\n- For client_email, use the \"from\" field of the email\n\nReturn a JSON object with this exact schema:\n{\n  \"client_name\": \"string or null\",\n  \"client_email\": \"string or null\",\n  \"products\": [\n    {\n      \"description\": \"product description as written by client\",\n      \"reference\": \"product code/reference if mentioned, else null\",\n      \"quantity\": \"quantity with unit as written\",\n      \"specs\": \"any specs (dimensions, material, grade, finish) or null\"\n    }\n  ],\n  \"delivery_date\": \"delivery date if mentioned, else null\",\n  \"notes\": \"any additional context or requirements, else null\"\n}`;\n\nconst emailText = `From: ${email.from}\\nSubject: ${email.subject}\\nDate: ${email.date}\\n\\n${email.body}`;\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.openai.com/v1/chat/completions',\n    headers: {\n      'Authorization': `Bearer ${$env.OPENAI_API_KEY}`,\n      'Content-Type': 'application/json'\n    },\n    body: {\n      model: 'gpt-4o',\n      response_format: { type: 'json_object' },\n      temperature: 0,\n      messages: [\n        { role: 'system', content: EXTRACTION_PROMPT },\n        { role: 'user', content: emailText }\n      ]\n    }\n  });\n\n  const content = response.choices[0].message.content;\n  let extracted;\n  try {\n    extracted = JSON.parse(content);\n  } catch (parseErr) {\n    return [{ json: {\n      _fixture_file: email._fixture_file,\n      _email_id: email.id,\n      _error: 'JSON parse error',\n      _raw_response: content\n    }}];\n  }\n\n  // Validate required fields exist\n  const requiredFields = ['client_name', 'client_email', 'products', 'delivery_date', 'notes'];\n  for (const field of requiredFields) {\n    if (!(field in extracted)) {\n      extracted[field] = null;\n    }\n  }\n\n  // Ensure products is an array\n  if (!Array.isArray(extracted.products)) {\n    extracted.products = [];\n  }\n\n  // Validate each product has required fields\n  extracted.products = extracted.products.map(p => ({\n    description: p.description || null,\n    reference: p.reference || null,\n    quantity: p.quantity || null,\n    specs: p.specs || null\n  }));\n\n  return [{ json: {\n    _fixture_file: email._fixture_file,\n    _email_id: email.id,\n    _email_from: email.from,\n    _email_subject: email.subject,\n    extraction: extracted\n  }}];\n\n} catch (err) {\n  return [{ json: {\n    _fixture_file: email._fixture_file,\n    _email_id: email.id,\n    _error: err.message\n  }}];\n}"
+      },
+      "id": "extract",
+      "name": "LLM Extract Structured Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Collect all extraction results and produce a summary\nconst items = $input.all();\nconst results = [];\nlet successCount = 0;\nlet errorCount = 0;\n\nfor (const item of items) {\n  const data = item.json;\n  if (data._error) {\n    errorCount++;\n    results.push({\n      file: data._fixture_file,\n      email_id: data._email_id,\n      status: 'ERROR',\n      error: data._error\n    });\n  } else {\n    successCount++;\n    const ext = data.extraction;\n    results.push({\n      file: data._fixture_file,\n      email_id: data._email_id,\n      status: 'OK',\n      client_name: ext.client_name,\n      client_email: ext.client_email,\n      product_count: ext.products ? ext.products.length : 0,\n      delivery_date: ext.delivery_date,\n      has_notes: ext.notes !== null\n    });\n  }\n}\n\nreturn [{ json: {\n  summary: {\n    total: items.length,\n    success: successCount,\n    errors: errorCount\n  },\n  results: results,\n  extractions: items.map(i => i.json)\n}}];"
+      },
+      "id": "summary",
+      "name": "Results Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Load Email Fixtures",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Email Fixtures": {
+      "main": [
+        [
+          {
+            "node": "LLM Extract Structured Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Extract Structured Data": {
+      "main": [
+        [
+          {
+            "node": "Results Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
