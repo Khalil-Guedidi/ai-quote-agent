@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-17  # updated by code-review for 0-6
+last_updated: 2026-03-17  # added Epic T: Build in Public
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -43,7 +43,7 @@ story_location: "{project-root}/_bmad-output/implementation-artifacts"
 
 development_status:
   # Epic 0: Prototype n8n — Validation Pré-MVP
-  epic-0: in-progress
+  epic-0: done
   0-1-setup-environnement-n8n-odoo: done
   0-2-ingestion-catalogue-odoo: done
   0-3-generation-embeddings-index-vectoriel: done
@@ -142,3 +142,22 @@ development_status:
   9-2-versionnage-prompts-configs-avec-rollback: backlog
   9-3-mode-cohabitation: backlog
   epic-9-retrospective: optional
+
+  # Epic T: Build in Public — Content & Visibility (cross-cutting, parallel to tech epics)
+  epic-t: backlog
+  t-0-content-pipeline-setup: backlog              # now — template, guidelines, profiles
+  t-1-prototype-launch-post: backlog               # after Epic 0 (ready now)
+  t-2-stack-decision-post: backlog                 # after 1.1–1.2
+  t-3-dirty-data-problem-post: backlog             # after 1.5–1.6
+  t-4-foundation-recap-post: backlog               # after Epic 1
+  t-5-french-industrial-jargon-post: backlog       # after 2.1–2.2
+  t-6-error-edge-cases-post: backlog               # after 2.4
+  t-7-its-alive-post: backlog                      # after Epic 2
+  t-8-search-deep-dive-post: backlog               # after 3.1–3.2
+  t-9-llm-reranking-post: backlog                  # after 3.4/3.6
+  t-10-search-recap-post: backlog                  # after Epic 3
+  t-11-confidence-tiers-post: backlog              # after 4.1–4.2
+  t-12-memory-architecture-post: backlog           # after 4.6–4.7 or Epic 6
+  t-13-intelligence-recap-post: backlog            # after Epic 4
+  t-14-human-ai-collaboration-post: backlog        # after 5.2–5.3
+  t-15-full-loop-recap-post: backlog               # after Epic 5

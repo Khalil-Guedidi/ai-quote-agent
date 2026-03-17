@@ -1697,3 +1697,232 @@ So that I can verify the agent's accuracy before trusting it to process quotes a
 **When** Laurent reviews the comparison report
 **Then** he sees: accuracy rate, common mismatch patterns, confidence calibration data
 **And** this data informs the decision to transition to autonomous mode
+
+## Epic T: Build in Public — Content & Visibility
+
+Cross-cutting epic that runs in parallel with technical epics. Each story produces a LinkedIn post (English) and optionally a Contra portfolio update. Goal: document the journey publicly to build personal brand, attract clients/collaborators, and create accountability.
+
+**Goal:** Regular public content (1 post/week cadence) chronicling the build from prototype to production, anchored on real technical decisions and metrics.
+
+**Guidelines:**
+- Language: English
+- Tone: technical but accessible, authentic, problem → solution → metric → open question
+- Never mention past clients by name or share confidential information
+- All content based exclusively on this repo's code, synthetic data, and metrics
+- Frame professional experience as domain expertise: "After working on B2B industrial quoting systems professionally..."
+
+**Exit Criteria:**
+- Consistent posting cadence maintained throughout development
+- LinkedIn profile active with growing engagement
+- Contra portfolio showcasing the project as a case study
+
+### Story T.0: Content Pipeline Setup
+
+As a **solo developer building in public**,
+I want a content creation workflow set up (templates, guidelines, profiles),
+So that I can produce posts efficiently with a consistent voice throughout the project.
+
+**Acceptance Criteria:**
+- [ ] AC-T.0.1: LinkedIn bio updated to reflect AI + B2B industrial domain expertise
+- [ ] AC-T.0.2: Contra project created with project description and prototype overview
+- [ ] AC-T.0.3: Post template created in `_bmad-output/build-in-public/template.md`
+- [ ] AC-T.0.4: Content guidelines documented (tone, rules, structure)
+
+### Story T.1: Prototype Launch Post
+
+**After:** Epic 0 completion
+
+As a **solo developer building in public**,
+I want to publish my first post announcing the prototype results,
+So that I establish my public presence and set the narrative for the series.
+
+**Acceptance Criteria:**
+- [ ] AC-T.1.1: LinkedIn post (~200 words) published — hook: "AI that reads messy B2B emails and generates quotes in 3 seconds"
+- [ ] AC-T.1.2: Post includes concrete metrics (96.2% accuracy, 2.9s latency, 3/3 scenarios)
+- [ ] AC-T.1.3: Contra project page updated with prototype case study (metrics, architecture overview, GO decision)
+- [ ] AC-T.1.4: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.2: Stack Decision Post
+
+**After:** Stories 1.1–1.2 (scaffold + DB)
+
+As a **solo developer building in public**,
+I want to publish a post about the technology choices for production,
+So that I share the reasoning behind moving from n8n prototype to Python/LangGraph.
+
+**Acceptance Criteria:**
+- [ ] AC-T.2.1: LinkedIn post published — "Why I moved from n8n to Python/LangGraph for production"
+- [ ] AC-T.2.2: Post covers trade-offs: prototyping speed vs production control, low-code vs code-first
+- [ ] AC-T.2.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.3: Dirty Data Problem Post
+
+**After:** Stories 1.5–1.6 (ERP + email adapters)
+
+As a **solo developer building in public**,
+I want to publish a post about the real challenge of industrial product catalogs,
+So that I highlight the core problem that makes this project technically interesting.
+
+**Acceptance Criteria:**
+- [ ] AC-T.3.1: LinkedIn post published — "The ugly truth about industrial product catalogs"
+- [ ] AC-T.3.2: Post includes anonymized examples of catalog noise (from synthetic data only)
+- [ ] AC-T.3.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.4: Foundation Recap Post
+
+**After:** Epic 1 completion
+
+As a **solo developer building in public**,
+I want to publish a milestone recap of the foundation phase,
+So that I mark the transition from prototype to production-ready infrastructure.
+
+**Acceptance Criteria:**
+- [ ] AC-T.4.1: LinkedIn post published — "From prototype to production-ready: what I had to rebuild and why"
+- [ ] AC-T.4.2: Post reflects on lessons learned during Epic 1
+- [ ] AC-T.4.3: Contra project updated with architecture diagram + stack decisions
+- [ ] AC-T.4.4: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.5: French Industrial Jargon Post
+
+**After:** Stories 2.1–2.2 (IMAP + extraction)
+
+As a **solo developer building in public**,
+I want to publish a post about the NLP challenges of French industrial emails,
+So that I showcase the domain-specific complexity that generic AI tools miss.
+
+**Acceptance Criteria:**
+- [ ] AC-T.5.1: LinkedIn post published — "Teaching an AI to read DN, Ø, lg and French industrial shorthand"
+- [ ] AC-T.5.2: Post includes real examples of jargon extraction (from synthetic test fixtures only)
+- [ ] AC-T.5.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.6: Error & Edge Cases Post
+
+**After:** Story 2.4 (validation)
+
+As a **solo developer building in public**,
+I want to publish a post about handling failure and edge cases in AI pipelines,
+So that I show the engineering rigor behind the "happy path" demos.
+
+**Acceptance Criteria:**
+- [ ] AC-T.6.1: LinkedIn post published — "What happens when the AI can't understand the email"
+- [ ] AC-T.6.2: Post covers graceful degradation, fallback strategies, and escalation design
+- [ ] AC-T.6.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.7: It's Alive Post
+
+**After:** Epic 2 completion
+
+As a **solo developer building in public**,
+I want to publish a milestone post about the first real email processed end-to-end,
+So that I mark the moment the system goes from prototype to functional pipeline.
+
+**Acceptance Criteria:**
+- [ ] AC-T.7.1: LinkedIn post published — "First real email processed end-to-end"
+- [ ] AC-T.7.2: Post compares prototype metrics vs production metrics
+- [ ] AC-T.7.3: Contra project updated with production pipeline results
+- [ ] AC-T.7.4: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.8: Search Deep Dive Post
+
+**After:** Stories 3.1–3.2 (hybrid search production)
+
+As a **solo developer building in public**,
+I want to publish a technical deep dive on the search architecture,
+So that I share the hybrid search approach with the AI/ML community.
+
+**Acceptance Criteria:**
+- [ ] AC-T.8.1: LinkedIn post published — "96.2% accuracy on 680 products — will it hold on 10,000?"
+- [ ] AC-T.8.2: Post covers dense + sparse + RRF fusion approach
+- [ ] AC-T.8.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.9: LLM Re-ranking Post
+
+**After:** Story 3.4 (proposability filter) or 3.6 (jargon matching)
+
+As a **solo developer building in public**,
+I want to publish a post about adding LLM re-ranking to improve the last few percent of accuracy,
+So that I show the iterative improvement process.
+
+**Acceptance Criteria:**
+- [ ] AC-T.9.1: LinkedIn post published — "When vector search isn't enough: adding an LLM judge"
+- [ ] AC-T.9.2: Post includes before/after accuracy comparison
+- [ ] AC-T.9.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.10: Search Recap Post
+
+**After:** Epic 3 completion
+
+As a **solo developer building in public**,
+I want to publish a milestone recap of the intelligent search phase,
+So that I consolidate the search narrative and share final production metrics.
+
+**Acceptance Criteria:**
+- [ ] AC-T.10.1: LinkedIn post published — "Building a search engine that works on data no one cleaned"
+- [ ] AC-T.10.2: Contra project updated with search architecture and final metrics
+- [ ] AC-T.10.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.11: Confidence Tiers Post
+
+**After:** Stories 4.1–4.2 (complexity classification + confidence scoring)
+
+As a **solo developer building in public**,
+I want to publish a post about the confidence-based routing system,
+So that I show how the agent handles uncertainty instead of guessing.
+
+**Acceptance Criteria:**
+- [ ] AC-T.11.1: LinkedIn post published — "When your AI isn't sure: 3 levels of certainty in quote generation"
+- [ ] AC-T.11.2: Post explains high/medium/low confidence routing with concrete examples
+- [ ] AC-T.11.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.12: Memory Architecture Post
+
+**After:** Story 4.6–4.7 (ERP reading + quote creation) or Epic 6 stories
+
+As a **solo developer building in public**,
+I want to publish a post about the 3-layer memory architecture,
+So that I share the design for industry/company/client memory and how it improves over time.
+
+**Acceptance Criteria:**
+- [ ] AC-T.12.1: LinkedIn post published — "An AI that remembers: 3-layer memory for B2B quoting"
+- [ ] AC-T.12.2: Post covers industry knowledge, company context, and client preferences
+- [ ] AC-T.12.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.13: Intelligence Recap Post
+
+**After:** Epic 4 completion
+
+As a **solo developer building in public**,
+I want to publish a milestone recap of the adaptive reasoning phase,
+So that I mark the transition from "matcher" to "reasoning agent."
+
+**Acceptance Criteria:**
+- [ ] AC-T.13.1: LinkedIn post published — "From pattern matching to reasoning: how the agent got smarter"
+- [ ] AC-T.13.2: Contra project updated with intelligence layer architecture and metrics
+- [ ] AC-T.13.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.14: Human-AI Collaboration Post
+
+**After:** Stories 5.2–5.3 (review UI + notifications)
+
+As a **solo developer building in public**,
+I want to publish a post about designing the human-in-the-loop workflow,
+So that I share why full automation is the wrong goal for high-stakes B2B decisions.
+
+**Acceptance Criteria:**
+- [ ] AC-T.14.1: LinkedIn post published — "Why full automation is a trap: designing the human-in-the-loop"
+- [ ] AC-T.14.2: Post covers trust, oversight, and the notification/review workflow
+- [ ] AC-T.14.3: Post draft archived in `_bmad-output/build-in-public/`
+
+### Story T.15: Full Loop Recap Post
+
+**After:** Epic 5 completion
+
+As a **solo developer building in public**,
+I want to publish a final milestone post celebrating the complete pipeline,
+So that I close the build-in-public series with a comprehensive retrospective.
+
+**Acceptance Criteria:**
+- [ ] AC-T.15.1: LinkedIn post published — "The complete pipeline: email → AI → human review → quote sent"
+- [ ] AC-T.15.2: Contra project fully updated as a polished case study
+- [ ] AC-T.15.3: Series retrospective: what worked, what didn't, metrics evolution from prototype to production
+- [ ] AC-T.15.4: Post draft archived in `_bmad-output/build-in-public/`
