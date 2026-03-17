@@ -1,0 +1,307 @@
+[
+  {
+    "email_file": "email_simple_ref.json",
+    "steps": {
+      "extraction": {
+        "latency_ms": 1822,
+        "client_name": "Acme Métallurgie",
+        "client_email": "sophie.martin@acme-metal.fr",
+        "product_count": 1,
+        "delivery_date": null
+      },
+      "search": {
+        "total_products": 1,
+        "matched": 1,
+        "details": [
+          {
+            "description": "500 boulons tête hexagonale M12x50",
+            "reference": "BHM-M12x50",
+            "query": "500 boulons tête hexagonale M12x50 tête hexagonale, M12x50",
+            "quantity": 500.0,
+            "match": {
+              "odoo_product_id": 397,
+              "name": "Boulon tête hexagonale M12x50",
+              "default_code": "BHM-M12x50",
+              "score": 1.0,
+              "price": 7.3,
+              "match_type": "exact_ref"
+            },
+            "latency_ms": 61
+          }
+        ]
+      },
+      "customer": {
+        "partner_id": 42,
+        "latency_ms": 21
+      },
+      "quote": {
+        "sale_order_id": 25,
+        "partner_id": 42,
+        "line_count": 1,
+        "latency_ms": 52
+      }
+    },
+    "status": "PASS",
+    "errors": [],
+    "total_latency_ms": 1956,
+    "sale_order_id": 25,
+    "partner_id": 42,
+    "matched_products": [
+      {
+        "product_id": 397,
+        "quantity": 500.0,
+        "price_unit": 7.3,
+        "description": "500 boulons tête hexagonale M12x50",
+        "matched_name": "Boulon tête hexagonale M12x50",
+        "matched_code": "BHM-M12x50",
+        "score": 1.0,
+        "match_type": "exact_ref"
+      }
+    ]
+  },
+  {
+    "email_file": "email_multi_products.json",
+    "steps": {
+      "extraction": {
+        "latency_ms": 2743,
+        "client_name": "Constructions Bernard SAS",
+        "client_email": "j.dupont@constructions-bernard.fr",
+        "product_count": 4,
+        "delivery_date": "2026-04-15"
+      },
+      "search": {
+        "total_products": 4,
+        "matched": 4,
+        "details": [
+          {
+            "description": "boulons tête hexagonale M8x40",
+            "reference": null,
+            "query": "boulons tête hexagonale M8x40 M8x40",
+            "quantity": 200.0,
+            "match": {
+              "odoo_product_id": 391,
+              "name": "Boulon tête hexagonale M8x40",
+              "default_code": "BHM-M8x40",
+              "score": 1.0,
+              "price": 3.51,
+              "match_type": "hybrid"
+            },
+            "latency_ms": 160
+          },
+          {
+            "description": "chevilles métalliques M10x50",
+            "reference": null,
+            "query": "chevilles métalliques M10x50 M10x50",
+            "quantity": 100.0,
+            "match": {
+              "odoo_product_id": 524,
+              "name": "Cheville métallique M10x50",
+              "default_code": "CHM-M10x50",
+              "score": 0.8333334,
+              "price": 10.47,
+              "match_type": "hybrid"
+            },
+            "latency_ms": 120
+          },
+          {
+            "description": "tés égal acier DN32",
+            "reference": null,
+            "query": "tés égal acier DN32 acier DN32",
+            "quantity": 50.0,
+            "match": {
+              "odoo_product_id": 561,
+              "name": "Tuyau acier DN32",
+              "default_code": "TUY-DN32",
+              "score": 0.6666667,
+              "price": 110.6,
+              "match_type": "hybrid"
+            },
+            "latency_ms": 113
+          },
+          {
+            "description": "vannes à boisseau sphérique DN50",
+            "reference": null,
+            "query": "vannes à boisseau sphérique DN50 DN50",
+            "quantity": 30.0,
+            "match": {
+              "odoo_product_id": 613,
+              "name": "Vanne à boisseau sphérique DN50",
+              "default_code": "VBS-DN50",
+              "score": 1.0,
+              "price": 234.42,
+              "match_type": "hybrid"
+            },
+            "latency_ms": 106
+          }
+        ]
+      },
+      "customer": {
+        "partner_id": 43,
+        "latency_ms": 19
+      },
+      "quote": {
+        "sale_order_id": 26,
+        "partner_id": 43,
+        "line_count": 4,
+        "latency_ms": 69
+      }
+    },
+    "status": "PASS",
+    "errors": [],
+    "total_latency_ms": 3331,
+    "sale_order_id": 26,
+    "partner_id": 43,
+    "matched_products": [
+      {
+        "product_id": 391,
+        "quantity": 200.0,
+        "price_unit": 3.51,
+        "description": "boulons tête hexagonale M8x40",
+        "matched_name": "Boulon tête hexagonale M8x40",
+        "matched_code": "BHM-M8x40",
+        "score": 1.0,
+        "match_type": "hybrid"
+      },
+      {
+        "product_id": 524,
+        "quantity": 100.0,
+        "price_unit": 10.47,
+        "description": "chevilles métalliques M10x50",
+        "matched_name": "Cheville métallique M10x50",
+        "matched_code": "CHM-M10x50",
+        "score": 0.8333334,
+        "match_type": "hybrid"
+      },
+      {
+        "product_id": 561,
+        "quantity": 50.0,
+        "price_unit": 110.6,
+        "description": "tés égal acier DN32",
+        "matched_name": "Tuyau acier DN32",
+        "matched_code": "TUY-DN32",
+        "score": 0.6666667,
+        "match_type": "hybrid"
+      },
+      {
+        "product_id": 613,
+        "quantity": 30.0,
+        "price_unit": 234.42,
+        "description": "vannes à boisseau sphérique DN50",
+        "matched_name": "Vanne à boisseau sphérique DN50",
+        "matched_code": "VBS-DN50",
+        "score": 1.0,
+        "match_type": "hybrid"
+      }
+    ]
+  },
+  {
+    "email_file": "email_jargon.json",
+    "steps": {
+      "extraction": {
+        "latency_ms": 2713,
+        "client_name": "Sideral Industrie",
+        "client_email": "p.lefevre@sideral-industrie.com",
+        "product_count": 3,
+        "delivery_date": null
+      },
+      "search": {
+        "total_products": 3,
+        "matched": 3,
+        "details": [
+          {
+            "description": "manchons acier DN200",
+            "reference": null,
+            "query": "manchons acier DN200 acier, DN200",
+            "quantity": 100.0,
+            "match": {
+              "odoo_product_id": 647,
+              "name": "Manchon acier DN200",
+              "default_code": "MAN-DN200",
+              "score": 1.0,
+              "price": 21.09,
+              "match_type": "hybrid"
+            },
+            "latency_ms": 254
+          },
+          {
+            "description": "tuyaux PVC pression DN20",
+            "reference": null,
+            "query": "tuyaux PVC pression DN20 PVC, pression, DN20",
+            "quantity": 50.0,
+            "match": {
+              "odoo_product_id": 624,
+              "name": "Tuyau PVC pression DN20",
+              "default_code": "TPVC-DN20",
+              "score": 1.0,
+              "price": 20.8,
+              "match_type": "hybrid"
+            },
+            "latency_ms": 127
+          },
+          {
+            "description": "fers plats 2mm lg 6m",
+            "reference": null,
+            "query": "fers plats 2mm lg 6m 2mm, lg 6m",
+            "quantity": 20.0,
+            "match": {
+              "odoo_product_id": 302,
+              "name": "Fer plat 2mm",
+              "default_code": "FPL-2mm",
+              "score": 0.8333334,
+              "price": 65.69,
+              "match_type": "hybrid"
+            },
+            "latency_ms": 118
+          }
+        ]
+      },
+      "customer": {
+        "partner_id": 44,
+        "latency_ms": 22
+      },
+      "quote": {
+        "sale_order_id": 27,
+        "partner_id": 44,
+        "line_count": 3,
+        "latency_ms": 61
+      }
+    },
+    "status": "PASS",
+    "errors": [],
+    "total_latency_ms": 3294,
+    "sale_order_id": 27,
+    "partner_id": 44,
+    "matched_products": [
+      {
+        "product_id": 647,
+        "quantity": 100.0,
+        "price_unit": 21.09,
+        "description": "manchons acier DN200",
+        "matched_name": "Manchon acier DN200",
+        "matched_code": "MAN-DN200",
+        "score": 1.0,
+        "match_type": "hybrid"
+      },
+      {
+        "product_id": 624,
+        "quantity": 50.0,
+        "price_unit": 20.8,
+        "description": "tuyaux PVC pression DN20",
+        "matched_name": "Tuyau PVC pression DN20",
+        "matched_code": "TPVC-DN20",
+        "score": 1.0,
+        "match_type": "hybrid"
+      },
+      {
+        "product_id": 302,
+        "quantity": 20.0,
+        "price_unit": 65.69,
+        "description": "fers plats 2mm lg 6m",
+        "matched_name": "Fer plat 2mm",
+        "matched_code": "FPL-2mm",
+        "score": 0.8333334,
+        "match_type": "hybrid"
+      }
+    ]
+  }
+]

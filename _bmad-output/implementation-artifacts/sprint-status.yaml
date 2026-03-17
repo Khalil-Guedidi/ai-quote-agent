@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-16  # updated by code-review for 0-5
+last_updated: 2026-03-17  # updated by code-review for 0-6
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -49,7 +49,7 @@ development_status:
   0-3-generation-embeddings-index-vectoriel: done
   0-4-recherche-hybride-benchmark-accuracy: done
   0-5-reception-email-extraction-donnees: done
-  0-6-flow-end-to-end-email-matching-devis: backlog
+  0-6-flow-end-to-end-email-matching-devis: done
   epic-0-retrospective: optional
 
   # Epic 1: Fondation Système & Déploiement

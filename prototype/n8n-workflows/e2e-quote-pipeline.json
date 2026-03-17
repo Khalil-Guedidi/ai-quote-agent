@@ -1,0 +1,131 @@
+{
+  "name": "E2E Quote Pipeline — Email to Odoo Draft",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Load 3 test email fixtures (embedded — n8n Code nodes cannot access host filesystem)\nconst emails = [\n  {\n    id: 'email-001',\n    from: 'sophie.martin@acme-metal.fr',\n    subject: 'Demande de devis - boulons hexagonaux',\n    date: '2026-03-10T09:15:00+01:00',\n    body: 'Bonjour,\\n\\nPourriez-vous me faire un devis pour :\\n- 500 boulons tête hexagonale M12x50, réf BHM-M12x50\\n\\nMerci de me confirmer le délai de livraison.\\n\\nCordialement,\\nSophie Martin\\nAcme Métallurgie\\nTél: 04 72 33 12 00',\n    _scenario: 'A_exact_ref'\n  },\n  {\n    id: 'email-002',\n    from: 'j.dupont@constructions-bernard.fr',\n    subject: 'Devis urgent - chantier Bordeaux',\n    date: '2026-03-11T14:30:00+01:00',\n    body: 'Bonjour,\\n\\nPour notre chantier de Bordeaux, nous aurions besoin de :\\n1. 200 boulons tête hexagonale M8x40\\n2. 100 chevilles métalliques M10x50\\n3. 50 tés égal acier DN32\\n4. 30 vannes à boisseau sphérique DN50\\n\\nLivraison souhaitée avant le 15 avril 2026.\\n\\nCordialement,\\nJean Dupont\\nConstructions Bernard SAS\\n05 56 78 90 12',\n    _scenario: 'B_multi_products'\n  },\n  {\n    id: 'email-003',\n    from: 'p.lefevre@sideral-industrie.com',\n    subject: 'Re: tuyaux et raccords',\n    date: '2026-03-12T08:45:00+01:00',\n    body: 'Il me faudrait :\\n- 100 manchons acier DN200\\n- 50 tuyaux PVC pression DN20\\n- 20 fers plats 2mm lg 6m\\n- Qualité certif 3.1 pour les manchons\\n\\nMerci\\nPL',\n    _scenario: 'C_jargon'\n  }\n];\n\nreturn emails.map(e => ({ json: e }));"
+      },
+      "id": "load-emails",
+      "name": "Load Test Emails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [420, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $input.first().json;\nconst startTime = Date.now();\n\nconst EXTRACTION_PROMPT = `You are an expert B2B quote request parser for an industrial steel and metals distributor.\nExtract structured data from the following quote request email.\n\nIMPORTANT RULES:\n- The email is in French (industrial B2B context)\n- Product descriptions may contain jargon: \"inox\" = stainless steel, \"Ø\" = diameter, \"lg\" = length\n- Common abbreviations: 304L, 316L (steel grades), HM (hexagonal), BLN (bolt), DN (nominal diameter)\n- Quantities may use French notation: \"200 pcs\", \"5 barres\", \"10 ml\" (mètres linéaires)\n- If information is not mentioned, use null (do NOT invent data)\n- Extract ALL products mentioned, even if descriptions are vague\n- References may look like: \"TUBE-INOX-304L-25x1.5-6M\" or \"BHM-M12x50\"\n- For client_name, extract the company name if available, otherwise the person name\n- For client_email, use the \"from\" field of the email\n\nReturn a JSON object with this exact schema:\n{\n  \"client_name\": \"string or null\",\n  \"client_email\": \"string or null\",\n  \"products\": [\n    {\n      \"description\": \"product description as written by client\",\n      \"reference\": \"product code/reference if mentioned, else null\",\n      \"quantity\": \"quantity with unit as written\",\n      \"specs\": \"any specs (dimensions, material, grade, finish) or null\"\n    }\n  ],\n  \"delivery_date\": \"delivery date if mentioned, else null\",\n  \"notes\": \"any additional context or requirements, else null\"\n}`;\n\nconst emailText = `From: ${email.from}\\nSubject: ${email.subject}\\nDate: ${email.date}\\n\\n${email.body}`;\n\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://api.openai.com/v1/chat/completions',\n    headers: {\n      'Authorization': `Bearer ${$env.OPENAI_API_KEY}`,\n      'Content-Type': 'application/json'\n    },\n    body: {\n      model: 'gpt-4o',\n      response_format: { type: 'json_object' },\n      temperature: 0,\n      messages: [\n        { role: 'system', content: EXTRACTION_PROMPT },\n        { role: 'user', content: emailText }\n      ]\n    }\n  });\n\n  const extracted = JSON.parse(response.choices[0].message.content);\n  if (!Array.isArray(extracted.products)) extracted.products = [];\n\n  return [{ json: {\n    ...email,\n    extraction: extracted,\n    _extraction_ms: Date.now() - startTime\n  }}];\n} catch (err) {\n  return [{ json: { ...email, _error: `Extraction: ${err.message}` }}];\n}"
+      },
+      "id": "extract",
+      "name": "LLM Extract (GPT-4o)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [640, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Product search via Qdrant HTTP API (no embedding — use pre-computed dense vectors not available here)\n// NOTE: This n8n version uses Qdrant scroll with payload filter (keyword matching on default_code or name)\n// For full hybrid search with BGE-M3 embeddings, use the Python script (e2e-quote-pipeline.py)\n\nconst data = $input.first().json;\nif (data._error) return [{ json: data }];\n\nconst extraction = data.extraction;\nconst matchedProducts = [];\n\nfor (const product of extraction.products) {\n  // Try exact reference match if reference provided\n  let matched = null;\n  if (product.reference) {\n    try {\n      const scrollResp = await this.helpers.httpRequest({\n        method: 'POST',\n        url: 'http://qdrant:6333/collections/products/points/scroll',\n        headers: { 'Content-Type': 'application/json' },\n        body: {\n          filter: {\n            should: [\n              { key: 'default_code', match: { value: product.reference } },\n              { key: 'default_code', match: { value: product.reference.toUpperCase() } }\n            ]\n          },\n          limit: 1,\n          with_payload: true\n        }\n      });\n      if (scrollResp.result && scrollResp.result.points && scrollResp.result.points.length > 0) {\n        const pt = scrollResp.result.points[0];\n        matched = {\n          odoo_product_id: pt.id,\n          name: pt.payload.name || '',\n          default_code: pt.payload.default_code || '',\n          list_price: pt.payload.list_price || 0,\n          match_type: 'exact_ref'\n        };\n      }\n    } catch (e) { /* fallback to scroll search below */ }\n  }\n\n  // Parse quantity\n  let qty = 1;\n  if (product.quantity) {\n    const m = String(product.quantity).match(/[\\d]+(?:[.,]\\d+)?/);\n    if (m) qty = parseFloat(m[0].replace(',', '.'));\n  }\n\n  matchedProducts.push({\n    description: product.description || '',\n    reference: product.reference,\n    quantity: qty,\n    match: matched,\n    _note: matched ? 'exact ref match via Qdrant payload filter' : 'no match (n8n version lacks embedding support — use Python script for hybrid search)'\n  });\n}\n\nreturn [{ json: {\n  ...data,\n  matched_products: matchedProducts\n}}];"
+      },
+      "id": "search",
+      "name": "Search Products (Qdrant)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [860, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Odoo JSON-RPC: Find or create customer, then create draft quote\nconst data = $input.first().json;\nif (data._error) return [{ json: data }];\n\nconst extraction = data.extraction;\nconst matchedProducts = data.matched_products;\n\n// --- Odoo JSON-RPC helpers ---\nconst ODOO_URL = 'http://odoo:8069';\nconst DB = 'odoo_db';\nconst LOGIN = 'admin';\nconst PASSWORD = 'admin';\n\nasync function odooAuth() {\n  const resp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${ODOO_URL}/web/session/authenticate`,\n    headers: { 'Content-Type': 'application/json' },\n    body: { jsonrpc: '2.0', params: { db: DB, login: LOGIN, password: PASSWORD } },\n    returnFullResponse: true\n  });\n  const cookies = resp.headers['set-cookie'] || [];\n  const sessionCookie = cookies.find(c => c.startsWith('session_id='));\n  const sessionId = sessionCookie ? sessionCookie.split('=')[1].split(';')[0] : '';\n  return { uid: resp.body.result.uid, sessionId };\n}\n\nasync function odooRPC(sessionId, uid, model, method, args, kwargs) {\n  const resp = await this.helpers.httpRequest({\n    method: 'POST',\n    url: `${ODOO_URL}/jsonrpc`,\n    headers: {\n      'Content-Type': 'application/json',\n      'Cookie': `session_id=${sessionId}`\n    },\n    body: {\n      jsonrpc: '2.0',\n      method: 'call',\n      params: {\n        service: 'object',\n        method: 'execute_kw',\n        args: [DB, uid, PASSWORD, model, method, args, kwargs || {}]\n      }\n    }\n  });\n  if (resp.error) throw new Error(`Odoo: ${JSON.stringify(resp.error)}`);\n  return resp.result;\n}\n\ntry {\n  const { uid, sessionId } = await odooAuth.call(this);\n\n  // Find or create customer\n  let partnerId = null;\n  if (extraction.client_email) {\n    const ids = await odooRPC.call(this, sessionId, uid, 'res.partner', 'search',\n      [[['email', '=', extraction.client_email]]]);\n    if (ids && ids.length) partnerId = ids[0];\n  }\n  if (!partnerId && extraction.client_name) {\n    const ids = await odooRPC.call(this, sessionId, uid, 'res.partner', 'search',\n      [[['name', 'ilike', extraction.client_name]]]);\n    if (ids && ids.length) partnerId = ids[0];\n  }\n  if (!partnerId) {\n    partnerId = await odooRPC.call(this, sessionId, uid, 'res.partner', 'create',\n      [{ name: extraction.client_name || extraction.client_email || 'Unknown', email: extraction.client_email || '' }]);\n  }\n\n  // Build order lines (only for matched products)\n  const orderLines = matchedProducts\n    .filter(p => p.match !== null)\n    .map(p => [0, 0, {\n      product_id: p.match.odoo_product_id,\n      product_uom_qty: p.quantity,\n      price_unit: p.match.list_price,\n      name: p.description\n    }]);\n\n  if (orderLines.length === 0) {\n    return [{ json: { ...data, _error: 'No products matched — cannot create quote' }}];\n  }\n\n  // Create draft sale.order\n  const values = { partner_id: partnerId, order_line: orderLines };\n  if (extraction.delivery_date) values.commitment_date = extraction.delivery_date;\n  const saleOrderId = await odooRPC.call(this, sessionId, uid, 'sale.order', 'create', [values]);\n\n  return [{ json: {\n    _scenario: data._scenario,\n    _email_from: data.from,\n    _email_subject: data.subject,\n    sale_order_id: saleOrderId,\n    partner_id: partnerId,\n    line_count: orderLines.length,\n    total_products: extraction.products.length,\n    matched_count: matchedProducts.filter(p => p.match).length,\n    _extraction_ms: data._extraction_ms,\n    status: 'PASS'\n  }}];\n} catch (err) {\n  return [{ json: { ...data, _error: `Odoo: ${err.message}` }}];\n}"
+      },
+      "id": "odoo-quote",
+      "name": "Create Draft Quote (Odoo)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1080, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate results from all scenarios\nconst items = $input.all();\nconst results = items.map(i => i.json);\nconst passed = results.filter(r => r.status === 'PASS').length;\nconst failed = results.filter(r => r._error).length;\n\nreturn [{ json: {\n  summary: {\n    total: results.length,\n    passed,\n    failed,\n    scenarios: results.map(r => ({\n      scenario: r._scenario || r._email_from,\n      sale_order_id: r.sale_order_id,\n      partner_id: r.partner_id,\n      lines: r.line_count,\n      status: r.status || 'FAIL',\n      error: r._error || null\n    }))\n  }\n}}];"
+      },
+      "id": "summary",
+      "name": "Results Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1300, 300]
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Load Test Emails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Test Emails": {
+      "main": [
+        [
+          {
+            "node": "LLM Extract (GPT-4o)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM Extract (GPT-4o)": {
+      "main": [
+        [
+          {
+            "node": "Search Products (Qdrant)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Products (Qdrant)": {
+      "main": [
+        [
+          {
+            "node": "Create Draft Quote (Odoo)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Draft Quote (Odoo)": {
+      "main": [
+        [
+          {
+            "node": "Results Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "instanceId": "prototype-e2e"
+  },
+  "tags": [
+    {
+      "name": "story-0.6"
+    }
+  ]
+}
