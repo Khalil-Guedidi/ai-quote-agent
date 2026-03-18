@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-18  # Story T.3 done
+last_updated: 2026-03-18  # Story 1.7 done
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -60,7 +60,7 @@ development_status:
   1-4-configuration-llm-provider-adapter: done
   1-5-configuration-connexions-erp-email: done
   1-6-configuration-canal-de-notification: done
-  1-7-deploiement-docker-outils-cli: backlog
+  1-7-deploiement-docker-outils-cli: done
   1-8-pipeline-ci-cd: backlog
   epic-1-retrospective: optional
 
