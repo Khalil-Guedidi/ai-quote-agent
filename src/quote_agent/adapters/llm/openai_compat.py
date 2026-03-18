@@ -58,10 +58,7 @@ class OpenAICompatAdapter:
 
     async def invoke(self, request: LLMRequest) -> LLMResponse:
         """Send a request to the LLM and return a typed response."""
-        messages = [
-            _ROLE_TO_CLASS[msg.role](content=msg.content)
-            for msg in request.messages
-        ]
+        messages = [_ROLE_TO_CLASS[msg.role](content=msg.content) for msg in request.messages]
 
         model = self._default_model
         if request.model:
