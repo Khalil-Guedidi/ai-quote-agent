@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-18  # Story 1.6 done
+last_updated: 2026-03-18  # Story T.3 done
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -148,7 +148,7 @@ development_status:
   t-0-content-pipeline-setup: done                    # template, guidelines, profiles
   t-1-prototype-launch-post: done                      # after Epic 0 (ready now)
   t-2-stack-decision-post: done               # after 1.1–1.2
-  t-3-dirty-data-problem-post: backlog             # after 1.5–1.6
+  t-3-dirty-data-problem-post: done           # after 1.5–1.6
   t-4-foundation-recap-post: backlog               # after Epic 1
   t-5-french-industrial-jargon-post: backlog       # after 2.1–2.2
   t-6-error-edge-cases-post: backlog               # after 2.4
