@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-18  # Story 1.1 done (code review passed)
+last_updated: 2026-03-18  # Story 1.2 done (code review passed)
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -55,7 +55,7 @@ development_status:
   # Epic 1: Fondation Système & Déploiement
   epic-1: in-progress
   1-1-scaffolding-projet-systeme-de-configuration: done
-  1-2-base-de-donnees-postgresql-migrations: backlog
+  1-2-base-de-donnees-postgresql-migrations: done
   1-3-serveur-api-health-check: backlog
   1-4-configuration-llm-provider-adapter: backlog
   1-5-configuration-connexions-erp-email: backlog

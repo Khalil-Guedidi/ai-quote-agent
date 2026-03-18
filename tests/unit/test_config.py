@@ -45,7 +45,7 @@ class TestSettingsValidation:
 
     def test_settings_fail_on_missing_required(self) -> None:
         with pytest.raises(ValidationError):
-            Settings()  # type: ignore[call-arg]
+            Settings(_env_file=None)  # type: ignore[call-arg]
 
     def test_settings_fail_on_invalid_database_url(self, env_vars: dict[str, str]) -> None:
         os.environ["DATABASE__URL"] = "mysql://bad:url@localhost/db"
