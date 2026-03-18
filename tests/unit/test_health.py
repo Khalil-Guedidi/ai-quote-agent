@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock
 
 if TYPE_CHECKING:
@@ -13,39 +13,16 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from quote_agent.adapters.email import get_email_adapter
+from quote_agent.adapters.erp import get_erp_adapter
+from quote_agent.adapters.llm import get_llm_adapter
 from quote_agent.models.base import get_async_session
+from tests.conftest import create_test_app, mock_healthy_adapter, mock_healthy_session
 
 
 @pytest.fixture()
 def _app_env(env_vars: dict[str, str], _clear_settings_cache: None) -> None:
     """Combine env_vars and cache clearing for app instantiation."""
-
-
-def _create_test_app() -> Any:
-    """Create a fresh app instance (must be called after env/cache setup)."""
-    from quote_agent.config import get_settings
-
-    get_settings.cache_clear()
-
-    from quote_agent.models.base import _get_session_factory, create_async_engine_from_settings
-
-    create_async_engine_from_settings.cache_clear()
-    _get_session_factory.cache_clear()
-
-    # Re-import to get fresh app
-    import importlib
-
-    import quote_agent.main
-
-    importlib.reload(quote_agent.main)
-    return quote_agent.main.app
-
-
-async def _mock_healthy_session() -> AsyncGenerator[AsyncSession, None]:
-    """Mock session that succeeds on execute."""
-    session = MagicMock(spec=AsyncSession)
-    session.execute = AsyncMock(return_value=MagicMock())
-    yield session
 
 
 async def _mock_unhealthy_session() -> AsyncGenerator[AsyncSession, None]:
@@ -57,9 +34,12 @@ async def _mock_unhealthy_session() -> AsyncGenerator[AsyncSession, None]:
 
 @pytest.mark.usefixtures("_app_env")
 async def test_health_endpoint_returns_healthy() -> None:
-    """GET /health returns 200 with healthy status when DB is reachable."""
-    app = _create_test_app()
-    app.dependency_overrides[get_async_session] = _mock_healthy_session
+    """GET /health returns 200 with healthy status when DB and LLM are reachable."""
+    app = create_test_app()
+    app.dependency_overrides[get_async_session] = mock_healthy_session
+    app.dependency_overrides[get_llm_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -78,8 +58,11 @@ async def test_health_endpoint_returns_healthy() -> None:
 @pytest.mark.usefixtures("_app_env")
 async def test_health_endpoint_returns_degraded_when_db_fails() -> None:
     """GET /health returns 200 with degraded status when DB is unreachable."""
-    app = _create_test_app()
+    app = create_test_app()
     app.dependency_overrides[get_async_session] = _mock_unhealthy_session
+    app.dependency_overrides[get_llm_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -98,7 +81,7 @@ async def test_health_endpoint_returns_degraded_when_db_fails() -> None:
 @pytest.mark.usefixtures("_app_env")
 async def test_api_v1_base_endpoint() -> None:
     """GET /api/v1/ returns app name, version, and meta timestamp."""
-    app = _create_test_app()
+    app = create_test_app()
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -114,8 +97,11 @@ async def test_api_v1_base_endpoint() -> None:
 @pytest.mark.usefixtures("_app_env")
 async def test_api_response_format_has_meta_timestamp() -> None:
     """Any endpoint response includes ISO 8601 timestamp in meta."""
-    app = _create_test_app()
-    app.dependency_overrides[get_async_session] = _mock_healthy_session
+    app = create_test_app()
+    app.dependency_overrides[get_async_session] = mock_healthy_session
+    app.dependency_overrides[get_llm_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -133,7 +119,7 @@ async def test_api_response_format_has_meta_timestamp() -> None:
 @pytest.mark.usefixtures("_app_env")
 async def test_unhandled_exception_returns_500_error_format() -> None:
     """Unhandled exceptions return structured 500 error response."""
-    app = _create_test_app()
+    app = create_test_app()
 
     @app.get("/test-error")
     async def trigger_error() -> None:
