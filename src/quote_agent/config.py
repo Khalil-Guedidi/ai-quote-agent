@@ -35,6 +35,14 @@ class LLMSettings(BaseModel):
     timeout: int = 60
     max_retries: int = 3
 
+    @field_validator("default_model", "simple_model", "complex_model")
+    @classmethod
+    def model_name_must_not_be_empty(cls, v: str) -> str:
+        if not v.strip():
+            msg = "Model name must not be empty"
+            raise ValueError(msg)
+        return v
+
 
 class ERPSettings(BaseModel):
     """Odoo ERP connection configuration."""
