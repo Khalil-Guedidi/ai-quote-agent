@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-from quote_agent.adapters.email.models import IMAPHealthInfo
+from quote_agent.adapters.email.models import IMAPHealthInfo, IncomingEmail
 from quote_agent.adapters.email.protocol import EmailAdapter
 
 if TYPE_CHECKING:
@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 __all__ = [
     "EmailAdapter",
     "IMAPHealthInfo",
+    "IncomingEmail",
     "get_email_adapter",
 ]
 

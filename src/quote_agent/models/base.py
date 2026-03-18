@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime  # noqa: TC003 — SQLAlchemy needs runtime access for Mapped[datetime]
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
@@ -16,7 +17,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 if TYPE_CHECKING:
     from collections.abc import AsyncGenerator
-    from datetime import datetime
 
 convention = {
     "ix": "ix_%(table_name)s_%(column_0_N_name)s",

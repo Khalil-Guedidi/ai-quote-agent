@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import logging
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
@@ -34,8 +36,33 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Manage application startup and shutdown lifecycle."""
     logger.info("Application starting up")
+
+    from quote_agent.adapters.email import get_email_adapter
+    from quote_agent.services.email_poller import EmailPollerService
+
+    settings = get_settings()
+    adapter = get_email_adapter()
+    session_factory = _get_session_factory()
+    poller = EmailPollerService(
+        adapter=adapter,
+        session_factory=session_factory,
+        poll_interval=settings.email.poll_interval,
+        folder=settings.email.folder,
+    )
+    app.state.email_poller = poller
+    poller_task = asyncio.create_task(poller.run())
+
     yield
+
     logger.info("Application shutting down")
+    await poller.stop()
+    poller_task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await poller_task
+    logger.info(
+        "Email poller shut down (processed=%d emails)", poller.total_emails_processed
+    )
+
     create_async_engine_from_settings.cache_clear()
     _get_session_factory.cache_clear()
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from quote_agent.adapters.email.models import IncomingEmail
     from quote_agent.api.health import ServiceHealth
 
 
@@ -16,5 +17,6 @@ class EmailAdapter(Protocol):
         """Check IMAP connectivity and authentication, return health status."""
         ...
 
-    # Future methods (Story 2.1):
-    # async def fetch_emails(...) -> list[IncomingEmail]
+    async def fetch_new_emails(self) -> list[IncomingEmail]:
+        """Fetch unread emails from the mail server."""
+        ...

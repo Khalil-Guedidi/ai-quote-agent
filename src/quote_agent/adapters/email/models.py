@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from datetime import datetime  # noqa: TC003 — Pydantic needs runtime access for model validation
+
 from pydantic import BaseModel
 
 
@@ -13,6 +15,12 @@ class IMAPHealthInfo(BaseModel):
     folder: str
 
 
-# Future DTOs (Epic 2):
-# - IncomingEmail: raw email data from IMAP fetch
-# - ParsedEmail: cleaned and structured email content
+class IncomingEmail(BaseModel):
+    """Raw email data from IMAP fetch."""
+
+    message_id: str
+    subject: str
+    sender: str
+    recipients: list[str]
+    raw_content: str
+    received_at: datetime | None = None
