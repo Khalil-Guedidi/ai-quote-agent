@@ -62,12 +62,14 @@ def create_test_app() -> Any:
     from quote_agent.adapters.email import get_email_adapter
     from quote_agent.adapters.erp import get_erp_adapter
     from quote_agent.adapters.llm import get_llm_adapter
+    from quote_agent.adapters.notification import get_notification_adapter
     from quote_agent.config import get_settings
 
     get_settings.cache_clear()
     get_llm_adapter.cache_clear()
     get_erp_adapter.cache_clear()
     get_email_adapter.cache_clear()
+    get_notification_adapter.cache_clear()
 
     from quote_agent.models.base import _get_session_factory, create_async_engine_from_settings
 

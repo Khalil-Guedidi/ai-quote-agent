@@ -13,6 +13,7 @@ from quote_agent.adapters.erp import get_erp_adapter
 from quote_agent.adapters.erp.odoo import OdooAdapter
 from quote_agent.adapters.erp.protocol import ERPAdapter
 from quote_agent.adapters.llm import get_llm_adapter
+from quote_agent.adapters.notification import get_notification_adapter
 from quote_agent.models.base import get_async_session
 from tests.conftest import create_test_app, mock_healthy_adapter, mock_healthy_session
 
@@ -148,6 +149,7 @@ async def test_health_endpoint_includes_erp_service() -> None:
     app.dependency_overrides[get_llm_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_notification_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

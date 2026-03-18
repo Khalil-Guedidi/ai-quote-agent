@@ -22,6 +22,7 @@ from quote_agent.adapters.llm.models import (
 )
 from quote_agent.adapters.llm.openai_compat import OpenAICompatAdapter
 from quote_agent.adapters.llm.protocol import LLMAdapter
+from quote_agent.adapters.notification import get_notification_adapter
 from quote_agent.api.health import ServiceHealth
 from quote_agent.models.base import get_async_session
 from tests.conftest import create_test_app, mock_healthy_adapter, mock_healthy_session
@@ -214,6 +215,7 @@ async def test_health_endpoint_includes_llm_service() -> None:
     app.dependency_overrides[get_llm_adapter] = lambda: mock_adapter
     app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_notification_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -239,6 +241,7 @@ async def test_health_endpoint_degraded_when_llm_unhealthy() -> None:
     app.dependency_overrides[get_llm_adapter] = lambda: mock_adapter
     app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_notification_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:

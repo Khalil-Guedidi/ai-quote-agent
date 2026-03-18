@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from quote_agent.adapters.email import get_email_adapter
 from quote_agent.adapters.erp import get_erp_adapter
 from quote_agent.adapters.llm import get_llm_adapter
+from quote_agent.adapters.notification import get_notification_adapter
 from quote_agent.api.schemas import make_response
 from quote_agent.models.base import get_async_session
 
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
     from quote_agent.adapters.email.imap import IMAPAdapter
     from quote_agent.adapters.erp.odoo import OdooAdapter
     from quote_agent.adapters.llm.openai_compat import OpenAICompatAdapter
+    from quote_agent.adapters.notification.teams import TeamsAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -48,18 +50,21 @@ async def health_check(
     llm_adapter: OpenAICompatAdapter = Depends(get_llm_adapter),  # noqa: B008
     erp_adapter: OdooAdapter = Depends(get_erp_adapter),  # noqa: B008
     email_adapter: IMAPAdapter = Depends(get_email_adapter),  # noqa: B008
+    notification_adapter: TeamsAdapter = Depends(get_notification_adapter),  # noqa: B008
 ) -> dict[str, object]:
-    """Check system health including database, LLM, ERP, and email connectivity."""
+    """Check system health including database, LLM, ERP, email, and notification connectivity."""
     db_health = await _check_database(session)
     llm_health = await llm_adapter.health_check()
     erp_health = await erp_adapter.health_check()
     email_health = await email_adapter.health_check()
+    notification_health = await notification_adapter.health_check()
 
     services = {
         "database": db_health,
         "llm": llm_health,
         "erp": erp_health,
         "email": email_health,
+        "notification": notification_health,
     }
 
     overall_status: Literal["healthy", "degraded"] = "healthy"

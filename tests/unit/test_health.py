@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from quote_agent.adapters.email import get_email_adapter
 from quote_agent.adapters.erp import get_erp_adapter
 from quote_agent.adapters.llm import get_llm_adapter
+from quote_agent.adapters.notification import get_notification_adapter
 from quote_agent.models.base import get_async_session
 from tests.conftest import create_test_app, mock_healthy_adapter, mock_healthy_session
 
@@ -40,6 +41,7 @@ async def test_health_endpoint_returns_healthy() -> None:
     app.dependency_overrides[get_llm_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_notification_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -63,6 +65,7 @@ async def test_health_endpoint_returns_degraded_when_db_fails() -> None:
     app.dependency_overrides[get_llm_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_notification_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -102,6 +105,7 @@ async def test_api_response_format_has_meta_timestamp() -> None:
     app.dependency_overrides[get_llm_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_erp_adapter] = mock_healthy_adapter
     app.dependency_overrides[get_email_adapter] = mock_healthy_adapter
+    app.dependency_overrides[get_notification_adapter] = mock_healthy_adapter
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
