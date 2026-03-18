@@ -34,7 +34,7 @@ This is a solo build-in-public project, documented from prototype to production.
 
 ## Technology Stack
 
-Python | LangGraph | Qdrant | OpenAI | Claude | Odoo 18 | PostgreSQL | Docker
+Python 3.12 | LangGraph | PostgreSQL + pgvector | FastAPI | OpenAI | Claude | Odoo 18 | Docker
 
 ## Prototype Case Study
 
@@ -64,6 +64,54 @@ Results validated the approach. The production build will rewrite from n8n to Py
 
 The prototype demonstrated that hybrid search (combining semantic embeddings with keyword matching) significantly outperforms either approach alone for B2B industrial catalogs, where product naming conventions vary widely between companies and languages.
 
+## Production Foundation (Epic 1 Complete)
+
+### Production Architecture
+
+The production system uses an **adapter pattern** with 5 integration points, each independently testable and swappable:
+
+| Adapter | Purpose | Technology |
+|---------|---------|------------|
+| Database | Product catalog, quotes, audit trail | PostgreSQL + pgvector, SQLAlchemy async, Alembic migrations |
+| LLM Provider | Structured extraction, reasoning, matching | OpenAI-compatible API abstraction with model routing |
+| ERP | Product catalog, customer data, quote creation | Odoo XML-RPC with credential redaction |
+| Email | Quote request reception | IMAP with structured parsing |
+| Notification | Sales team alerts | Microsoft Teams Adaptive Cards with webhook health check |
+
+### Stack Decisions
+
+- **Language:** Python 3.12 with strict typing (mypy --strict on all source files)
+- **AI Framework:** LangGraph (agent orchestration, state management)
+- **Database:** PostgreSQL + pgvector (relational data + vector search in one DB)
+- **API:** FastAPI with per-service health checks
+- **Deployment:** Docker Compose (multi-stage build, app + PostgreSQL containers)
+- **CI/CD:** GitHub Actions (Ruff linting + mypy type-check + pytest + Docker build)
+
+### Quality Metrics
+
+| Metric | Value |
+|--------|-------|
+| Automated tests | 68 |
+| Test coverage | 95% |
+| Type-checked source files (mypy --strict) | 41 |
+| Integration adapters | 5 |
+| Stories completed | 8 |
+| Manual deployment steps | 0 (docker compose up) |
+
+### High-Level Architecture
+
+```
+Email (IMAP) → FastAPI → LangGraph Agent → Quote Draft
+                  ↕            ↕
+              PostgreSQL    LLM Provider
+              + pgvector   (OpenAI-compat)
+                  ↕            ↕
+             ERP (Odoo)    Notifications
+            XML-RPC         (Teams)
+```
+
+Each adapter follows the same pattern: abstract interface, concrete implementation, health check endpoint, independent configuration. This allows swapping any integration (e.g., switching from Odoo to SAP, or from Teams to Slack) without touching the rest of the system.
+
 ## Project Links
 
 - GitHub: {add_repo_url_when_public}
@@ -71,6 +119,6 @@ The prototype demonstrated that hybrid search (combining semantic embeddings wit
 
 ## Page Notes
 
-- Update metrics and architecture details as the production build progresses
-- Add screenshots/demos after Epic 1 (foundation) is complete
+- Epic 1 (Foundation) is complete. Architecture and quality metrics sections added.
+- Update metrics as production build progresses through Epics 2-9
 - Link to LinkedIn posts as they're published
