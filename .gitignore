@@ -1,4 +1,5 @@
 # Environment files
+.env
 prototype/.env
 
 # Generated data
@@ -11,6 +12,9 @@ __pycache__/
 dist/
 build/
 .venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
 
 # IDE
 .idea/

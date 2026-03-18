@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-17  # added Epic T: Build in Public
+last_updated: 2026-03-18  # Story 1.1 done (code review passed)
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -53,8 +53,8 @@ development_status:
   epic-0-retrospective: optional
 
   # Epic 1: Fondation Système & Déploiement
-  epic-1: backlog
-  1-1-scaffolding-projet-systeme-de-configuration: backlog
+  epic-1: in-progress
+  1-1-scaffolding-projet-systeme-de-configuration: done
   1-2-base-de-donnees-postgresql-migrations: backlog
   1-3-serveur-api-health-check: backlog
   1-4-configuration-llm-provider-adapter: backlog
@@ -144,9 +144,9 @@ development_status:
   epic-9-retrospective: optional
 
   # Epic T: Build in Public — Content & Visibility (cross-cutting, parallel to tech epics)
-  epic-t: backlog
-  t-0-content-pipeline-setup: backlog              # now — template, guidelines, profiles
-  t-1-prototype-launch-post: backlog               # after Epic 0 (ready now)
+  epic-t: in-progress
+  t-0-content-pipeline-setup: done                    # template, guidelines, profiles
+  t-1-prototype-launch-post: done                      # after Epic 0 (ready now)
   t-2-stack-decision-post: backlog                 # after 1.1–1.2
   t-3-dirty-data-problem-post: backlog             # after 1.5–1.6
   t-4-foundation-recap-post: backlog               # after Epic 1
