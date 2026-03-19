@@ -71,6 +71,15 @@ class NotificationSettings(BaseModel):
     teams_webhook_url: str = ""
 
 
+class EmbeddingSettings(BaseModel):
+    """Embedding model configuration."""
+
+    model_name: str = "BAAI/bge-m3"
+    embedding_dim: int = 1024
+    batch_size: int = 64
+    device: str = "cpu"
+
+
 class AppSettings(BaseModel):
     """Application-level configuration."""
 
@@ -97,6 +106,7 @@ class Settings(BaseSettings):
     erp: ERPSettings
     email: EmailSettings
     notification: NotificationSettings = NotificationSettings()
+    embedding: EmbeddingSettings = EmbeddingSettings()
     app: AppSettings = AppSettings()
 
 

@@ -21,6 +21,7 @@ dependencies = [
     "pydantic>=2.12.5",
     "pydantic-settings>=2.13.1",
     "python-dotenv>=1.2.2",
+    "sentence-transformers>=5.3.0",
     "sqlalchemy[asyncio]>=2.0.48",
     "typer>=0.24.1",
     "uvicorn>=0.42.0",

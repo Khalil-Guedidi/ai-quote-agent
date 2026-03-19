@@ -9,6 +9,7 @@ import pytest
 from sqlalchemy import delete, text
 
 from quote_agent.adapters.email import get_email_adapter
+from quote_agent.adapters.embedding import get_embedding_adapter
 from quote_agent.adapters.erp import get_erp_adapter
 from quote_agent.adapters.llm import get_llm_adapter
 from quote_agent.config import get_settings
@@ -73,6 +74,7 @@ def _clear_all_caches() -> Iterator[None]:
     get_llm_adapter.cache_clear()
     get_email_adapter.cache_clear()
     get_erp_adapter.cache_clear()
+    get_embedding_adapter.cache_clear()
     yield
     get_settings.cache_clear()
     create_async_engine_from_settings.cache_clear()
@@ -80,6 +82,7 @@ def _clear_all_caches() -> Iterator[None]:
     get_llm_adapter.cache_clear()
     get_email_adapter.cache_clear()
     get_erp_adapter.cache_clear()
+    get_embedding_adapter.cache_clear()
 
 
 # ---------------------------------------------------------------------------

@@ -35,8 +35,8 @@ class Product(Base, TimestampMixin):
     metadata_: Mapped[dict[str, object] | None] = mapped_column("metadata_", JSON, default=None, nullable=True)
     is_stale: Mapped[bool] = mapped_column(default=False)
 
-    # Placeholder for Story 3.2 — embedding vector (nullable, populated later)
-    vector: Mapped[list[float] | None] = mapped_column(Vector(dim=1536), nullable=True, default=None)
+    # Embedding vector — populated by EmbeddingService (Story 3.2)
+    vector: Mapped[list[float] | None] = mapped_column(Vector(dim=1024), nullable=True, default=None)
 
     __table_args__ = (
         Index("ix_products_reference", "reference"),
