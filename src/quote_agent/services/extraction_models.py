@@ -35,3 +35,25 @@ class ExtractionResult(BaseModel):
     confidence: float
     missing_fields: list[str] = Field(default_factory=list)
     extraction_duration_ms: int
+
+
+class RequestGroup(BaseModel):
+    """A group of line items forming a single quote request."""
+
+    line_item_indices: list[int]
+    rationale: str
+
+
+class SplitDecision(BaseModel):
+    """LLM decision on how to group line items into distinct requests."""
+
+    groups: list[RequestGroup]
+
+
+class SplitResult(BaseModel):
+    """Result of splitting an extraction into one or more sub-requests."""
+
+    requests: list[ExtractedQuoteRequest]
+    split_count: int
+    split_rationale: str
+    split_duration_ms: int

@@ -12,8 +12,10 @@ from sqlalchemy.exc import IntegrityError
 
 from quote_agent.exceptions import AdapterError, EmailConnectionError, LLMTimeoutError
 from quote_agent.models.email_request import EmailRequest
+from quote_agent.models.quote_request import QuoteRequest
 from quote_agent.services.email_cleaner import clean
 from quote_agent.services.email_extractor import extract
+from quote_agent.services.request_splitter import split_requests
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -193,6 +195,61 @@ class EmailPollerService:
                             record.error_message = str(exc)
                             logger.warning(
                                 "Extraction failed for %s: %s",
+                                incoming.message_id,
+                                exc,
+                            )
+
+                    # Split extracted data into sub-requests (only if extraction succeeded)
+                    if record.status == "extracted":
+                        try:
+                            split_result = await split_requests(extraction_result)
+                            for idx, sub_request in enumerate(split_result.requests):
+                                quote_req = QuoteRequest(
+                                    email_request_id=record.id,
+                                    request_index=idx,
+                                    line_items=[item.model_dump() for item in sub_request.line_items],
+                                    client_name=sub_request.client_name,
+                                    client_identifier=sub_request.client_identifier,
+                                    client_email=sub_request.client_email,
+                                    urgency=sub_request.urgency,
+                                    delivery_address=sub_request.delivery_address,
+                                    notes=sub_request.notes,
+                                    status="pending",
+                                    confidence=extraction_result.confidence,
+                                )
+                                session.add(quote_req)
+                            record.status = "split"
+                            logger.info(
+                                "Request splitting complete",
+                                extra={
+                                    "component": "services.request_splitter",
+                                    "context": {
+                                        "email_request_id": str(record.id),
+                                        "split_count": split_result.split_count,
+                                        "split_rationale": split_result.split_rationale,
+                                        "duration_ms": split_result.split_duration_ms,
+                                    },
+                                },
+                            )
+                        except (LLMTimeoutError, AdapterError) as exc:
+                            # Graceful degradation: create single QuoteRequest with all items
+                            quote_req = QuoteRequest(
+                                email_request_id=record.id,
+                                request_index=0,
+                                line_items=[item.model_dump() for item in extraction_result.request.line_items],
+                                client_name=extraction_result.request.client_name,
+                                client_identifier=extraction_result.request.client_identifier,
+                                client_email=extraction_result.request.client_email,
+                                urgency=extraction_result.request.urgency,
+                                delivery_address=extraction_result.request.delivery_address,
+                                notes=extraction_result.request.notes,
+                                status="pending",
+                                confidence=extraction_result.confidence,
+                            )
+                            session.add(quote_req)
+                            record.status = "split"
+                            logger.warning(
+                                "Splitting failed for %s, falling back to single request: %s",
                                 incoming.message_id,
                                 exc,
                             )
