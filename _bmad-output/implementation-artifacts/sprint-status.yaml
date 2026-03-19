@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-19  # Story 2.6 code review done
+last_updated: 2026-03-19  # Epic 2 retrospective done
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -72,10 +72,15 @@ development_status:
   2-4-gestion-multi-demandes-dans-un-seul-email: done
   2-5-defense-contre-injection-de-prompt-couches-1-2: done
   2-6-separation-input-instructions-logging-securise: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   # Epic 3: Catalogue Produits & Recherche Intelligente
+  # Note: 3 foundation stories (3.0a, 3.0b, 3.0c) added from Epic 2 retrospective (2026-03-19)
+  # All 3 block stories 3.1+
   epic-3: backlog
+  3-0a-tests-e2e-pipeline-epic-2: backlog
+  3-0b-generation-project-context-md: backlog
+  3-0c-generation-catalogue-test-50k-realiste: backlog
   3-1-ingestion-catalogue-depuis-erp-zero-preprocessing: backlog
   3-2-generation-embeddings-index-vectoriel: backlog
   3-3-recherche-hybride-semantique-mot-cle: backlog

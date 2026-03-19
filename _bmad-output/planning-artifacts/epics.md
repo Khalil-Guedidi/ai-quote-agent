@@ -335,7 +335,7 @@ L'agent reçoit automatiquement les emails de demande de devis et en extrait les
 **FRs covered:** FR1, FR2, FR3, FR4, FR25, FR26
 
 ### Epic 3: Catalogue Produits & Recherche Intelligente
-L'agent ingère des catalogues produits "sales" sans nettoyage préalable et trouve les bons produits via recherche hybride sémantique + mot-clé. La promesse "zero-preprocessing" est validée.
+L'agent ingère des catalogues produits "sales" sans nettoyage préalable et trouve les bons produits via recherche hybride sémantique + mot-clé. La promesse "zero-preprocessing" est validée. Précédé par 3 stories de fondation (E2E tests, project-context, catalogue test 50K) issues de la rétro Epic 2.
 **FRs covered:** FR5, FR6, FR7, FR9, FR10
 
 ### Epic 4: Raisonnement Adaptatif & Génération de Devis
@@ -770,6 +770,73 @@ So that every email processing step is auditable without leaking sensitive data.
 ## Epic 3: Catalogue Produits & Recherche Intelligente
 
 L'agent ingère des catalogues produits "sales" sans nettoyage préalable et trouve les bons produits via recherche hybride sémantique + mot-clé. La promesse "zero-preprocessing" est validée.
+
+**Note:** 3 foundation stories (3.0a, 3.0b, 3.0c) added during Epic 2 retrospective (2026-03-19). All 3 are blockers for Stories 3.1+.
+
+### Story 3.0a: Tests End-to-End Pipeline Epic 2
+
+As an **IT operator (Laurent)**,
+I want the Epic 2 email pipeline tested end-to-end with real services (IMAP, PostgreSQL, LLM),
+So that we validate the pipeline behaves correctly as an assembled system before building on top of it.
+
+**Acceptance Criteria:**
+
+**Given** a real IMAP server with a test email containing a French industrial quote request
+**When** the full pipeline runs (polling → cleaning → extraction → splitting)
+**Then** the email is persisted in a real PostgreSQL database with status "split"
+**And** QuoteRequest records are created with correct line items extracted by a real LLM
+**And** the complete decision chain is traceable via structured logs
+
+**Given** an email with prompt injection attempts
+**When** the pipeline processes it
+**Then** the sanitization layer detects and escapes the threats
+**And** extraction still produces valid structured output
+
+**Given** the IMAP server is temporarily unavailable
+**When** the poller attempts to connect
+**Then** exponential backoff and circuit breaker activate as designed
+
+**Blocks:** All stories 3.1+. Epic 2 pipeline must be validated before building Epic 3 on top of it.
+
+### Story 3.0b: Génération du project-context.md
+
+As a **developer (human or AI)**,
+I want a centralized `project-context.md` documenting established patterns, conventions, and known pitfalls,
+So that every story starts with full project context instead of rediscovering it from scratch.
+
+**Acceptance Criteria:**
+
+**Given** the project has completed Epics 1 and 2
+**When** the project-context.md is generated
+**Then** it contains: adapter pattern, LLM structured output pattern, pipeline integration pattern, security layer pattern, test conventions, known pitfalls (annotations + SQLAlchemy, lexicographic string comparisons, regex edge cases), naming conventions, and quality gates (mypy strict, ruff, coverage)
+
+**Given** a new story is created
+**When** the dev agent reads project-context.md
+**Then** it has sufficient context to avoid previously-identified anti-patterns without relying on per-story dev notes
+
+**Blocks:** All stories 3.1+. Context must be centralized before new development.
+
+### Story 3.0c: Génération Catalogue Test 50K Réaliste
+
+As a **QA engineer (Dana)**,
+I want a realistic synthetic French industrial product catalog of 50,000 references,
+So that Epic 3 search and matching features are validated against data representative of real-world conditions.
+
+**Acceptance Criteria:**
+
+**Given** public sources of French industrial product naming conventions (RS Components, Würth, etc.)
+**When** the catalog generation pipeline runs
+**Then** it produces 50,000 product records with realistic attributes: reference codes, abbreviated French names (e.g., "TB RD INOX 304L 25x1.5 LG6000"), categories, prices, stock status, and metadata
+
+**Given** the generated catalog
+**When** analyzed for realism
+**Then** it includes controlled noise: ~30% missing metadata, naming inconsistencies, duplicates with variant names, mix of French/English descriptions, truncated fields
+
+**Given** the catalog is generated
+**When** loaded into the test infrastructure
+**Then** it is versioned as a project asset and reusable across epics
+
+**Blocks:** Story 3.1 (ingestion). Cannot validate ingestion without realistic data.
 
 ### Story 3.1: Ingestion Catalogue depuis l'ERP (Zero-Preprocessing)
 
