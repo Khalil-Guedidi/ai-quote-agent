@@ -35,12 +35,17 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Manage application startup and shutdown lifecycle."""
+    settings = get_settings()
+
+    from quote_agent.audit.logger import setup_logging
+
+    setup_logging(settings.app.log_level)
+
     logger.info("Application starting up")
 
     from quote_agent.adapters.email import get_email_adapter
     from quote_agent.services.email_poller import EmailPollerService
 
-    settings = get_settings()
     adapter = get_email_adapter()
     session_factory = _get_session_factory()
     poller = EmailPollerService(

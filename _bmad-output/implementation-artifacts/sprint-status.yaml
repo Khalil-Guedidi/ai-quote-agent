@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-19  # Story 2.5 done (code review passed)
+last_updated: 2026-03-19  # Story 2.6 code review done
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -71,7 +71,7 @@ development_status:
   2-3-extraction-de-donnees-structurees: done
   2-4-gestion-multi-demandes-dans-un-seul-email: done
   2-5-defense-contre-injection-de-prompt-couches-1-2: done
-  2-6-separation-input-instructions-logging-securise: backlog
+  2-6-separation-input-instructions-logging-securise: done
   epic-2-retrospective: optional
 
   # Epic 3: Catalogue Produits & Recherche Intelligente

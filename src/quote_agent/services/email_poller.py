@@ -155,17 +155,49 @@ class EmailPollerService:
                     async with session.begin_nested():
                         session.add(record)
                         await session.flush()
+                    logger.info(
+                        "Email received",
+                        extra={
+                            "component": "services.email_poller",
+                            "context": {
+                                "email_request_id": str(record.id),
+                                "message_id": record.message_id,
+                                "sender": record.sender,
+                                "subject": record.subject,
+                                "status": "received",
+                            },
+                        },
+                    )
                     # Clean email content inline (pure CPU, <1ms)
                     try:
                         record.cleaned_content = clean(incoming.raw_content)
                         record.status = "cleaned"
+                        logger.info(
+                            "Email cleaned",
+                            extra={
+                                "component": "services.email_cleaner",
+                                "context": {
+                                    "email_request_id": str(record.id),
+                                    "status": "cleaned",
+                                    "raw_length": len(incoming.raw_content),
+                                    "cleaned_length": len(record.cleaned_content),
+                                },
+                            },
+                        )
                     except Exception as exc:
                         record.status = "cleaning_failed"
                         record.error_message = str(exc)
                         logger.warning(
-                            "Cleaning failed for %s: %s",
-                            incoming.message_id,
-                            exc,
+                            "Cleaning failed",
+                            extra={
+                                "component": "services.email_cleaner",
+                                "context": {
+                                    "email_request_id": str(record.id),
+                                    "message_id": incoming.message_id,
+                                    "status": "cleaning_failed",
+                                    "error": str(exc),
+                                },
+                            },
                         )
 
                     # Extract structured data via LLM (only if cleaning succeeded)
@@ -253,6 +285,17 @@ class EmailPollerService:
                                 incoming.message_id,
                                 exc,
                             )
+                    logger.info(
+                        "Email pipeline complete",
+                        extra={
+                            "component": "services.email_poller",
+                            "context": {
+                                "email_request_id": str(record.id),
+                                "message_id": record.message_id,
+                                "final_status": record.status,
+                            },
+                        },
+                    )
                     persisted += 1
                     self._total_emails_processed += 1
                 except IntegrityError:
