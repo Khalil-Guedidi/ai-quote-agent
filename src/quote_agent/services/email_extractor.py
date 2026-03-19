@@ -10,6 +10,7 @@ import openai
 
 from quote_agent.adapters.llm import get_llm_adapter
 from quote_agent.exceptions import AdapterError, LLMTimeoutError
+from quote_agent.security.input_isolation import EXTRACTION_SYSTEM_PROMPT
 from quote_agent.services.extraction_models import (
     ExtractedQuoteRequest,
     ExtractionResult,
@@ -18,21 +19,6 @@ from quote_agent.services.extraction_models import (
 logger = logging.getLogger(__name__)
 
 _EXTRACTION_TIMEOUT = 10.0  # NFR-P3: < 10 seconds
-
-EXTRACTION_SYSTEM_PROMPT = """You are a data extraction assistant for a French B2B industrial quote processing system.
-
-Your task: Extract structured data from a quote request email. The emails are in French (sometimes English).
-
-Rules:
-- Extract ALL requested products as separate line items
-- For each product: description, quantity (number), unit (e.g., "pièces", "mètres", "kg"), specifications, reference
-- Extract client identification: name, company, email, any identifier
-- If a field is not mentioned in the email, set it to null — NEVER guess or hallucinate
-- Product references may be codes like "REF-12345", "Art. 4567", catalog numbers
-- Quantities may be written as "10 pcs", "10 unités", "une dizaine", "x10"
-- French industrial terminology: "devis" = quote, "tarif" = price, "délai" = lead time, "livraison" = delivery
-
-The email sender and subject are provided as additional context."""
 
 _MIN_CONTENT_LENGTH = 10
 
@@ -63,7 +49,10 @@ async def extract(
         LLMTimeoutError: If extraction exceeds 10s (NFR-P3).
         AdapterError: If the LLM provider returns an error.
     """
-    from langchain_core.messages import HumanMessage, SystemMessage
+    from quote_agent.security.input_isolation import (
+        build_extraction_messages,
+        isolate_input,
+    )
 
     if len(cleaned_content) < _MIN_CONTENT_LENGTH:
         return ExtractionResult(
@@ -73,14 +62,40 @@ async def extract(
             extraction_duration_ms=0,
         )
 
+    isolated = isolate_input(cleaned_content, sender=sender, subject=subject)
+    if isolated.sanitization_result.threat_count > 0:
+        logger.warning(
+            "Prompt injection threats detected in email",
+            extra={
+                "component": "security.sanitizer",
+                "context": {
+                    "threat_count": isolated.sanitization_result.threat_count,
+                    "pattern_names": [
+                        t.pattern_name
+                        for t in isolated.sanitization_result.threats_detected
+                    ],
+                    "severity_max": (
+                        "high"
+                        if any(
+                            t.severity == "high"
+                            for t in isolated.sanitization_result.threats_detected
+                        )
+                        else "medium"
+                        if any(
+                            t.severity == "medium"
+                            for t in isolated.sanitization_result.threats_detected
+                        )
+                        else "low"
+                    ),
+                },
+            },
+        )
+
     adapter = get_llm_adapter()
     model = adapter.get_model("simple")
     structured_model = model.with_structured_output(ExtractedQuoteRequest)
 
-    messages = [
-        SystemMessage(content=EXTRACTION_SYSTEM_PROMPT),
-        HumanMessage(content=f"Sender: {sender}\nSubject: {subject}\n\n{cleaned_content}"),
-    ]
+    messages = build_extraction_messages(isolated)
 
     start_s = time.monotonic()
     try:
