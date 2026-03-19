@@ -11,7 +11,7 @@ from alembic import context
 
 # Import Base and all models so autogenerate discovers them.
 from quote_agent.models.base import Base  # noqa: F401
-from quote_agent.models import EmailRequest  # noqa: F401
+from quote_agent.models import EmailRequest, Product  # noqa: F401
 from quote_agent.models.base import _ensure_async_url
 
 # Alembic Config object — provides access to alembic.ini values.

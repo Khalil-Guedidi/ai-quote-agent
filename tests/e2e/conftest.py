@@ -9,6 +9,7 @@ import pytest
 from sqlalchemy import delete, text
 
 from quote_agent.adapters.email import get_email_adapter
+from quote_agent.adapters.erp import get_erp_adapter
 from quote_agent.adapters.llm import get_llm_adapter
 from quote_agent.config import get_settings
 from quote_agent.models.base import _get_session_factory, create_async_engine_from_settings
@@ -39,9 +40,22 @@ def _has_real_llm() -> bool:
     return bool(key) and not key.startswith("test") and key != "placeholder"
 
 
+def _has_real_erp() -> bool:
+    """Check if real ERP (Odoo) credentials are available."""
+    return all(
+        bool(os.environ.get(var))
+        for var in ("ERP__URL", "ERP__DATABASE", "ERP__USERNAME", "ERP__API_KEY")
+    )
+
+
 requires_e2e = pytest.mark.skipif(
     not (_has_real_database() and _has_real_llm()),
     reason="E2E tests require real DATABASE__URL and LLM__API_KEY",
+)
+
+requires_e2e_erp = pytest.mark.skipif(
+    not (_has_real_database() and _has_real_erp()),
+    reason="E2E catalog tests require real DATABASE__URL and ERP__* env vars",
 )
 
 
@@ -58,12 +72,14 @@ def _clear_all_caches() -> Iterator[None]:
     _get_session_factory.cache_clear()
     get_llm_adapter.cache_clear()
     get_email_adapter.cache_clear()
+    get_erp_adapter.cache_clear()
     yield
     get_settings.cache_clear()
     create_async_engine_from_settings.cache_clear()
     _get_session_factory.cache_clear()
     get_llm_adapter.cache_clear()
     get_email_adapter.cache_clear()
+    get_erp_adapter.cache_clear()
 
 
 # ---------------------------------------------------------------------------
@@ -135,3 +151,9 @@ def e2e_email_adapter():
 def e2e_llm_adapter():
     """Return a real LLM adapter using LLM__API_KEY — uses simple_model to minimize cost."""
     return get_llm_adapter()
+
+
+@pytest.fixture()
+def e2e_erp_adapter():
+    """Return a real OdooAdapter connected to the configured Odoo instance."""
+    return get_erp_adapter()

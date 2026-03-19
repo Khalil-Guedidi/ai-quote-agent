@@ -34,5 +34,41 @@ services:
       timeout: 3s
       retries: 5
 
+  # ── Odoo (ERP for catalog ingestion) ──────────────────────────────────────
+  odoo:
+    image: odoo:17.0
+    container_name: quote-agent-odoo
+    ports:
+      - "8069:8069"
+    environment:
+      HOST: odoo-db
+      PORT: 5432
+      USER: odoo
+      PASSWORD: odoo_secret
+    depends_on:
+      odoo-db:
+        condition: service_healthy
+    volumes:
+      - odoo-data:/var/lib/odoo
+
+  odoo-db:
+    image: postgres:16
+    container_name: quote-agent-odoo-db
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo_secret
+      POSTGRES_DB: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - odoo-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
 volumes:
   pgdata:
+  odoo-data:
+  odoo-pgdata:

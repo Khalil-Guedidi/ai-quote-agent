@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from quote_agent.adapters.erp.models import Product, ProductFilter
     from quote_agent.api.health import ServiceHealth
 
 
@@ -16,7 +17,6 @@ class ERPAdapter(Protocol):
         """Check ERP connectivity and authentication, return health status."""
         ...
 
-    # Future methods (Epic 3/4):
-    # async def create_draft_quote(...) -> UniversalQuote
-    # async def get_products(...) -> list[Product]
-    # async def get_client(...) -> Client
+    async def get_products(self, filters: ProductFilter) -> list[Product]:
+        """Fetch products from ERP with optional filtering and pagination."""
+        ...
