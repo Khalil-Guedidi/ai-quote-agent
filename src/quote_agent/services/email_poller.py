@@ -10,9 +10,10 @@ from typing import TYPE_CHECKING
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 
-from quote_agent.exceptions import EmailConnectionError
+from quote_agent.exceptions import AdapterError, EmailConnectionError, LLMTimeoutError
 from quote_agent.models.email_request import EmailRequest
 from quote_agent.services.email_cleaner import clean
+from quote_agent.services.email_extractor import extract
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -164,6 +165,37 @@ class EmailPollerService:
                             incoming.message_id,
                             exc,
                         )
+
+                    # Extract structured data via LLM (only if cleaning succeeded)
+                    if record.status == "cleaned":
+                        try:
+                            extraction_result = await extract(
+                                cleaned_content=record.cleaned_content,  # type: ignore[arg-type]
+                                sender=record.sender,
+                                subject=record.subject,
+                            )
+                            record.extracted_data = extraction_result.request.model_dump()
+                            record.status = "extracted"
+                            logger.info(
+                                "Extraction complete",
+                                extra={
+                                    "component": "services.email_extractor",
+                                    "context": {
+                                        "email_request_id": str(record.id),
+                                        "line_item_count": len(extraction_result.request.line_items),
+                                        "missing_fields": extraction_result.missing_fields,
+                                        "duration_ms": extraction_result.extraction_duration_ms,
+                                    },
+                                },
+                            )
+                        except (LLMTimeoutError, AdapterError) as exc:
+                            record.status = "extraction_failed"
+                            record.error_message = str(exc)
+                            logger.warning(
+                                "Extraction failed for %s: %s",
+                                incoming.message_id,
+                                exc,
+                            )
                     persisted += 1
                     self._total_emails_processed += 1
                 except IntegrityError:

@@ -30,6 +30,7 @@ class EmailRequest(Base, TimestampMixin):
     cleaned_content: Mapped[str | None] = mapped_column(Text, default=None)
     folder: Mapped[str]
     status: Mapped[str] = mapped_column(default="received")
+    extracted_data: Mapped[dict | None] = mapped_column(JSON, default=None)
     error_message: Mapped[str | None] = mapped_column(Text, default=None)
     received_at: Mapped[datetime | None] = mapped_column(default=None)
 

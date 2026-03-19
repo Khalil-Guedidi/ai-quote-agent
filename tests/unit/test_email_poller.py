@@ -8,11 +8,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from quote_agent.adapters.email.models import IncomingEmail
-from quote_agent.exceptions import EmailConnectionError
+from quote_agent.exceptions import AdapterError, EmailConnectionError
 from quote_agent.services.email_poller import (
     _CIRCUIT_BREAKER_PAUSE,
     _CIRCUIT_BREAKER_THRESHOLD,
     EmailPollerService,
+)
+from quote_agent.services.extraction_models import (
+    ExtractedQuoteRequest,
+    ExtractionResult,
+    QuoteLineItem,
 )
 
 
@@ -82,12 +87,20 @@ def poller(mock_adapter: MagicMock, mock_session_factory: MagicMock) -> EmailPol
     )
 
 
+@patch("quote_agent.services.email_poller.extract", new_callable=AsyncMock)
 async def test_successful_poll_persists_emails(
+    mock_extract: AsyncMock,
     poller: EmailPollerService,
     mock_adapter: MagicMock,
     mock_session: MagicMock,
 ) -> None:
     """Successful poll via run() persists emails with status 'received'."""
+    mock_extract.return_value = ExtractionResult(
+        request=ExtractedQuoteRequest(raw_text="test body"),
+        confidence=0.5,
+        missing_fields=[],
+        extraction_duration_ms=50,
+    )
     email = _make_incoming_email()
     call_count = 0
 
@@ -111,22 +124,84 @@ async def test_successful_poll_persists_emails(
     assert mock_adapter.mark_emails_seen.call_args_list[0].args[0] == ["<test-1@example.com>"]
 
 
+@patch("quote_agent.services.email_poller.extract", new_callable=AsyncMock)
 async def test_cleaning_called_after_persistence(
+    mock_extract: AsyncMock,
     poller: EmailPollerService,
     mock_adapter: MagicMock,
     mock_session: MagicMock,
 ) -> None:
-    """Cleaning is called after successful email persistence."""
+    """Cleaning is called after successful email persistence, then extraction runs."""
+    mock_extract.return_value = ExtractionResult(
+        request=ExtractedQuoteRequest(
+            client_name="Test",
+            line_items=[QuoteLineItem(description="test product", quantity=1.0)],
+            raw_text="test body",
+        ),
+        confidence=0.9,
+        missing_fields=[],
+        extraction_duration_ms=100,
+    )
+
     email = _make_incoming_email()
     mock_adapter.fetch_new_emails = AsyncMock(return_value=[email])
 
     persisted = await poller._persist_emails([email])
 
     assert persisted == 1
-    # Verify the record was added and has cleaned status
     added_record = mock_session.add.call_args[0][0]
-    assert added_record.status == "cleaned"
+    assert added_record.status == "extracted"
     assert added_record.cleaned_content is not None
+    assert added_record.extracted_data is not None
+    mock_extract.assert_called_once()
+
+
+@patch("quote_agent.services.email_poller.extract", new_callable=AsyncMock)
+async def test_extraction_called_after_cleaning(
+    mock_extract: AsyncMock,
+    poller: EmailPollerService,
+    mock_adapter: MagicMock,
+    mock_session: MagicMock,
+) -> None:
+    """Extraction is called after successful cleaning with correct arguments."""
+    mock_extract.return_value = ExtractionResult(
+        request=ExtractedQuoteRequest(
+            client_name="Jean",
+            line_items=[QuoteLineItem(description="Vis M8", quantity=10.0)],
+            raw_text="test body",
+        ),
+        confidence=0.8,
+        missing_fields=[],
+        extraction_duration_ms=200,
+    )
+
+    email = _make_incoming_email(subject="Demande de devis")
+    persisted = await poller._persist_emails([email])
+
+    assert persisted == 1
+    mock_extract.assert_called_once()
+    call_kwargs = mock_extract.call_args
+    assert call_kwargs.kwargs["sender"] == "sender@example.com"
+    assert call_kwargs.kwargs["subject"] == "Demande de devis"
+
+
+@patch("quote_agent.services.email_poller.extract", new_callable=AsyncMock)
+async def test_extraction_failure_does_not_block_pipeline(
+    mock_extract: AsyncMock,
+    poller: EmailPollerService,
+    mock_adapter: MagicMock,
+    mock_session: MagicMock,
+) -> None:
+    """Extraction failure sets extraction_failed status but doesn't block the pipeline."""
+    mock_extract.side_effect = AdapterError("LLM connection failed")
+
+    email = _make_incoming_email()
+    persisted = await poller._persist_emails([email])
+
+    assert persisted == 1
+    added_record = mock_session.add.call_args[0][0]
+    assert added_record.status == "extraction_failed"
+    assert added_record.error_message == "LLM connection failed"
 
 
 async def test_duplicate_message_id_is_skipped(
