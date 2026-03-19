@@ -6,7 +6,7 @@ import uuid
 
 from pgvector.sqlalchemy import Vector  # type: ignore[import-untyped]
 from sqlalchemy import Index, Text, text
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import JSON
 
@@ -37,6 +37,9 @@ class Product(Base, TimestampMixin):
 
     # Embedding vector — populated by EmbeddingService (Story 3.2)
     vector: Mapped[list[float] | None] = mapped_column(Vector(dim=1024), nullable=True, default=None)
+
+    # Full-text search vector — populated by DB trigger (Story 3.3)
+    search_vector: Mapped[str | None] = mapped_column(TSVECTOR, nullable=True, default=None)
 
     __table_args__ = (
         Index("ix_products_reference", "reference"),

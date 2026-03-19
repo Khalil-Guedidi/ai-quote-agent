@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-20  # Story T.8 done
+last_updated: 2026-03-20  # Story 3.3 review
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -83,7 +83,7 @@ development_status:
   3-0c-generation-catalogue-test-50k-realiste: done
   3-1-ingestion-catalogue-depuis-erp-zero-preprocessing: done
   3-2-generation-embeddings-index-vectoriel: done
-  3-3-recherche-hybride-semantique-mot-cle: backlog
+  3-3-recherche-hybride-semantique-mot-cle: done
   3-4-filtre-de-proposabilite: backlog
   3-5-cache-de-resultats-de-recherche: backlog
   3-6-matching-terminologie-client-jargon: backlog

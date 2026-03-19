@@ -80,6 +80,16 @@ class EmbeddingSettings(BaseModel):
     device: str = "cpu"
 
 
+class SearchSettings(BaseModel):
+    """Hybrid search configuration."""
+
+    default_limit: int = 10
+    semantic_weight: float = 0.5  # Reserved for future weighted RRF variant (not yet used)
+    keyword_weight: float = 0.5  # Reserved for future weighted RRF variant (not yet used)
+    rrf_k: int = 60
+    hnsw_ef_search: int = 100
+
+
 class AppSettings(BaseModel):
     """Application-level configuration."""
 
@@ -107,6 +117,7 @@ class Settings(BaseSettings):
     email: EmailSettings
     notification: NotificationSettings = NotificationSettings()
     embedding: EmbeddingSettings = EmbeddingSettings()
+    search: SearchSettings = SearchSettings()
     app: AppSettings = AppSettings()
 
 
