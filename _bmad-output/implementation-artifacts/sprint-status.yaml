@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-19  # Story 3.0a done (code review passed)
+last_updated: 2026-03-19  # Story 3.0b done
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -79,7 +79,7 @@ development_status:
   # All 3 block stories 3.1+
   epic-3: in-progress
   3-0a-tests-e2e-pipeline-epic-2: done
-  3-0b-generation-project-context-md: backlog
+  3-0b-generation-project-context-md: done
   3-0c-generation-catalogue-test-50k-realiste: backlog
   3-1-ingestion-catalogue-depuis-erp-zero-preprocessing: backlog
   3-2-generation-embeddings-index-vectoriel: backlog
