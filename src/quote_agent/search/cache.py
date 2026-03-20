@@ -48,7 +48,7 @@ async def get_cached(session: AsyncSession, cache_key: str) -> SearchResult | No
         )
         return None
 
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     if row.expires_at <= now:
         logger.info(
             "Cache miss",
@@ -71,7 +71,7 @@ async def put_cached(
     ttl_seconds: int,
 ) -> None:
     """Store a search result in the cache. Upserts on duplicate key."""
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     expires_at = now + timedelta(seconds=ttl_seconds)
     results_json = result.model_dump(mode="json")
 
@@ -122,7 +122,7 @@ async def invalidate_all(session: AsyncSession) -> int:
 
 async def cleanup_expired(session: AsyncSession) -> int:
     """Delete expired cache entries. Returns the number of entries removed."""
-    now = datetime.now(UTC)
+    now = datetime.now(UTC).replace(tzinfo=None)
     stmt = delete(SearchCache).where(SearchCache.expires_at < now)
     cursor_result = await session.execute(stmt)
     await session.flush()
