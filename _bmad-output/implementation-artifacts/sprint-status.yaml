@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-20  # Story 4-2 review
+last_updated: 2026-03-20  # Story T-11 in-progress
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -166,7 +166,7 @@ development_status:
   t-8-search-deep-dive-post: done              # after 3.1–3.2
   t-9-llm-reranking-post: done              # after 3.4/3.6
   t-10-search-recap-post: done             # after Epic 3
-  t-11-confidence-tiers-post: backlog              # after 4.1–4.2
+  t-11-confidence-tiers-post: review              # after 4.1–4.2
   t-12-memory-architecture-post: backlog           # after 4.6–4.7 or Epic 6
   t-13-intelligence-recap-post: backlog            # after Epic 4
   t-14-human-ai-collaboration-post: backlog        # after 5.2–5.3
