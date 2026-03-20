@@ -103,6 +103,17 @@ class ClassificationSettings(BaseModel):
     fallback_complexity: Literal["simple", "ambiguous", "complex", "out_of_scope"] = "complex"
 
 
+class ConfidenceScoringSettings(BaseModel):
+    """Confidence scoring and tier routing configuration."""
+
+    timeout_seconds: int = 10
+    high_threshold: float = 0.85
+    low_threshold: float = 0.50
+    max_proposals: int = 5
+    min_proposals: int = 2
+    fallback_tier: Literal["high", "medium", "low"] = "low"
+
+
 class SearchSettings(BaseModel):
     """Hybrid search configuration."""
 
@@ -141,6 +152,7 @@ class Settings(BaseSettings):
     notification: NotificationSettings = NotificationSettings()
     embedding: EmbeddingSettings = EmbeddingSettings()
     classification: ClassificationSettings = ClassificationSettings()
+    confidence_scoring: ConfidenceScoringSettings = ConfidenceScoringSettings()
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()

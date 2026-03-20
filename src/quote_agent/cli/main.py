@@ -33,6 +33,28 @@ def classify(
 
 
 @app.command()
+def score(
+    description: str = typer.Argument(..., help="Quote request description to score"),
+    quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
+    reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
+    urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
+    limit: int = typer.Option(5, "--limit", "-l", help="Number of search results to score"),
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Score confidence of product matches and route by tier."""
+    from quote_agent.cli.score import score as _score_impl
+
+    _score_impl(
+        description=description,
+        quantity=quantity,
+        reference=reference,
+        urgency=urgency,
+        limit=limit,
+        json_output=json_output,
+    )
+
+
+@app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),
     limit: int = typer.Option(10, "--limit", "-l", help="Maximum number of results"),
