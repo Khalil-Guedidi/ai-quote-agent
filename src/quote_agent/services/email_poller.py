@@ -76,9 +76,7 @@ class EmailPollerService:
 
                 # Mark fetched emails as seen — safe to fail, dedup handles re-fetch
                 with contextlib.suppress(EmailConnectionError):
-                    await self._adapter.mark_emails_seen(
-                        [e.message_id for e in emails]
-                    )
+                    await self._adapter.mark_emails_seen([e.message_id for e in emails])
 
                 self._consecutive_failures = 0
                 self._last_poll_time = asyncio.get_event_loop().time()
@@ -99,8 +97,7 @@ class EmailPollerService:
 
                 if self._consecutive_failures >= _CIRCUIT_BREAKER_THRESHOLD:
                     logger.error(
-                        "Circuit breaker triggered after %d consecutive failures, "
-                        "pausing for %ds",
+                        "Circuit breaker triggered after %d consecutive failures, pausing for %ds",
                         self._consecutive_failures,
                         _CIRCUIT_BREAKER_PAUSE,
                     )
@@ -130,9 +127,7 @@ class EmailPollerService:
         async with self._session_factory() as session:
             for incoming in emails:
                 existing = await session.execute(
-                    select(EmailRequest.id).where(
-                        EmailRequest.message_id == incoming.message_id
-                    )
+                    select(EmailRequest.id).where(EmailRequest.message_id == incoming.message_id)
                 )
                 if existing.scalar_one_or_none() is not None:
                     logger.debug(

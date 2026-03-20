@@ -306,9 +306,7 @@ async def test_mark_emails_seen_marks_by_message_id(
 
     await adapter.mark_emails_seen(["<test-123@example.com>"])
 
-    mock_conn.search.assert_called_once_with(
-        None, 'HEADER Message-ID "<test-123@example.com>"'
-    )
+    mock_conn.search.assert_called_once_with(None, 'HEADER Message-ID "<test-123@example.com>"')
     mock_conn.store.assert_called_once_with(b"1", "+FLAGS", "\\Seen")
 
 

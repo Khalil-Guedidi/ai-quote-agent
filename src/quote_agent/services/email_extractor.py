@@ -10,7 +10,6 @@ import openai
 
 from quote_agent.adapters.llm import get_llm_adapter
 from quote_agent.exceptions import AdapterError, LLMTimeoutError
-from quote_agent.security.input_isolation import EXTRACTION_SYSTEM_PROMPT
 from quote_agent.services.extraction_models import (
     ExtractedQuoteRequest,
     ExtractionResult,
@@ -70,21 +69,12 @@ async def extract(
                 "component": "security.sanitizer",
                 "context": {
                     "threat_count": isolated.sanitization_result.threat_count,
-                    "pattern_names": [
-                        t.pattern_name
-                        for t in isolated.sanitization_result.threats_detected
-                    ],
+                    "pattern_names": [t.pattern_name for t in isolated.sanitization_result.threats_detected],
                     "severity_max": (
                         "high"
-                        if any(
-                            t.severity == "high"
-                            for t in isolated.sanitization_result.threats_detected
-                        )
+                        if any(t.severity == "high" for t in isolated.sanitization_result.threats_detected)
                         else "medium"
-                        if any(
-                            t.severity == "medium"
-                            for t in isolated.sanitization_result.threats_detected
-                        )
+                        if any(t.severity == "medium" for t in isolated.sanitization_result.threats_detected)
                         else "low"
                     ),
                 },
@@ -100,7 +90,7 @@ async def extract(
     start_s = time.monotonic()
     try:
         result: ExtractedQuoteRequest = await asyncio.wait_for(
-            structured_model.ainvoke(messages),
+            structured_model.ainvoke(messages),  # type: ignore[arg-type]
             timeout=_EXTRACTION_TIMEOUT,
         )
     except TimeoutError as exc:

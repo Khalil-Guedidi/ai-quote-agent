@@ -9,12 +9,12 @@ import pytest
 
 from quote_agent.adapters.email.models import IncomingEmail
 from quote_agent.exceptions import AdapterError, EmailConnectionError, LLMTimeoutError
+from quote_agent.models.quote_request import QuoteRequest
 from quote_agent.services.email_poller import (
     _CIRCUIT_BREAKER_PAUSE,
     _CIRCUIT_BREAKER_THRESHOLD,
     EmailPollerService,
 )
-from quote_agent.models.quote_request import QuoteRequest
 from quote_agent.services.extraction_models import (
     ExtractedQuoteRequest,
     ExtractionResult,

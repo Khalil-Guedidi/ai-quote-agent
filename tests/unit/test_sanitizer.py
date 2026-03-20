@@ -22,10 +22,7 @@ def test_ignore_previous_instructions_detected_english() -> None:
 
     assert result.threat_count >= 1
     assert "[SANITIZED: ignore previous instructions]" in result.sanitized_text
-    assert any(
-        t.pattern_name == "instruction_override_ignore_previous"
-        for t in result.threats_detected
-    )
+    assert any(t.pattern_name == "instruction_override_ignore_previous" for t in result.threats_detected)
 
 
 def test_oublie_les_instructions_detected_french() -> None:
@@ -43,10 +40,7 @@ def test_system_role_impersonation_detected() -> None:
     result = sanitize(text)
 
     assert result.threat_count >= 1
-    assert any(
-        t.pattern_name == "role_impersonation_system"
-        for t in result.threats_detected
-    )
+    assert any(t.pattern_name == "role_impersonation_system" for t in result.threats_detected)
     assert any(t.severity == "high" for t in result.threats_detected)
 
 
@@ -56,9 +50,7 @@ def test_im_start_im_end_token_injection_detected() -> None:
     result = sanitize(text)
 
     assert result.threat_count >= 2
-    im_patterns = [
-        t for t in result.threats_detected if "im_start" in t.pattern_name or "im_end" in t.pattern_name
-    ]
+    im_patterns = [t for t in result.threats_detected if "im_start" in t.pattern_name or "im_end" in t.pattern_name]
     assert len(im_patterns) == 2
 
 

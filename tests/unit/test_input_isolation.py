@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch
-
 from quote_agent.security.input_isolation import (
     UNTRUSTED_END,
     UNTRUSTED_START,

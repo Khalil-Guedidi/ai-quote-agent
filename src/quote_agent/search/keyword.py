@@ -93,11 +93,7 @@ async def search_exact_ref(
     proposability_settings: ProposabilitySettings | None = None,
 ) -> list[ScoredProduct]:
     """Exact reference matching — ILIKE on reference column, score = 1.0."""
-    stmt = (
-        select(Product)
-        .where(Product.reference.ilike(query_text.strip()))
-        .limit(limit)
-    )
+    stmt = select(Product).where(Product.reference.ilike(query_text.strip())).limit(limit)
 
     if not include_stale:
         stmt = stmt.where(Product.is_stale.is_(False))

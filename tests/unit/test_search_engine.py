@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -11,13 +10,10 @@ import pytest
 from quote_agent.search.engine import SearchEngine, _rrf_fuse
 from quote_agent.search.models import ScoredProduct, SearchRequest, SearchResult
 
-if TYPE_CHECKING:
-    pass
-
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_scored(
     *,
@@ -151,8 +147,10 @@ class TestSearchEngineHybrid:
         """AC-2: Reference code query returns exact match immediately."""
         exact_result = _make_scored(name="Tube", source="exact_ref", score=1.0)
 
-        with patch("quote_agent.search.engine.is_reference_code", return_value=True), \
-             patch("quote_agent.search.engine.search_exact_ref", new_callable=AsyncMock, return_value=[exact_result]):
+        with (
+            patch("quote_agent.search.engine.is_reference_code", return_value=True),
+            patch("quote_agent.search.engine.search_exact_ref", new_callable=AsyncMock, return_value=[exact_result]),
+        ):
             result = await engine.search_hybrid(SearchRequest(query="TUB-304L-025"))
 
         assert result.method == "exact_ref"
@@ -164,9 +162,11 @@ class TestSearchEngineHybrid:
         sem_result = _make_scored(name="Tube Inox", source="semantic")
         kw_result = _make_scored(name="Tube Rond", source="keyword")
 
-        with patch("quote_agent.search.engine.is_reference_code", return_value=False), \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[sem_result]), \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[kw_result]):
+        with (
+            patch("quote_agent.search.engine.is_reference_code", return_value=False),
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[sem_result]),
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[kw_result]),
+        ):
             result = await engine.search_hybrid(SearchRequest(query="tubes inox"))
 
         assert result.method == "hybrid"
@@ -176,10 +176,12 @@ class TestSearchEngineHybrid:
         """AC-2: Reference code query falls back to hybrid when no exact match."""
         sem_result = _make_scored(name="Tube", source="semantic")
 
-        with patch("quote_agent.search.engine.is_reference_code", return_value=True), \
-             patch("quote_agent.search.engine.search_exact_ref", new_callable=AsyncMock, return_value=[]), \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[sem_result]), \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]):
+        with (
+            patch("quote_agent.search.engine.is_reference_code", return_value=True),
+            patch("quote_agent.search.engine.search_exact_ref", new_callable=AsyncMock, return_value=[]),
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[sem_result]),
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]),
+        ):
             result = await engine.search_hybrid(SearchRequest(query="TUB-UNKNOWN-999"))
 
         assert result.method == "hybrid"
@@ -194,8 +196,10 @@ class TestSearchEngineSemanticOnly:
         adapter = _make_embedding_adapter()
         sem_result = _make_scored(name="Product", source="semantic")
 
-        with patch("quote_agent.search.engine.get_settings") as mock_settings, \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[sem_result]):
+        with (
+            patch("quote_agent.search.engine.get_settings") as mock_settings,
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[sem_result]),
+        ):
             settings = MagicMock()
             settings.search.default_limit = 10
             settings.search.hnsw_ef_search = 100
@@ -217,8 +221,10 @@ class TestSearchEngineKeywordOnly:
         adapter = _make_embedding_adapter()
         kw_result = _make_scored(name="Product", source="keyword")
 
-        with patch("quote_agent.search.engine.get_settings") as mock_settings, \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[kw_result]):
+        with (
+            patch("quote_agent.search.engine.get_settings") as mock_settings,
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[kw_result]),
+        ):
             settings = MagicMock()
             settings.search.default_limit = 10
             settings.search_cache.enabled = False
@@ -243,10 +249,12 @@ class TestSearchEdgeCases:
         session = AsyncMock()
         adapter = _make_embedding_adapter()
 
-        with patch("quote_agent.search.engine.get_settings") as mock_settings, \
-             patch("quote_agent.search.engine.is_reference_code", return_value=False), \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]), \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]):
+        with (
+            patch("quote_agent.search.engine.get_settings") as mock_settings,
+            patch("quote_agent.search.engine.is_reference_code", return_value=False),
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]),
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]),
+        ):
             settings = MagicMock()
             settings.search.default_limit = 10
             settings.search.rrf_k = 60

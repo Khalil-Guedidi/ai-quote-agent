@@ -160,18 +160,21 @@ class TestJargonSettings:
 
     def test_jargon_env_var_mapping(self) -> None:
         """AC-5: JARGON__EXPANSION_ENABLED env var maps correctly."""
-        with patch.dict("os.environ", {
-            "DATABASE__URL": "postgresql://localhost/test",
-            "LLM__API_KEY": "test-key",
-            "ERP__URL": "http://localhost",
-            "ERP__DATABASE": "test",
-            "ERP__USERNAME": "admin",
-            "ERP__API_KEY": "test",
-            "EMAIL__IMAP_SERVER": "localhost",
-            "EMAIL__USERNAME": "test",
-            "EMAIL__PASSWORD": "test",
-            "JARGON__EXPANSION_ENABLED": "false",
-        }):
+        with patch.dict(
+            "os.environ",
+            {
+                "DATABASE__URL": "postgresql://localhost/test",
+                "LLM__API_KEY": "test-key",
+                "ERP__URL": "http://localhost",
+                "ERP__DATABASE": "test",
+                "ERP__USERNAME": "admin",
+                "ERP__API_KEY": "test",
+                "EMAIL__IMAP_SERVER": "localhost",
+                "EMAIL__USERNAME": "test",
+                "EMAIL__PASSWORD": "test",
+                "JARGON__EXPANSION_ENABLED": "false",
+            },
+        ):
             from quote_agent.config import Settings
 
             s = Settings()
@@ -214,9 +217,11 @@ class TestSearchEngineJargonIntegration:
         """AC-4: When expansion enabled, expanded query is sent to embedding."""
         engine = self._make_engine(expansion_enabled=True)
 
-        with patch("quote_agent.search.engine.is_reference_code", return_value=False), \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]), \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]):
+        with (
+            patch("quote_agent.search.engine.is_reference_code", return_value=False),
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]),
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]),
+        ):
             await engine.search_hybrid(SearchRequest(query="tubes inox 304L"))
 
         # Verify expanded query was sent to embedding
@@ -227,9 +232,11 @@ class TestSearchEngineJargonIntegration:
         """AC-5: When expansion_enabled=False, no expansion occurs."""
         engine = self._make_engine(expansion_enabled=False)
 
-        with patch("quote_agent.search.engine.is_reference_code", return_value=False), \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]), \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]):
+        with (
+            patch("quote_agent.search.engine.is_reference_code", return_value=False),
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]),
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]),
+        ):
             result = await engine.search_hybrid(SearchRequest(query="tubes inox 304L"))
 
         # Verify original query was sent to embedding (no expansion)
@@ -242,9 +249,11 @@ class TestSearchEngineJargonIntegration:
         """AC-2: jargon_expanded and expanded_query metadata set correctly on SearchResult."""
         engine = self._make_engine(expansion_enabled=True)
 
-        with patch("quote_agent.search.engine.is_reference_code", return_value=False), \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]), \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]):
+        with (
+            patch("quote_agent.search.engine.is_reference_code", return_value=False),
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]),
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]),
+        ):
             result = await engine.search_hybrid(SearchRequest(query="tubes inox 304L"))
 
         assert result.jargon_expanded is True
@@ -295,9 +304,11 @@ class TestSearchEngineJargonIntegration:
         """AC-2: No jargon metadata when query has no abbreviations to expand."""
         engine = self._make_engine(expansion_enabled=True)
 
-        with patch("quote_agent.search.engine.is_reference_code", return_value=False), \
-             patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]), \
-             patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]):
+        with (
+            patch("quote_agent.search.engine.is_reference_code", return_value=False),
+            patch("quote_agent.search.engine.search_semantic", new_callable=AsyncMock, return_value=[]),
+            patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[]),
+        ):
             result = await engine.search_hybrid(SearchRequest(query="acier carbone standard"))
 
         assert result.jargon_expanded is False

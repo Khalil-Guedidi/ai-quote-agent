@@ -87,7 +87,8 @@ class TestProposabilityE2E:
     """E2E tests: proposability filter with real PostgreSQL + real embedding model."""
 
     async def test_proposable_products_returned_when_filter_enabled_e2e(
-        self, e2e_db_session: AsyncSession,
+        self,
+        e2e_db_session: AsyncSession,
     ) -> None:
         """AC-6: Only proposable products returned with filter enabled."""
         session = e2e_db_session
@@ -134,7 +135,8 @@ class TestProposabilityE2E:
             await session.commit()
 
     async def test_all_products_returned_when_filter_disabled_e2e(
-        self, e2e_db_session: AsyncSession,
+        self,
+        e2e_db_session: AsyncSession,
     ) -> None:
         """AC-6: All products returned with filter disabled, is_proposable correctly set."""
         session = e2e_db_session
@@ -162,9 +164,7 @@ class TestProposabilityE2E:
 
             # All 4 products should appear (filter is off, query matches all)
             test_results = {r.product_id: r for r in result.results if r.product_id in product_ids}
-            assert len(test_results) >= 2, (
-                f"Expected at least 2 test products in results, got {len(test_results)}"
-            )
+            assert len(test_results) >= 2, f"Expected at least 2 test products in results, got {len(test_results)}"
 
             # Check is_proposable is correctly computed for our test products
             if prod_a.id in test_results:
@@ -180,7 +180,8 @@ class TestProposabilityE2E:
             await session.commit()
 
     async def test_excluded_categories_filter_e2e(
-        self, e2e_db_session: AsyncSession,
+        self,
+        e2e_db_session: AsyncSession,
     ) -> None:
         """AC-6: excluded_categories config filters products by category."""
         session = e2e_db_session

@@ -172,9 +172,7 @@ class IMAPAdapter:
         for header in ("To", "Cc"):
             value = msg.get(header)
             if value:
-                recipients.extend(
-                    addr.strip() for addr in value.split(",") if addr.strip()
-                )
+                recipients.extend(addr.strip() for addr in value.split(",") if addr.strip())
 
         received_at = None
         date_str = msg.get("Date")

@@ -28,7 +28,7 @@ class QuoteRequest(Base, TimestampMixin):
         ForeignKey("email_requests.id"),
     )
     request_index: Mapped[int] = mapped_column(default=0)
-    line_items: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    line_items: Mapped[list[dict[str, object]]] = mapped_column(JSON, default=list)
     client_name: Mapped[str | None] = mapped_column(default=None)
     client_identifier: Mapped[str | None] = mapped_column(default=None)
     client_email: Mapped[str | None] = mapped_column(default=None)

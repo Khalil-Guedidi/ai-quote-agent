@@ -17,20 +17,35 @@ class TestProductHash:
     def test_same_data_same_hash(self) -> None:
         """AC-3: Identical products produce identical hashes."""
         dto = ProductDTO(
-            odoo_id=1, reference="A", name="B", category="C",
-            unit_price=1.0, stock_status="in_stock", is_active=True,
+            odoo_id=1,
+            reference="A",
+            name="B",
+            category="C",
+            unit_price=1.0,
+            stock_status="in_stock",
+            is_active=True,
         )
         assert _product_hash(dto) == _product_hash(dto)
 
     def test_different_data_different_hash(self) -> None:
         """AC-3: Changed products produce different hashes."""
         dto1 = ProductDTO(
-            odoo_id=1, reference="A", name="B", category="C",
-            unit_price=1.0, stock_status="in_stock", is_active=True,
+            odoo_id=1,
+            reference="A",
+            name="B",
+            category="C",
+            unit_price=1.0,
+            stock_status="in_stock",
+            is_active=True,
         )
         dto2 = ProductDTO(
-            odoo_id=1, reference="A", name="B-updated", category="C",
-            unit_price=1.0, stock_status="in_stock", is_active=True,
+            odoo_id=1,
+            reference="A",
+            name="B-updated",
+            category="C",
+            unit_price=1.0,
+            stock_status="in_stock",
+            is_active=True,
         )
         assert _product_hash(dto1) != _product_hash(dto2)
 
@@ -89,9 +104,7 @@ class TestCatalogServiceIngestFull:
         session.execute.return_value = stale_result
         return session
 
-    async def test_products_inserted_when_new_catalog(
-        self, mock_adapter: AsyncMock, mock_session: AsyncMock
-    ) -> None:
+    async def test_products_inserted_when_new_catalog(self, mock_adapter: AsyncMock, mock_session: AsyncMock) -> None:
         """AC-1: New products are inserted into PostgreSQL."""
         products = [self._make_product_dto(1), self._make_product_dto(2)]
         mock_adapter.get_products.side_effect = [products, []]
@@ -111,9 +124,7 @@ class TestCatalogServiceIngestFull:
         assert result.unchanged == 0
         assert mock_session.add.call_count == 2
 
-    async def test_products_updated_when_changed(
-        self, mock_adapter: AsyncMock, mock_session: AsyncMock
-    ) -> None:
+    async def test_products_updated_when_changed(self, mock_adapter: AsyncMock, mock_session: AsyncMock) -> None:
         """AC-3: Changed products are updated (not duplicated)."""
         # Adapter returns product with updated name
         updated_dto = self._make_product_dto(1, name="Updated Name")
@@ -134,9 +145,7 @@ class TestCatalogServiceIngestFull:
         assert result.inserted == 0
         assert existing.name == "Updated Name"
 
-    async def test_products_unchanged_when_identical(
-        self, mock_adapter: AsyncMock, mock_session: AsyncMock
-    ) -> None:
+    async def test_products_unchanged_when_identical(self, mock_adapter: AsyncMock, mock_session: AsyncMock) -> None:
         """AC-3: Identical products are skipped (unchanged)."""
         dto = self._make_product_dto(1)
         mock_adapter.get_products.side_effect = [[dto], []]
@@ -176,9 +185,7 @@ class TestCatalogServiceIngestFull:
         assert mock_adapter.get_products.call_count == 1
         assert result.inserted == 2
 
-    async def test_stale_products_flagged(
-        self, mock_adapter: AsyncMock, mock_session: AsyncMock
-    ) -> None:
+    async def test_stale_products_flagged(self, mock_adapter: AsyncMock, mock_session: AsyncMock) -> None:
         """AC-3: Products not in fetched set are flagged stale."""
         products = [self._make_product_dto(1)]
         mock_adapter.get_products.side_effect = [products, []]
@@ -194,9 +201,7 @@ class TestCatalogServiceIngestFull:
 
         assert result.stale == 3
 
-    async def test_ingestion_result_has_duration(
-        self, mock_adapter: AsyncMock, mock_session: AsyncMock
-    ) -> None:
+    async def test_ingestion_result_has_duration(self, mock_adapter: AsyncMock, mock_session: AsyncMock) -> None:
         """AC-2: IngestionResult includes duration_seconds."""
         mock_adapter.get_products.side_effect = [[]]
 
@@ -223,6 +228,7 @@ class TestCatalogServiceIngestFull:
         mock_session.execute.side_effect = [select_result, stale_result, self._cache_invalidate_result()]
 
         import logging
+
         with caplog.at_level(logging.INFO, logger="quote_agent.services.catalog_service"):
             service = CatalogService(mock_adapter, mock_session)
             await service.ingest_full()

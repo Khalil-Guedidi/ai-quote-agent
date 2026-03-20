@@ -64,9 +64,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     poller_task.cancel()
     with contextlib.suppress(asyncio.CancelledError):
         await poller_task
-    logger.info(
-        "Email poller shut down (processed=%d emails)", poller.total_emails_processed
-    )
+    logger.info("Email poller shut down (processed=%d emails)", poller.total_emails_processed)
 
     create_async_engine_from_settings.cache_clear()
     _get_session_factory.cache_clear()

@@ -38,9 +38,7 @@ if TYPE_CHECKING:
 class TestPipelineHappyPath:
     """Happy path — full pipeline with real services."""
 
-    async def test_pipeline_processes_french_quote_request_e2e(
-        self, e2e_db_session: AsyncSession
-    ) -> None:
+    async def test_pipeline_processes_french_quote_request_e2e(self, e2e_db_session: AsyncSession) -> None:
         """AC-1: Full pipeline processes a French industrial quote request end-to-end."""
         email = simple_french_quote()
         factory = _get_session_factory()
@@ -56,18 +54,14 @@ class TestPipelineHappyPath:
         assert persisted == 1
 
         # Verify EmailRequest in DB
-        result = await e2e_db_session.execute(
-            select(EmailRequest).where(EmailRequest.message_id == email.message_id)
-        )
+        result = await e2e_db_session.execute(select(EmailRequest).where(EmailRequest.message_id == email.message_id))
         record = result.scalar_one()
         assert record.status == "split"
         assert record.cleaned_content is not None
         assert record.extracted_data is not None
 
         # Verify QuoteRequest(s) in DB
-        quotes = await e2e_db_session.execute(
-            select(QuoteRequest).where(QuoteRequest.email_request_id == record.id)
-        )
+        quotes = await e2e_db_session.execute(select(QuoteRequest).where(QuoteRequest.email_request_id == record.id))
         quote_list = list(quotes.scalars().all())
         assert len(quote_list) >= 1
 
@@ -75,9 +69,9 @@ class TestPipelineHappyPath:
         assert len(quote.line_items) >= 1
         # Check that extraction captured the product content
         items_text = str(quote.line_items).lower()
-        assert any(
-            keyword in items_text for keyword in ("tube", "inox", "304l")
-        ), f"Expected product keywords in line_items, got: {items_text}"
+        assert any(keyword in items_text for keyword in ("tube", "inox", "304l")), (
+            f"Expected product keywords in line_items, got: {items_text}"
+        )
         assert quote.confidence is not None
         assert quote.confidence > 0.0
 
@@ -160,30 +154,21 @@ class TestPromptInjectionResilience:
         assert persisted == 1
 
         # Email should be persisted (not rejected)
-        result = await e2e_db_session.execute(
-            select(EmailRequest).where(EmailRequest.message_id == email.message_id)
-        )
+        result = await e2e_db_session.execute(select(EmailRequest).where(EmailRequest.message_id == email.message_id))
         record = result.scalar_one()
-        assert record.status in ("extracted", "split"), (
-            f"Pipeline should reach extracted/split, got: {record.status}"
-        )
+        assert record.status in ("extracted", "split"), f"Pipeline should reach extracted/split, got: {record.status}"
 
         # Verify product data was extracted (not leaked system prompt)
-        quotes = await e2e_db_session.execute(
-            select(QuoteRequest).where(QuoteRequest.email_request_id == record.id)
-        )
+        quotes = await e2e_db_session.execute(select(QuoteRequest).where(QuoteRequest.email_request_id == record.id))
         quote_list = list(quotes.scalars().all())
         assert len(quote_list) >= 1
         items_text = str(quote_list[0].line_items).lower()
-        assert any(
-            keyword in items_text for keyword in ("tube", "acier", "galvanise", "32")
-        ), f"Expected product data in line_items, got: {items_text}"
+        assert any(keyword in items_text for keyword in ("tube", "acier", "galvanise", "32")), (
+            f"Expected product data in line_items, got: {items_text}"
+        )
 
         # Verify sanitization warnings were logged (component set via extra dict)
-        sanitizer_logs = [
-            r for r in caplog.records
-            if getattr(r, "component", None) == "security.sanitizer"
-        ]
+        sanitizer_logs = [r for r in caplog.records if getattr(r, "component", None) == "security.sanitizer"]
         assert len(sanitizer_logs) >= 1, (
             "Expected structured log with component='security.sanitizer'. "
             f"Components found: {[getattr(r, 'component', None) for r in caplog.records]}"
@@ -199,9 +184,7 @@ class TestPromptInjectionResilience:
 class TestCircuitBreaker:
     """Circuit breaker behavior on IMAP failure — no real IMAP needed."""
 
-    async def test_poller_circuit_breaker_on_imap_failure(
-        self, caplog: pytest.LogCaptureFixture
-    ) -> None:
+    async def test_poller_circuit_breaker_on_imap_failure(self, caplog: pytest.LogCaptureFixture) -> None:
         """AC-3: Circuit breaker activates after consecutive IMAP failures."""
         from quote_agent.exceptions import EmailConnectionError
 
@@ -212,9 +195,7 @@ class TestCircuitBreaker:
         )
 
         factory = MagicMock()
-        poller = EmailPollerService(
-            adapter=failing_adapter, session_factory=factory, poll_interval=0
-        )
+        poller = EmailPollerService(adapter=failing_adapter, session_factory=factory, poll_interval=0)
 
         # Simulate consecutive failures by calling run() briefly
         import asyncio
@@ -275,22 +256,14 @@ class TestStructuredLogging:
         }
 
         logged_components = {
-            getattr(r, "component", None)
-            for r in caplog.records
-            if getattr(r, "component", None) is not None
+            getattr(r, "component", None) for r in caplog.records if getattr(r, "component", None) is not None
         }
 
         missing = expected_components - logged_components
         assert not missing, (
-            f"Missing structured logs for components: {missing}. "
-            f"Found: {logged_components}. Messages: {log_messages}"
+            f"Missing structured logs for components: {missing}. Found: {logged_components}. Messages: {log_messages}"
         )
 
         # Verify final log has final_status in context
-        final_logs = [
-            r for r in caplog.records
-            if getattr(r, "context", {}).get("final_status") is not None
-        ]
-        assert len(final_logs) >= 1, (
-            f"Expected log with context.final_status. Messages: {log_messages}"
-        )
+        final_logs = [r for r in caplog.records if getattr(r, "context", {}).get("final_status") is not None]
+        assert len(final_logs) >= 1, f"Expected log with context.final_status. Messages: {log_messages}"

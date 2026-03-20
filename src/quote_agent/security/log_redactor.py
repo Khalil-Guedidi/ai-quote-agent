@@ -36,8 +36,7 @@ _PHONE_FR_RE = re.compile(
 )
 _PRICE_RE = re.compile(
     r"\d[\d\s.,]*\s*(?:€|EUR\b)"  # 500€, 1 500 EUR
-    r"|(?:prix|tarif|remise|réduction|escompte)\s*[:=]?\s*\d[\d\s.,]*(?:\s*%)?"  # prix: 250, remise 10%
-    ,
+    r"|(?:prix|tarif|remise|réduction|escompte)\s*[:=]?\s*\d[\d\s.,]*(?:\s*%)?",  # prix: 250, remise 10%
     re.IGNORECASE,
 )
 _IBAN_RE = re.compile(r"\b[A-Z]{2}\d{2}[\s]?[\dA-Z]{4}[\s]?(?:[\dA-Z]{4}[\s]?){2,7}[\dA-Z]{1,4}\b")
@@ -92,22 +91,19 @@ def redact(text: str | None) -> RedactionResult:
     )
 
 
-def redact_context(context: dict) -> dict:
+def redact_context(context: dict[str, object]) -> dict[str, object]:
     """Recursively redact string values in a dict for structured log context.
 
     Non-string values pass through unchanged. Nested dicts are walked recursively.
     """
-    result = {}
+    result: dict[str, object] = {}
     for key, value in context.items():
         if isinstance(value, str):
             result[key] = redact(value).redacted_text
         elif isinstance(value, dict):
             result[key] = redact_context(value)
         elif isinstance(value, list):
-            result[key] = [
-                redact(item).redacted_text if isinstance(item, str) else item
-                for item in value
-            ]
+            result[key] = [redact(item).redacted_text if isinstance(item, str) else item for item in value]
         else:
             result[key] = value
     return result

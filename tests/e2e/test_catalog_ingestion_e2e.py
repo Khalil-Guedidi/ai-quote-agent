@@ -83,8 +83,11 @@ def _seed_products_to_odoo(
             cat_name = rec.get("category", "Uncategorized")
             if cat_name not in category_ids:
                 existing = obj.execute_kw(
-                    db, uid, api_key,
-                    "product.category", "search",
+                    db,
+                    uid,
+                    api_key,
+                    "product.category",
+                    "search",
                     [[("name", "=", cat_name)]],
                     {"limit": 1},
                 )
@@ -92,8 +95,11 @@ def _seed_products_to_odoo(
                     category_ids[cat_name] = existing[0]
                 else:
                     category_ids[cat_name] = obj.execute_kw(
-                        db, uid, api_key,
-                        "product.category", "create",
+                        db,
+                        uid,
+                        api_key,
+                        "product.category",
+                        "create",
                         [{"name": cat_name}],
                     )
 
@@ -120,15 +126,22 @@ def _seed_products_to_odoo(
 
         # Batch create
         ids = obj.execute_kw(
-            db, uid, api_key,
-            "product.product", "create",
+            db,
+            uid,
+            api_key,
+            "product.product",
+            "create",
             [vals_list],
         )
         if isinstance(ids, int):
             ids = [ids]
         created_ids.extend(ids)
-        logger.info("Seeded batch %d/%d (%d products)", i // _SEED_BATCH_SIZE + 1,
-                     (len(records) + _SEED_BATCH_SIZE - 1) // _SEED_BATCH_SIZE, len(ids))
+        logger.info(
+            "Seeded batch %d/%d (%d products)",
+            i // _SEED_BATCH_SIZE + 1,
+            (len(records) + _SEED_BATCH_SIZE - 1) // _SEED_BATCH_SIZE,
+            len(ids),
+        )
 
     return created_ids
 
@@ -142,15 +155,21 @@ def _cleanup_odoo_products(
     """Delete all E2E test products from Odoo. Returns count deleted."""
     # Search for products with the E2E prefix (including archived)
     ids = obj.execute_kw(
-        db, uid, api_key,
-        "product.product", "search",
+        db,
+        uid,
+        api_key,
+        "product.product",
+        "search",
         [[("name", "like", _E2E_PRODUCT_PREFIX)]],
         {"context": {"active_test": False}},
     )
     if ids:
         obj.execute_kw(
-            db, uid, api_key,
-            "product.product", "unlink",
+            db,
+            uid,
+            api_key,
+            "product.product",
+            "unlink",
             [ids],
         )
     return len(ids)
@@ -176,9 +195,7 @@ async def seeded_odoo_products(e2e_db_session):
     await asyncio.to_thread(_cleanup_odoo_products, obj, uid, db, api_key)
 
     # Cleanup PostgreSQL — delete products with E2E prefix in name
-    await e2e_db_session.execute(
-        delete(ProductModel).where(ProductModel.name.like(f"%{_E2E_PRODUCT_PREFIX}%"))
-    )
+    await e2e_db_session.execute(delete(ProductModel).where(ProductModel.name.like(f"%{_E2E_PRODUCT_PREFIX}%")))
     await e2e_db_session.commit()
 
 
@@ -206,16 +223,12 @@ class TestCatalogIngestionE2E:
 
         # Verify products landed in PostgreSQL
         count_result = await e2e_db_session.execute(
-            select(func.count()).select_from(ProductModel).where(
-                ProductModel.name.like(f"%{_E2E_PRODUCT_PREFIX}%")
-            )
+            select(func.count()).select_from(ProductModel).where(ProductModel.name.like(f"%{_E2E_PRODUCT_PREFIX}%"))
         )
         db_count = count_result.scalar_one()
 
         # At least our seeded products should be there (there may be others from Odoo)
-        assert db_count >= record_count, (
-            f"Expected at least {record_count} E2E products in DB, got {db_count}"
-        )
+        assert db_count >= record_count, f"Expected at least {record_count} E2E products in DB, got {db_count}"
         assert result.inserted > 0
 
     async def test_resync_produces_correct_counts_e2e(
@@ -255,8 +268,11 @@ class TestCatalogIngestionE2E:
         target_id = created_ids[0]
         await asyncio.to_thread(
             obj.execute_kw,
-            db, uid, api_key,
-            "product.product", "write",
+            db,
+            uid,
+            api_key,
+            "product.product",
+            "write",
             [[target_id], {"list_price": 999.99}],
         )
 

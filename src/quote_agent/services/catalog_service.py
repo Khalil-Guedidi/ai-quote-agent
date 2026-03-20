@@ -175,17 +175,19 @@ class CatalogService:
                 inserted += 1
             else:
                 # Check if changed
-                existing_hash = _product_hash(ProductDTO(
-                    odoo_id=existing.odoo_id,
-                    reference=existing.reference,
-                    name=existing.name,
-                    description=existing.description,
-                    category=existing.category,
-                    unit_price=existing.unit_price,
-                    stock_status=existing.stock_status,
-                    is_active=existing.is_active,
-                    metadata=existing.metadata_ or {},
-                ))
+                existing_hash = _product_hash(
+                    ProductDTO(
+                        odoo_id=existing.odoo_id,
+                        reference=existing.reference,
+                        name=existing.name,
+                        description=existing.description,
+                        category=existing.category,
+                        unit_price=existing.unit_price,
+                        stock_status=existing.stock_status,
+                        is_active=existing.is_active,
+                        metadata=existing.metadata_ or {},
+                    )
+                )
                 if new_hash != existing_hash:
                     existing.reference = dto.reference
                     existing.name = dto.name

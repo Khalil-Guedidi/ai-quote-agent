@@ -43,10 +43,7 @@ def _has_real_llm() -> bool:
 
 def _has_real_erp() -> bool:
     """Check if real ERP (Odoo) credentials are available."""
-    return all(
-        bool(os.environ.get(var))
-        for var in ("ERP__URL", "ERP__DATABASE", "ERP__USERNAME", "ERP__API_KEY")
-    )
+    return all(bool(os.environ.get(var)) for var in ("ERP__URL", "ERP__DATABASE", "ERP__USERNAME", "ERP__API_KEY"))
 
 
 requires_e2e = pytest.mark.skipif(
@@ -110,8 +107,7 @@ async def e2e_db_session() -> AsyncIterator[AsyncSession]:
     )
     if result.returncode != 0:
         raise RuntimeError(
-            f"Alembic migration failed (rc={result.returncode}):\n"
-            f"stdout: {result.stdout}\nstderr: {result.stderr}"
+            f"Alembic migration failed (rc={result.returncode}):\nstdout: {result.stdout}\nstderr: {result.stderr}"
         )
 
     factory = _get_session_factory()
@@ -124,18 +120,12 @@ async def e2e_db_session() -> AsyncIterator[AsyncSession]:
     async with factory() as cleanup_session:
         # Delete QuoteRequests linked to test EmailRequests first (FK constraint)
         test_emails = await cleanup_session.execute(
-            EmailRequest.__table__.select().where(
-                EmailRequest.message_id.like(f"%{_E2E_TEST_PREFIX}%")
-            )
+            EmailRequest.__table__.select().where(EmailRequest.message_id.like(f"%{_E2E_TEST_PREFIX}%"))
         )
         test_email_ids = [row.id for row in test_emails]
         if test_email_ids:
-            await cleanup_session.execute(
-                delete(QuoteRequest).where(QuoteRequest.email_request_id.in_(test_email_ids))
-            )
-        await cleanup_session.execute(
-            delete(EmailRequest).where(EmailRequest.message_id.like(f"%{_E2E_TEST_PREFIX}%"))
-        )
+            await cleanup_session.execute(delete(QuoteRequest).where(QuoteRequest.email_request_id.in_(test_email_ids)))
+        await cleanup_session.execute(delete(EmailRequest).where(EmailRequest.message_id.like(f"%{_E2E_TEST_PREFIX}%")))
         await cleanup_session.commit()
 
 

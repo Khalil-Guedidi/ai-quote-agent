@@ -92,18 +92,20 @@ class JargonSettings(BaseModel):
     """Query expansion settings for industrial jargon."""
 
     expansion_enabled: bool = True
-    abbreviations: dict[str, str] = Field(default_factory=lambda: {
-        "inox": "acier inoxydable stainless steel",
-        "Ø": "diamètre diameter",
-        "lg": "longueur length",
-        "DN": "diamètre nominal nominal diameter",
-        "PN": "pression nominale nominal pressure",
-        "HM": "hexagonal mâle",
-        "BLN": "boulon bolt",
-        "RD": "rond round",
-        "TB": "tube",
-        "ml": "mètres linéaires linear meters",
-    })
+    abbreviations: dict[str, str] = Field(
+        default_factory=lambda: {
+            "inox": "acier inoxydable stainless steel",
+            "Ø": "diamètre diameter",
+            "lg": "longueur length",
+            "DN": "diamètre nominal nominal diameter",
+            "PN": "pression nominale nominal pressure",
+            "HM": "hexagonal mâle",
+            "BLN": "boulon bolt",
+            "RD": "rond round",
+            "TB": "tube",
+            "ml": "mètres linéaires linear meters",
+        }
+    )
 
 
 class SearchCacheSettings(BaseModel):

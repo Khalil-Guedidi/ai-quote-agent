@@ -75,23 +75,27 @@ async def put_cached(
     expires_at = now + timedelta(seconds=ttl_seconds)
     results_json = result.model_dump(mode="json")
 
-    stmt = pg_insert(SearchCache).values(
-        cache_key=cache_key,
-        query=request.query,
-        search_params={
-            "limit": request.limit,
-            "include_stale": request.include_stale,
-            "apply_proposability_filter": request.apply_proposability_filter,
-        },
-        results_json=results_json,
-        expires_at=expires_at,
-    ).on_conflict_do_update(
-        index_elements=["cache_key"],
-        set_={
-            "results_json": results_json,
-            "expires_at": expires_at,
-            "updated_at": now,
-        },
+    stmt = (
+        pg_insert(SearchCache)
+        .values(
+            cache_key=cache_key,
+            query=request.query,
+            search_params={
+                "limit": request.limit,
+                "include_stale": request.include_stale,
+                "apply_proposability_filter": request.apply_proposability_filter,
+            },
+            results_json=results_json,
+            expires_at=expires_at,
+        )
+        .on_conflict_do_update(
+            index_elements=["cache_key"],
+            set_={
+                "results_json": results_json,
+                "expires_at": expires_at,
+                "updated_at": now,
+            },
+        )
     )
     await session.execute(stmt)
     await session.flush()

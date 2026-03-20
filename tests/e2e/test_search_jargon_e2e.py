@@ -118,9 +118,7 @@ class TestSearchJargonE2E:
             await service.embed_all()
 
             engine = SearchEngine(session, adapter)
-            result = await engine.search_hybrid(
-                SearchRequest(query="tubes inox 304L Ø25 lg 6m")
-            )
+            result = await engine.search_hybrid(SearchRequest(query="tubes inox 304L Ø25 lg 6m"))
 
             assert len(result.results) > 0, "Jargon search returned no results"
             assert result.jargon_expanded is True
@@ -159,9 +157,7 @@ class TestSearchJargonE2E:
 
             with patch("quote_agent.search.engine.get_settings", return_value=patched):
                 engine = SearchEngine(session, adapter)
-                result = await engine.search_hybrid(
-                    SearchRequest(query="tubes inox 304L")
-                )
+                result = await engine.search_hybrid(SearchRequest(query="tubes inox 304L"))
 
             assert result.jargon_expanded is False
             assert result.expanded_query is None
@@ -190,9 +186,7 @@ class TestSearchJargonE2E:
 
             engine = SearchEngine(session, adapter)
             # Mixed French/English query
-            result = await engine.search_hybrid(
-                SearchRequest(query="stainless steel tube DN100")
-            )
+            result = await engine.search_hybrid(SearchRequest(query="stainless steel tube DN100"))
 
             assert len(result.results) > 0, "Cross-language query returned no results"
             assert result.method in ("hybrid", "exact_ref")
@@ -218,9 +212,7 @@ class TestSearchJargonE2E:
             await service.embed_all()
 
             engine = SearchEngine(session, adapter)
-            result = await engine.search_hybrid(
-                SearchRequest(query="clapet inox DN150 PN40")
-            )
+            result = await engine.search_hybrid(SearchRequest(query="clapet inox DN150 PN40"))
 
             assert result.jargon_expanded is True
             assert result.expanded_query is not None
@@ -282,28 +274,32 @@ class TestJargonBenchmarkE2E:
                     fail_count += 1
                     status = "FAIL"
 
-                results_log.append({
-                    "query": query,
-                    "category": category,
-                    "status": status,
-                    "results_count": len(result.results),
-                    "jargon_expanded": result.jargon_expanded,
-                    "top_5_names": [r.name for r in result.results[:5]],
-                })
+                results_log.append(
+                    {
+                        "query": query,
+                        "category": category,
+                        "status": status,
+                        "results_count": len(result.results),
+                        "jargon_expanded": result.jargon_expanded,
+                        "top_5_names": [r.name for r in result.results[:5]],
+                    }
+                )
 
             total = pass_count + fail_count
             pass_rate = pass_count / total if total > 0 else 0.0
 
             logger.info(
                 "Jargon benchmark completed",
-                extra={"context": {
-                    "component": "search.jargon.benchmark",
-                    "total_queries": total,
-                    "pass_count": pass_count,
-                    "fail_count": fail_count,
-                    "pass_rate": round(pass_rate, 4),
-                    "results": results_log,
-                }},
+                extra={
+                    "context": {
+                        "component": "search.jargon.benchmark",
+                        "total_queries": total,
+                        "pass_count": pass_count,
+                        "fail_count": fail_count,
+                        "pass_rate": round(pass_rate, 4),
+                        "results": results_log,
+                    }
+                },
             )
 
             assert pass_rate >= 0.80, (

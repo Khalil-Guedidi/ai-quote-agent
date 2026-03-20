@@ -117,7 +117,9 @@ class SearchEngine:
         # (no jargon expansion for reference codes)
         if is_reference_code(query):
             exact_results = await search_exact_ref(
-                self._session, query, limit,
+                self._session,
+                query,
+                limit,
                 include_stale=request.include_stale,
                 proposability_clauses=prop_clauses,
                 proposability_settings=tag_settings,
@@ -126,13 +128,15 @@ class SearchEngine:
                 duration = time.monotonic() - start
                 logger.info(
                     "Exact reference search completed",
-                    extra={"context": {
-                        "query": query,
-                        "method": "exact_ref",
-                        "results": len(exact_results),
-                        "proposability_filter": request.apply_proposability_filter,
-                        "duration_s": round(duration, 4),
-                    }},
+                    extra={
+                        "context": {
+                            "query": query,
+                            "method": "exact_ref",
+                            "results": len(exact_results),
+                            "proposability_filter": request.apply_proposability_filter,
+                            "duration_s": round(duration, 4),
+                        }
+                    },
                 )
                 exact_result = SearchResult(
                     results=exact_results,
@@ -158,13 +162,17 @@ class SearchEngine:
         # concurrent queries on the same connection)
         prefetch_limit = limit * _PREFETCH_MULTIPLIER
         semantic_results = await search_semantic(
-            self._session, query_embedding, prefetch_limit,
+            self._session,
+            query_embedding,
+            prefetch_limit,
             include_stale=request.include_stale,
             proposability_clauses=prop_clauses,
             proposability_settings=tag_settings,
         )
         keyword_results = await search_keyword(
-            self._session, search_query, prefetch_limit,
+            self._session,
+            search_query,
+            prefetch_limit,
             include_stale=request.include_stale,
             proposability_clauses=prop_clauses,
             proposability_settings=tag_settings,
@@ -177,16 +185,18 @@ class SearchEngine:
         duration = time.monotonic() - start
         logger.info(
             "Hybrid search completed",
-            extra={"context": {
-                "query": query,
-                "method": "hybrid",
-                "results": len(final_results),
-                "semantic_count": len(semantic_results),
-                "keyword_count": len(keyword_results),
-                "proposability_filter": request.apply_proposability_filter,
-                "jargon_expanded": jargon_expanded,
-                "duration_s": round(duration, 4),
-            }},
+            extra={
+                "context": {
+                    "query": query,
+                    "method": "hybrid",
+                    "results": len(final_results),
+                    "semantic_count": len(semantic_results),
+                    "keyword_count": len(keyword_results),
+                    "proposability_filter": request.apply_proposability_filter,
+                    "jargon_expanded": jargon_expanded,
+                    "duration_s": round(duration, 4),
+                }
+            },
         )
 
         result = SearchResult(
@@ -228,7 +238,9 @@ class SearchEngine:
         query_embedding = embeddings[0]
 
         results = await search_semantic(
-            self._session, query_embedding, limit,
+            self._session,
+            query_embedding,
+            limit,
             include_stale=request.include_stale,
             proposability_clauses=prop_clauses,
             proposability_settings=tag_settings,
@@ -237,14 +249,16 @@ class SearchEngine:
         duration = time.monotonic() - start
         logger.info(
             "Semantic search completed",
-            extra={"context": {
-                "query": query,
-                "method": "semantic",
-                "results": len(results),
-                "proposability_filter": request.apply_proposability_filter,
-                "jargon_expanded": jargon_expanded,
-                "duration_s": round(duration, 4),
-            }},
+            extra={
+                "context": {
+                    "query": query,
+                    "method": "semantic",
+                    "results": len(results),
+                    "proposability_filter": request.apply_proposability_filter,
+                    "jargon_expanded": jargon_expanded,
+                    "duration_s": round(duration, 4),
+                }
+            },
         )
 
         result = SearchResult(
@@ -283,7 +297,9 @@ class SearchEngine:
         search_query, jargon_expanded, expanded_query = self._apply_jargon_expansion(query)
 
         results = await search_keyword(
-            self._session, search_query, limit,
+            self._session,
+            search_query,
+            limit,
             include_stale=request.include_stale,
             proposability_clauses=prop_clauses,
             proposability_settings=tag_settings,
@@ -292,14 +308,16 @@ class SearchEngine:
         duration = time.monotonic() - start
         logger.info(
             "Keyword search completed",
-            extra={"context": {
-                "query": query,
-                "method": "keyword",
-                "results": len(results),
-                "proposability_filter": request.apply_proposability_filter,
-                "jargon_expanded": jargon_expanded,
-                "duration_s": round(duration, 4),
-            }},
+            extra={
+                "context": {
+                    "query": query,
+                    "method": "keyword",
+                    "results": len(results),
+                    "proposability_filter": request.apply_proposability_filter,
+                    "jargon_expanded": jargon_expanded,
+                    "duration_s": round(duration, 4),
+                }
+            },
         )
 
         result = SearchResult(

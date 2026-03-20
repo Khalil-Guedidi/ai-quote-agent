@@ -34,7 +34,7 @@ class SanitizationResult(BaseModel):
 class _ThreatPattern(BaseModel):
     """Internal: compiled regex pattern with metadata."""
 
-    model_config: ClassVar[dict] = {"arbitrary_types_allowed": True}
+    model_config: ClassVar[dict[str, bool]] = {"arbitrary_types_allowed": True}  # type: ignore[assignment]
 
     name: str
     regex: re.Pattern[str]
@@ -238,11 +238,7 @@ def sanitize(text: str) -> SanitizationResult:
     for threat in threats_sorted:
         start_pos = threat.position
         end_pos = start_pos + len(threat.matched_text)
-        sanitized = (
-            sanitized[:start_pos]
-            + f"[SANITIZED: {threat.matched_text}]"
-            + sanitized[end_pos:]
-        )
+        sanitized = sanitized[:start_pos] + f"[SANITIZED: {threat.matched_text}]" + sanitized[end_pos:]
 
     # Re-sort threats by position ascending for output
     threats.sort(key=lambda t: t.position)

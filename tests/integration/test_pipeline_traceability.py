@@ -2,14 +2,12 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
+import pytest  # noqa: TC002
 
 from quote_agent.adapters.email.models import IncomingEmail
-from quote_agent.audit.logger import JSONLogFormatter, setup_logging
 from quote_agent.exceptions import LLMTimeoutError
 from quote_agent.services.email_poller import EmailPollerService
 from quote_agent.services.extraction_models import (
@@ -35,9 +33,7 @@ def _make_incoming_email(
 
 def _make_mock_session() -> MagicMock:
     session = MagicMock()
-    session.execute = AsyncMock(
-        return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None))
-    )
+    session.execute = AsyncMock(return_value=MagicMock(scalar_one_or_none=MagicMock(return_value=None)))
     session.add = MagicMock()
     session.flush = AsyncMock()
     session.commit = AsyncMock()

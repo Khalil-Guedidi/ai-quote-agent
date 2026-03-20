@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-from sqlalchemy import delete, select, text
+from sqlalchemy import delete, select
 
 from quote_agent.adapters.embedding import get_embedding_adapter
 from quote_agent.models.product import Product
@@ -139,9 +139,7 @@ class TestSearchE2E:
             result = await engine.search_hybrid(SearchRequest(query=known_ref))
 
             assert len(result.results) > 0, f"No results for reference '{known_ref}'"
-            assert result.method == "exact_ref", (
-                f"Expected exact_ref path for '{known_ref}', got '{result.method}'"
-            )
+            assert result.method == "exact_ref", f"Expected exact_ref path for '{known_ref}', got '{result.method}'"
             assert result.results[0].reference == known_ref
             assert result.results[0].score == 1.0
         finally:

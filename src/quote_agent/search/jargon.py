@@ -56,13 +56,15 @@ def expand_query(query: str, abbreviations: dict[str, str]) -> JargonExpansionRe
 
     logger.info(
         "Query expanded",
-        extra={"context": {
-            "component": "search.jargon",
-            "original": query,
-            "expanded": expanded,
-            "expansions_count": len(expansions),
-            "expansions": expansions,
-        }},
+        extra={
+            "context": {
+                "component": "search.jargon",
+                "original": query,
+                "expanded": expanded,
+                "expansions_count": len(expansions),
+                "expansions": expansions,
+            }
+        },
     )
 
     return JargonExpansionResult(

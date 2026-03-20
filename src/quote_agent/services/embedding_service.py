@@ -49,8 +49,8 @@ class EmbeddingService:
         batch_num = 0
 
         # Count stale products that will be skipped (DB-side count, no ORM loading)
-        stale_stmt = select(func.count()).select_from(Product).where(
-            Product.is_stale.is_(True), Product.vector.is_(None)
+        stale_stmt = (
+            select(func.count()).select_from(Product).where(Product.is_stale.is_(True), Product.vector.is_(None))
         )
         stale_result = await self._session.execute(stale_stmt)
         total_skipped_stale = stale_result.scalar_one()
