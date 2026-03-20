@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -96,6 +96,13 @@ class SearchCacheSettings(BaseModel):
     max_entries: int = 10_000
 
 
+class ClassificationSettings(BaseModel):
+    """Complexity classification configuration."""
+
+    timeout_seconds: int = 10
+    fallback_complexity: Literal["simple", "ambiguous", "complex", "out_of_scope"] = "complex"
+
+
 class SearchSettings(BaseModel):
     """Hybrid search configuration."""
 
@@ -133,6 +140,7 @@ class Settings(BaseSettings):
     email: EmailSettings
     notification: NotificationSettings = NotificationSettings()
     embedding: EmbeddingSettings = EmbeddingSettings()
+    classification: ClassificationSettings = ClassificationSettings()
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()

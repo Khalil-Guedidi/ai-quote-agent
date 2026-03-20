@@ -13,6 +13,26 @@ app.command()(logs)
 
 
 @app.command()
+def classify(
+    description: str = typer.Argument(..., help="Quote request description to classify"),
+    quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
+    reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
+    urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Classify the complexity of a quote request."""
+    from quote_agent.cli.classify import classify as _classify_impl
+
+    _classify_impl(
+        description=description,
+        quantity=quantity,
+        reference=reference,
+        urgency=urgency,
+        json_output=json_output,
+    )
+
+
+@app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),
     limit: int = typer.Option(10, "--limit", "-l", help="Maximum number of results"),
