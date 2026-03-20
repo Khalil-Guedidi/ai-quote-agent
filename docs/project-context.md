@@ -1,7 +1,7 @@
 # Project Context — ai-quote-agent
 
 Internal developer reference for established patterns, known pitfalls, conventions, and quality gates.
-Derived from Epics 1-2 implementation and retrospectives.
+Derived from Epics 1-3 implementation and retrospectives.
 
 ---
 
@@ -20,7 +20,7 @@ Derived from Epics 1-2 implementation and retrospectives.
 - **DB naming**: `snake_case` plural tables, `{singular}_id` FKs, prefix conventions: `ix_/uq_/ck_/fk_/pk_`
 - **Test naming**: `test_{behavior}_when_{condition}()` or `test_{behavior}_e2e()`
 - **Severity comparison**: never use `max()` or lexicographic comparison on severity strings — use explicit conditional chains
-- **Cache clearing**: clear ALL `@lru_cache` singletons between E2E tests (5 functions)
+- **Cache clearing**: clear ALL `@lru_cache` singletons between E2E tests (6 functions, including `get_embedding_adapter`)
 - **Health checks**: 30s TTL caching with `time.monotonic()`, `asyncio.wait_for(..., timeout=5.0)`
 
 ---
@@ -60,7 +60,7 @@ def get_llm_adapter() -> OpenAICompatAdapter:
     return OpenAICompatAdapter(get_settings().llm)
 ```
 
-**4 implemented adapters**: LLM (`openai_compat.py`), ERP (`odoo.py`), Email (`imap.py`), Notification (`teams.py`). A 5th directory `embedding/` exists as scaffolding for Epic 3 but is not yet implemented.
+**5 implemented adapters**: LLM (`openai_compat.py`), ERP (`odoo.py`), Email (`imap.py`), Notification (`teams.py`), Embedding (`sentence_transformers.py`).
 
 **Health check pattern** — all adapters:
 - Instance-level caching: `_last_health`, `_last_health_time`
@@ -150,6 +150,52 @@ result = await asyncio.wait_for(
 ```
 
 The entire stack is async — no sync blocking calls in the event loop.
+
+### Search Module Pattern
+
+The search subsystem is **internal infrastructure**, not an adapter — it lives in `search/` (not `adapters/`). No Protocol, no factory, no `@lru_cache` — components are instantiated per-request with a database session.
+
+```
+search/
+├── engine.py          # Orchestration + RRF fusion (combines results from vector + keyword)
+├── vector.py          # pgvector semantic search (cosine similarity)
+├── keyword.py         # tsvector full-text search + exact reference matching
+├── proposability.py   # SQL-level filtering (proposable-only products)
+├── cache.py           # PostgreSQL-backed TTL cache (no Redis)
+├── jargon.py          # Query expansion (abbreviation → full term)
+└── models.py          # DTOs: SearchRequest, ScoredProduct, SearchResult
+```
+
+**Key design decisions**:
+- RRF (Reciprocal Rank Fusion) merges semantic and keyword results with configurable weights
+- All search methods return `list[ScoredProduct]` for uniform merging
+- Engine exposes a single `search()` entry point that handles caching, expansion, and fusion
+
+### SQL-Level Filtering Pattern
+
+Proposability filtering is applied as `WHERE` clauses **within** the search queries, NOT as a Python post-filter. This ensures:
+- `LIMIT` returns the correct number of proposable results (not fewer after post-filtering)
+- Better performance by pushing filtering to PostgreSQL
+- Consistent pattern with `is_stale` filtering already used elsewhere
+
+### PostgreSQL Cache Pattern
+
+Search results are cached in a PostgreSQL table — no Redis dependency.
+
+- **Cache key**: SHA-256 hash of `SearchRequest` params (query, method, top_k, filters)
+- **TTL**: configurable expiry checked on read
+- **Write**: upsert via `ON CONFLICT ... DO UPDATE`
+- **Invalidation**: full cache clear on catalog re-sync
+- Cache key **must include the search method** (hybrid/semantic/keyword) to prevent cross-method collisions
+
+### Embedding Adapter Pattern
+
+Follows the standard 4-file adapter pattern (`protocol.py`, `models.py`, `sentence_transformers.py`, `__init__.py` with factory).
+
+- Uses `asyncio.to_thread()` to wrap sync `sentence-transformers` calls
+- Lazy model loading: the BGE-M3 model is loaded on first `embed()` call, not at import time
+- BGE-M3 outputs **1024-dimensional** vectors (not 1536 like OpenAI)
+- Device configurable via `EMBEDDING__DEVICE` (cpu/cuda)
 
 ### Configuration Pattern
 
@@ -249,6 +295,7 @@ create_async_engine_from_settings.cache_clear()
 _get_session_factory.cache_clear()
 get_llm_adapter.cache_clear()
 get_email_adapter.cache_clear()
+get_embedding_adapter.cache_clear()
 # Not currently cleared in E2E tests (not exercised):
 # get_erp_adapter.cache_clear()
 # get_notification_adapter.cache_clear()
@@ -269,6 +316,45 @@ Prefer PEP 695 type parameter syntax (Python 3.12+) over `typing.Generic[T]` —
 ### BaseHTTPMiddleware for Global Exception Catching
 
 `app.exception_handler(Exception)` is insufficient for true global exception catching in FastAPI. Use `BaseHTTPMiddleware` instead to intercept all unhandled exceptions and return uniform error responses.
+
+### asyncpg: No Concurrent Queries on Same Connection
+
+asyncpg does not support concurrent queries on the same connection. Using `asyncio.gather()` for parallel DB queries on a single session **will fail** with `InterfaceError`.
+
+**Fix**: Execute queries sequentially, or use separate connections/sessions for true parallelism.
+
+### asyncpg: No Parameterized `SET LOCAL`
+
+`SET LOCAL hnsw.ef_search = $1` fails with asyncpg — parameterized placeholders are not supported for `SET` statements.
+
+**Fix**: Use f-string with explicit `int()` cast for safety:
+```python
+await session.execute(text(f"SET LOCAL hnsw.ef_search = {int(value)}"))
+```
+
+### Vector Dimension Must Match Model
+
+BGE-M3 outputs **1024** dimensions, NOT 1536 (OpenAI's default). Using the wrong dimension for the pgvector column causes silent failures or dimension mismatch errors.
+
+**Fix**: Always verify the embedding model's output dimension before creating or altering the vector column.
+
+### Unicode Regex Word Boundaries
+
+Python `\b` word boundary treats characters like `Ø` (U+00D8) as `\w`, so `\b` patterns don't match as expected around non-ASCII characters.
+
+**Fix**: Use separate regex strategies for ASCII vs non-ASCII abbreviations (e.g., exact substring match for non-ASCII terms).
+
+### Cache Key Must Include Search Method
+
+Without the search method (hybrid/semantic/keyword) in the cache key, different search methods can collide and return wrong cached results.
+
+**Fix**: Include all distinguishing parameters in the SHA-256 cache key: query text, method, top_k, and filter flags.
+
+### Commit After Cache Invalidation
+
+When invalidating cache inside a transaction (e.g., after catalog re-sync), the `DELETE` must be committed. If the session is rolled back later, the invalidation is lost and stale cache entries persist.
+
+**Fix**: Ensure cache invalidation is committed (or use a separate transaction) before proceeding with operations that might roll back.
 
 ---
 
@@ -306,11 +392,20 @@ Prefer PEP 695 type parameter syntax (Python 3.12+) over `typing.Generic[T]` —
 
 ```
 src/quote_agent/
-├── adapters/           # External integrations (4 types: llm, erp, email, notification)
+├── adapters/           # External integrations (5 types: llm, erp, email, notification, embedding)
 │   ├── llm/            # protocol.py + models.py + openai_compat.py + __init__.py
 │   ├── erp/
 │   ├── email/
-│   └── notification/
+│   ├── notification/
+│   └── embedding/      # protocol.py + models.py + sentence_transformers.py + __init__.py
+├── search/             # Internal search infrastructure (not an adapter)
+│   ├── engine.py       # Orchestration + RRF fusion
+│   ├── vector.py       # pgvector semantic search
+│   ├── keyword.py      # tsvector full-text + exact reference
+│   ├── proposability.py # SQL-level proposability filtering
+│   ├── cache.py        # PostgreSQL-backed TTL cache
+│   ├── jargon.py       # Query expansion (abbreviation dictionary)
+│   └── models.py       # SearchRequest, ScoredProduct, SearchResult
 ├── agent/              # LangGraph (graph, state, nodes, tools)
 ├── models/             # SQLAlchemy models + DB access (base.py, email_request.py, quote_request.py)
 ├── services/           # Business logic (email_poller.py, email_cleaner.py, email_extractor.py, request_splitter.py)
@@ -347,6 +442,23 @@ tests/
 - Never include confidential data in context — redaction is a safety net, not a substitute for discipline
 - Never use `print()` — always structured logging
 
+### Search Configuration Settings
+
+All search-related settings follow the existing pydantic-settings pattern and are accessed via `get_settings()`:
+
+| Setting Class | Env Prefix | Purpose |
+|---------------|-----------|---------|
+| `SearchSettings` | `SEARCH__` | Top-k, RRF weights, ef_search |
+| `SearchCacheSettings` | `SEARCH_CACHE__` | TTL, enabled flag |
+| `ProposabilitySettings` | `PROPOSABILITY__` | Filter rules, enabled flag |
+| `JargonSettings` | `JARGON__` | Abbreviation dictionary, enabled flag |
+| `EmbeddingSettings` | `EMBEDDING__` | Model name, device (cpu/cuda), dimension |
+
+### Test Markers
+
+- `@pytest.mark.e2e` — requires real services (PostgreSQL, BGE-M3 model, optionally Odoo)
+- `@pytest.mark.benchmark` — performance benchmarks, excluded from CI by default
+
 ---
 
 ## Quality Gates
@@ -382,13 +494,17 @@ Rules: pycodestyle (E/W), Pyflakes (F), isort (I), pep8-naming (N), pyupgrade (U
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
-markers = ["e2e: end-to-end tests requiring real services (IMAP, PostgreSQL, LLM)"]
+markers = [
+    "e2e: end-to-end tests requiring real services (IMAP, PostgreSQL, LLM)",
+    "benchmark: performance benchmarks",
+]
 addopts = "-m 'not e2e'"
 ```
 
 - `asyncio_mode = "auto"`: no need for `@pytest.mark.asyncio` decorator
 - E2E tests excluded by default; run with `pytest -m e2e`
-- E2E tests require real `DATABASE__URL` and `LLM__API_KEY` environment variables
+- E2E tests require real `DATABASE__URL` and `LLM__API_KEY` environment variables; search E2E tests also require a loaded BGE-M3 model
+- **Test count**: 363 (188 after Epic 2, 363 after Epic 3)
 - `@requires_e2e` skip decorator checks service availability
 
 ### E2E Test Requirements
@@ -415,5 +531,7 @@ addopts = "-m 'not e2e'"
 | Testing | pytest + pytest-asyncio |
 | Linting | Ruff |
 | Type checking | mypy (strict) |
+| Embeddings | sentence-transformers (BGE-M3, 1024-dim) |
+| Vector search | pgvector (cosine similarity via `<=>` operator) |
 | Database | PostgreSQL (relational + vector + queue) |
 | Containerization | Docker |

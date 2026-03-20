@@ -975,6 +975,73 @@ So that it understands requests the way a human sales rep would — without need
 
 L'agent classifie les demandes par complexité, applique un raisonnement adaptatif avec scoring de confiance, s'auto-vérifie, et crée des brouillons de devis dans Odoo. Parcours complet de Sophie (happy path + cas ambigus).
 
+**Note:** 3 foundation stories (4.0a, 4.0b, 4.0c) added during Epic 3 retrospective (2026-03-20). All 3 block stories 4.1+.
+
+### Story 4.0a: Fix CI/CD Pipeline GitHub Actions
+
+As an **IT operator (Laurent)**,
+I want the CI/CD pipeline on GitHub Actions to pass reliably,
+So that every push is validated automatically and regressions are caught before merge.
+
+**Acceptance Criteria:**
+
+**Given** a push to any branch on GitHub
+**When** GitHub Actions runs
+**Then** unit tests pass in CI (no heavy dependencies like sentence-transformers/torch required)
+**And** linting (ruff) and type checking (mypy --strict) pass
+**And** E2E tests are either run with service containers or gracefully skipped
+
+**Given** the pipeline has been broken since Epic 1
+**When** the root cause is investigated
+**Then** the fix addresses the actual failure (likely: heavy deps timeout/memory, missing PostgreSQL service container)
+
+**Blocks:** All stories 4.1+. No more development without CI validation.
+
+### Story 4.0b: CLI Flux Testable Search
+
+As a **Project Lead (Khalil)**,
+I want a CLI command that executes a product search and displays formatted results,
+So that I can manually test the search engine, judge result quality, and catch product regressions.
+
+**Acceptance Criteria:**
+
+**Given** products are ingested and embedded in PostgreSQL
+**When** I run `uv run quote-agent search "tubes inox 304L Ø25"`
+**Then** the top results are displayed with: product name, reference, category, score, match source (semantic/keyword/hybrid/exact_ref), is_proposable flag
+**And** if jargon expansion occurred, the expanded query is shown
+**And** the search duration is displayed
+
+**Given** the CLI is extensible
+**When** Epic 4 is developed
+**Then** additional commands can be added (`classify`, `process`) to expose the full agent reasoning pipeline
+
+**Blocks:** All stories 4.1+. The Project Lead must see the system work before building the reasoning layer.
+
+### Story 4.0c: Résolution Dictionnaire Jargon Story 3.6
+
+As a **Project Lead (Khalil)**,
+I want the jargon dictionary regression from Story 3.6 evaluated and resolved,
+So that the "zero-preprocessing" product vision is restored and we don't carry a synonym table into Epic 4.
+
+**Acceptance Criteria:**
+
+**Given** the jargon benchmark (25 queries from `tests/e2e/fixtures/jargon_benchmark.json`)
+**When** run with `expansion_enabled=False` (no dictionary, pure semantic search)
+**Then** the pass rate is measured and compared to the expansion-enabled result
+
+**Given** the benchmark results
+**When** analyzed
+**Then** a decision is made:
+- If BGE-M3 alone meets ≥ 80% pass rate → remove the dictionary entirely
+- If not → investigate embedding strategy improvements (text building, model tuning) rather than growing the dictionary
+
+**Given** the decision is made
+**When** implemented
+**Then** the `JargonSettings.expansion_enabled` default reflects the decision
+**And** the rationale is documented in `project-context.md`
+
+**Blocks:** All stories 4.1+. The zero-preprocessing vision must be restored before building the reasoning layer.
+
 ### Story 4.1: Classification de Complexité des Demandes
 
 As a **sales rep (Sophie)**,

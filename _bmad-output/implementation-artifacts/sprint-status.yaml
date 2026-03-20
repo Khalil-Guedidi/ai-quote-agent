@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-20  # Story T.9 done
+last_updated: 2026-03-20  # Epic 3 retrospective done
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -77,7 +77,7 @@ development_status:
   # Epic 3: Catalogue Produits & Recherche Intelligente
   # Note: 3 foundation stories (3.0a, 3.0b, 3.0c) added from Epic 2 retrospective (2026-03-19)
   # All 3 block stories 3.1+
-  epic-3: in-progress
+  epic-3: done
   3-0a-tests-e2e-pipeline-epic-2: done
   3-0b-generation-project-context-md: done
   3-0c-generation-catalogue-test-50k-realiste: done
@@ -87,10 +87,15 @@ development_status:
   3-4-filtre-de-proposabilite: done
   3-5-cache-de-resultats-de-recherche: done
   3-6-matching-terminologie-client-jargon: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
 
   # Epic 4: Raisonnement Adaptatif & Génération de Devis
+  # Note: 3 foundation stories (4.0a, 4.0b, 4.0c) added from Epic 3 retrospective (2026-03-20)
+  # All 3 block stories 4.1+
   epic-4: backlog
+  4-0a-fix-ci-cd-pipeline-github-actions: backlog
+  4-0b-cli-flux-testable-search: backlog
+  4-0c-resolution-dictionnaire-jargon: backlog
   4-1-classification-de-complexite-des-demandes: backlog
   4-2-scoring-de-confiance-routage-par-tiers: backlog
   4-3-strategies-de-raisonnement-adaptatives: backlog
