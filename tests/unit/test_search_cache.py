@@ -473,6 +473,16 @@ class TestSearchCacheSettings:
             "SEARCH_CACHE__ENABLED": "false",
             "SEARCH_CACHE__TTL_SECONDS": "7200",
             "SEARCH_CACHE__MAX_ENTRIES": "5000",
+            # Required fields that have no defaults — provide dummy values for CI
+            "DATABASE__URL": "postgresql+asyncpg://test:test@localhost:5432/test",
+            "LLM__API_KEY": "fake-key",
+            "ERP__URL": "http://localhost:8069",
+            "ERP__DATABASE": "test",
+            "ERP__USERNAME": "test",
+            "ERP__API_KEY": "fake-key",
+            "EMAIL__IMAP_SERVER": "localhost",
+            "EMAIL__USERNAME": "test",
+            "EMAIL__PASSWORD": "fake",
         }
         with patch.dict(os.environ, env, clear=False):
             from quote_agent.config import get_settings

@@ -92,6 +92,16 @@ class TestProposabilitySettings:
             "PROPOSABILITY__EXCLUDE_OUT_OF_STOCK": "false",
             "PROPOSABILITY__EXCLUDE_INACTIVE": "false",
             "PROPOSABILITY__EXCLUDED_CATEGORIES": '["Obsolete"]',
+            # Required fields that have no defaults — provide dummy values for CI
+            "DATABASE__URL": "postgresql+asyncpg://test:test@localhost:5432/test",
+            "LLM__API_KEY": "fake-key",
+            "ERP__URL": "http://localhost:8069",
+            "ERP__DATABASE": "test",
+            "ERP__USERNAME": "test",
+            "ERP__API_KEY": "fake-key",
+            "EMAIL__IMAP_SERVER": "localhost",
+            "EMAIL__USERNAME": "test",
+            "EMAIL__PASSWORD": "fake",
         }
         with patch.dict(os.environ, env, clear=False):
             from quote_agent.config import get_settings
