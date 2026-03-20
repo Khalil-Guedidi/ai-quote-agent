@@ -40,3 +40,4 @@ class SearchResult(BaseModel):
     query: str
     method: str
     duration_seconds: float
+    from_cache: bool = False

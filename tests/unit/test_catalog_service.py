@@ -69,6 +69,13 @@ class TestCatalogServiceIngestFull:
     def mock_adapter(self) -> AsyncMock:
         return AsyncMock()
 
+    @staticmethod
+    def _cache_invalidate_result() -> MagicMock:
+        """Mock result for the search cache invalidate_all() DELETE call."""
+        r = MagicMock()
+        r.rowcount = 0
+        return r
+
     @pytest.fixture()
     def mock_session(self) -> AsyncMock:
         session = AsyncMock()
@@ -89,12 +96,12 @@ class TestCatalogServiceIngestFull:
         products = [self._make_product_dto(1), self._make_product_dto(2)]
         mock_adapter.get_products.side_effect = [products, []]
 
-        # First execute: select returns empty (no existing), second: stale update
+        # First execute: select returns empty (no existing), second: stale update, third: cache invalidation
         select_result = MagicMock()
         select_result.scalars.return_value = []
         stale_result = MagicMock()
         stale_result.rowcount = 0
-        mock_session.execute.side_effect = [select_result, stale_result]
+        mock_session.execute.side_effect = [select_result, stale_result, self._cache_invalidate_result()]
 
         service = CatalogService(mock_adapter, mock_session)
         result = await service.ingest_full()
@@ -118,7 +125,7 @@ class TestCatalogServiceIngestFull:
         select_result.scalars.return_value = [existing]
         stale_result = MagicMock()
         stale_result.rowcount = 0
-        mock_session.execute.side_effect = [select_result, stale_result]
+        mock_session.execute.side_effect = [select_result, stale_result, self._cache_invalidate_result()]
 
         service = CatalogService(mock_adapter, mock_session)
         result = await service.ingest_full()
@@ -139,7 +146,7 @@ class TestCatalogServiceIngestFull:
         select_result.scalars.return_value = [existing]
         stale_result = MagicMock()
         stale_result.rowcount = 0
-        mock_session.execute.side_effect = [select_result, stale_result]
+        mock_session.execute.side_effect = [select_result, stale_result, self._cache_invalidate_result()]
 
         service = CatalogService(mock_adapter, mock_session)
         result = await service.ingest_full()
@@ -160,7 +167,7 @@ class TestCatalogServiceIngestFull:
         select_result.scalars.return_value = []
         stale_result = MagicMock()
         stale_result.rowcount = 0
-        mock_session.execute.side_effect = [select_result, stale_result]
+        mock_session.execute.side_effect = [select_result, stale_result, self._cache_invalidate_result()]
 
         service = CatalogService(mock_adapter, mock_session)
         result = await service.ingest_full()
@@ -180,7 +187,7 @@ class TestCatalogServiceIngestFull:
         select_result.scalars.return_value = []
         stale_result = MagicMock()
         stale_result.rowcount = 3  # 3 products flagged stale
-        mock_session.execute.side_effect = [select_result, stale_result]
+        mock_session.execute.side_effect = [select_result, stale_result, self._cache_invalidate_result()]
 
         service = CatalogService(mock_adapter, mock_session)
         result = await service.ingest_full()
@@ -213,7 +220,7 @@ class TestCatalogServiceIngestFull:
         select_result.scalars.return_value = []
         stale_result = MagicMock()
         stale_result.rowcount = 0
-        mock_session.execute.side_effect = [select_result, stale_result]
+        mock_session.execute.side_effect = [select_result, stale_result, self._cache_invalidate_result()]
 
         import logging
         with caplog.at_level(logging.INFO, logger="quote_agent.services.catalog_service"):

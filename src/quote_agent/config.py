@@ -88,6 +88,14 @@ class ProposabilitySettings(BaseModel):
     excluded_categories: list[str] = Field(default_factory=list)
 
 
+class SearchCacheSettings(BaseModel):
+    """Search result cache settings."""
+
+    enabled: bool = True
+    ttl_seconds: int = 3600
+    max_entries: int = 10_000
+
+
 class SearchSettings(BaseModel):
     """Hybrid search configuration."""
 
@@ -126,6 +134,7 @@ class Settings(BaseSettings):
     notification: NotificationSettings = NotificationSettings()
     embedding: EmbeddingSettings = EmbeddingSettings()
     search: SearchSettings = SearchSettings()
+    search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()
     app: AppSettings = AppSettings()
 

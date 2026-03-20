@@ -92,6 +92,17 @@ class CatalogService:
         # Stale detection
         stale = await self._mark_stale(fetched_odoo_ids)
 
+        # Invalidate search cache after successful catalog re-sync
+        from quote_agent.search.cache import invalidate_all
+
+        cache_count = await invalidate_all(self._session)
+        logger.info(
+            "Search cache invalidated after catalog re-sync",
+            extra={"context": {"entries_removed": cache_count}},
+        )
+
+        await self._session.commit()
+
         duration = time.monotonic() - start
 
         logger.info(
@@ -211,5 +222,5 @@ class CatalogService:
             .values(is_stale=True)
         )
         cursor_result = await self._session.execute(stmt)
-        await self._session.commit()
+        await self._session.flush()
         return int(cursor_result.rowcount)  # type: ignore[attr-defined]

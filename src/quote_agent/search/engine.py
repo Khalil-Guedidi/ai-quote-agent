@@ -7,6 +7,13 @@ import time
 from typing import TYPE_CHECKING
 
 from quote_agent.config import get_settings
+from quote_agent.search.cache import (
+    cleanup_expired,
+    compute_cache_key,
+    count_entries,
+    get_cached,
+    put_cached,
+)
 from quote_agent.search.keyword import is_reference_code, search_exact_ref, search_keyword
 from quote_agent.search.models import ScoredProduct, SearchRequest, SearchResult
 from quote_agent.search.proposability import build_proposability_clauses
@@ -58,10 +65,35 @@ class SearchEngine:
         settings = get_settings()
         self._settings = settings.search
         self._proposability_settings = settings.proposability
+        self._cache_settings = settings.search_cache
+        self._cache_enabled = settings.search_cache.enabled
+
+    async def _check_cache(self, request: SearchRequest, method: str) -> tuple[str, SearchResult | None]:
+        """Check cache for a result. Returns (cache_key, cached_result_or_None)."""
+        cache_key = compute_cache_key(request, method)
+        cached = await get_cached(self._session, cache_key)
+        return cache_key, cached
+
+    async def _store_in_cache(self, cache_key: str, request: SearchRequest, result: SearchResult) -> None:
+        """Store a result in cache, enforcing max_entries."""
+        entry_count = await count_entries(self._session)
+        if entry_count >= self._cache_settings.max_entries:
+            await cleanup_expired(self._session)
+            entry_count = await count_entries(self._session)
+            if entry_count >= self._cache_settings.max_entries:
+                return
+        await put_cached(self._session, cache_key, request, result, self._cache_settings.ttl_seconds)
 
     async def search_hybrid(self, request: SearchRequest) -> SearchResult:
         """Run hybrid search: exact ref shortcut, then semantic + keyword with RRF fusion."""
         start = time.monotonic()
+
+        if self._cache_enabled:
+            cache_key, cached = await self._check_cache(request, "hybrid")
+            if cached is not None:
+                cached.from_cache = True
+                cached.duration_seconds = round(time.monotonic() - start, 4)
+                return cached
         query = request.query.strip()
         limit = request.limit or self._settings.default_limit
         prop_settings = self._proposability_settings
@@ -89,13 +121,18 @@ class SearchEngine:
                         "duration_s": round(duration, 4),
                     }},
                 )
-                return SearchResult(
+                exact_result = SearchResult(
                     results=exact_results,
                     total_found=len(exact_results),
                     query=query,
                     method="exact_ref",
                     duration_seconds=round(duration, 4),
                 )
+
+                if self._cache_enabled:
+                    await self._store_in_cache(cache_key, request, exact_result)
+
+                return exact_result
 
         # Generate query embedding
         embeddings = await self._embedding.embed_texts([query])
@@ -135,7 +172,7 @@ class SearchEngine:
             }},
         )
 
-        return SearchResult(
+        result = SearchResult(
             results=final_results,
             total_found=len(fused),
             query=query,
@@ -143,9 +180,22 @@ class SearchEngine:
             duration_seconds=round(duration, 4),
         )
 
+        if self._cache_enabled:
+            await self._store_in_cache(cache_key, request, result)
+
+        return result
+
     async def search_semantic_only(self, request: SearchRequest) -> SearchResult:
         """Expose semantic (vector) search alone."""
         start = time.monotonic()
+
+        if self._cache_enabled:
+            cache_key, cached = await self._check_cache(request, "semantic")
+            if cached is not None:
+                cached.from_cache = True
+                cached.duration_seconds = round(time.monotonic() - start, 4)
+                return cached
+
         query = request.query.strip()
         limit = request.limit or self._settings.default_limit
         prop_settings = self._proposability_settings
@@ -174,7 +224,7 @@ class SearchEngine:
             }},
         )
 
-        return SearchResult(
+        result = SearchResult(
             results=results,
             total_found=len(results),
             query=query,
@@ -182,9 +232,22 @@ class SearchEngine:
             duration_seconds=round(duration, 4),
         )
 
+        if self._cache_enabled:
+            await self._store_in_cache(cache_key, request, result)
+
+        return result
+
     async def search_keyword_only(self, request: SearchRequest) -> SearchResult:
         """Expose keyword (tsvector) search alone."""
         start = time.monotonic()
+
+        if self._cache_enabled:
+            cache_key, cached = await self._check_cache(request, "keyword")
+            if cached is not None:
+                cached.from_cache = True
+                cached.duration_seconds = round(time.monotonic() - start, 4)
+                return cached
+
         query = request.query.strip()
         limit = request.limit or self._settings.default_limit
         prop_settings = self._proposability_settings
@@ -210,10 +273,15 @@ class SearchEngine:
             }},
         )
 
-        return SearchResult(
+        result = SearchResult(
             results=results,
             total_found=len(results),
             query=query,
             method="keyword",
             duration_seconds=round(duration, 4),
         )
+
+        if self._cache_enabled:
+            await self._store_in_cache(cache_key, request, result)
+
+        return result

@@ -52,6 +52,7 @@ def _make_engine() -> SearchEngine:
         settings.search.default_limit = 10
         settings.search.rrf_k = 60
         settings.search.hnsw_ef_search = 100
+        settings.search_cache.enabled = False
         settings.proposability = ProposabilitySettings()
         mock_settings.return_value = settings
         return SearchEngine(session, adapter)

@@ -143,6 +143,7 @@ class TestSearchEngineHybrid:
             settings.search.default_limit = 10
             settings.search.rrf_k = 60
             settings.search.hnsw_ef_search = 100
+            settings.search_cache.enabled = False
             mock_settings.return_value = settings
             return SearchEngine(session, adapter)
 
@@ -198,6 +199,7 @@ class TestSearchEngineSemanticOnly:
             settings = MagicMock()
             settings.search.default_limit = 10
             settings.search.hnsw_ef_search = 100
+            settings.search_cache.enabled = False
             mock_settings.return_value = settings
             engine = SearchEngine(session, adapter)
             result = await engine.search_semantic_only(SearchRequest(query="tube"))
@@ -219,6 +221,7 @@ class TestSearchEngineKeywordOnly:
              patch("quote_agent.search.engine.search_keyword", new_callable=AsyncMock, return_value=[kw_result]):
             settings = MagicMock()
             settings.search.default_limit = 10
+            settings.search_cache.enabled = False
             mock_settings.return_value = settings
             engine = SearchEngine(session, adapter)
             result = await engine.search_keyword_only(SearchRequest(query="tube"))
@@ -248,6 +251,7 @@ class TestSearchEdgeCases:
             settings.search.default_limit = 10
             settings.search.rrf_k = 60
             settings.search.hnsw_ef_search = 100
+            settings.search_cache.enabled = False
             mock_settings.return_value = settings
             engine = SearchEngine(session, adapter)
             result = await engine.search_hybrid(SearchRequest(query=""))
