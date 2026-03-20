@@ -1,0 +1,127 @@
+[
+  {
+    "query": "tubes inox 304L Ø25 lg 6m",
+    "expected_match_keywords": ["tube", "inox", "304L"],
+    "category": "abbreviation"
+  },
+  {
+    "query": "vannes papillon DN100 inox 316L",
+    "expected_match_keywords": ["vanne", "DN100", "316L", "inox"],
+    "category": "jargon"
+  },
+  {
+    "query": "tôle inox 316L 1500x1000",
+    "expected_match_keywords": ["tole", "inox", "316L", "1500"],
+    "category": "jargon"
+  },
+  {
+    "query": "boulons HM M10x50",
+    "expected_match_keywords": ["boulon", "M10"],
+    "category": "abbreviation"
+  },
+  {
+    "query": "raccord manchon inox DN65",
+    "expected_match_keywords": ["raccord", "manchon", "inox", "DN65"],
+    "category": "jargon"
+  },
+  {
+    "query": "tube RD alu 6060",
+    "expected_match_keywords": ["tube", "alu", "6060"],
+    "category": "abbreviation"
+  },
+  {
+    "query": "clapet PN40 inox",
+    "expected_match_keywords": ["clapet", "inox", "PN40"],
+    "category": "jargon"
+  },
+  {
+    "query": "profil IPE 100 lg 12m",
+    "expected_match_keywords": ["IPE", "100"],
+    "category": "abbreviation"
+  },
+  {
+    "query": "stainless steel DN100 valve",
+    "expected_match_keywords": ["inox", "DN100", "clapet", "vanne"],
+    "category": "cross_language"
+  },
+  {
+    "query": "butterfly valve inox",
+    "expected_match_keywords": ["vanne", "papillon", "inox", "clapet"],
+    "category": "cross_language"
+  },
+  {
+    "query": "foret HSS D12",
+    "expected_match_keywords": ["foret", "HSS", "D12"],
+    "category": "exact_reference"
+  },
+  {
+    "query": "graisse hydraulique 5kg",
+    "expected_match_keywords": ["graisse", "hydraulique"],
+    "category": "jargon"
+  },
+  {
+    "query": "plaque acier S355 EP4",
+    "expected_match_keywords": ["plaque", "acier", "S355"],
+    "category": "jargon"
+  },
+  {
+    "query": "cable U1000R2V 5G10",
+    "expected_match_keywords": ["cab", "U1000R2V", "5G10"],
+    "category": "exact_reference"
+  },
+  {
+    "query": "joint plat NBR DN3",
+    "expected_match_keywords": ["joint", "NBR", "DN3"],
+    "category": "jargon"
+  },
+  {
+    "query": "tresse PTFE 25mm",
+    "expected_match_keywords": ["tresse", "PTFE", "25"],
+    "category": "jargon"
+  },
+  {
+    "query": "tubes cuivre Ø40 lg 2m",
+    "expected_match_keywords": ["tube", "cuivre", "40"],
+    "category": "abbreviation"
+  },
+  {
+    "query": "meule tronconnage 150",
+    "expected_match_keywords": ["meule", "tronconnage", "150"],
+    "category": "jargon"
+  },
+  {
+    "query": "HEA 300 acier S355",
+    "expected_match_keywords": ["HEA", "300", "S355"],
+    "category": "jargon"
+  },
+  {
+    "query": "cartouche filtrante",
+    "expected_match_keywords": ["cartouche", "filtrante"],
+    "category": "jargon"
+  },
+  {
+    "query": "roulement butée FAG",
+    "expected_match_keywords": ["FAG", "butee", "butée"],
+    "category": "jargon"
+  },
+  {
+    "query": "TB laiton DN32 EP2",
+    "expected_match_keywords": ["tube", "laiton", "DN32"],
+    "category": "abbreviation"
+  },
+  {
+    "query": "EPI gants cuir T36",
+    "expected_match_keywords": ["EPI", "cuir", "T36"],
+    "category": "jargon"
+  },
+  {
+    "query": "raccord coude PPR DN100",
+    "expected_match_keywords": ["raccord", "coude", "PPR", "DN100"],
+    "category": "jargon"
+  },
+  {
+    "query": "huile engrenage ISO VG 100",
+    "expected_match_keywords": ["huile", "engrenage", "VG"],
+    "category": "jargon"
+  }
+]
