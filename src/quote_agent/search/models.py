@@ -14,6 +14,7 @@ class SearchRequest(BaseModel):
     query: str
     limit: int = 10
     include_stale: bool = False
+    apply_proposability_filter: bool = True
 
 
 class ScoredProduct(BaseModel):
@@ -28,6 +29,7 @@ class ScoredProduct(BaseModel):
     score: float
     rank: int
     match_source: Literal["semantic", "keyword", "exact_ref", "hybrid"]
+    is_proposable: bool = True
 
 
 class SearchResult(BaseModel):

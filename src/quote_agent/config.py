@@ -5,7 +5,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Any
 
-from pydantic import BaseModel, SecretStr, field_validator
+from pydantic import BaseModel, Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -80,6 +80,14 @@ class EmbeddingSettings(BaseModel):
     device: str = "cpu"
 
 
+class ProposabilitySettings(BaseModel):
+    """Proposability filter rules — which products can be proposed to clients."""
+
+    exclude_out_of_stock: bool = True
+    exclude_inactive: bool = True
+    excluded_categories: list[str] = Field(default_factory=list)
+
+
 class SearchSettings(BaseModel):
     """Hybrid search configuration."""
 
@@ -118,6 +126,7 @@ class Settings(BaseSettings):
     notification: NotificationSettings = NotificationSettings()
     embedding: EmbeddingSettings = EmbeddingSettings()
     search: SearchSettings = SearchSettings()
+    proposability: ProposabilitySettings = ProposabilitySettings()
     app: AppSettings = AppSettings()
 
 

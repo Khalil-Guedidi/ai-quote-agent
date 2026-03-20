@@ -9,9 +9,13 @@ from sqlalchemy import func, select
 
 from quote_agent.models.product import Product
 from quote_agent.search.models import ScoredProduct
+from quote_agent.search.proposability import is_product_proposable
 
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.sql.elements import ColumnElement
+
+    from quote_agent.config import ProposabilitySettings
 
 REF_CODE_PATTERN = re.compile(
     r"^[A-Z]{2,6}[-_][A-Z0-9.²]+(?:[-_][A-Z0-9.²x]+)*$",
@@ -30,6 +34,8 @@ async def search_keyword(
     limit: int,
     *,
     include_stale: bool = False,
+    proposability_clauses: list[ColumnElement[bool]] | None = None,
+    proposability_settings: ProposabilitySettings | None = None,
 ) -> list[ScoredProduct]:
     """Full-text search using French tsvector with cover density ranking."""
     tsquery = func.plainto_tsquery("french", query_text)
@@ -45,11 +51,20 @@ async def search_keyword(
     if not include_stale:
         stmt = stmt.where(Product.is_stale.is_(False))
 
+    if proposability_clauses:
+        for clause in proposability_clauses:
+            stmt = stmt.where(clause)
+
     result = await session.execute(stmt)
     rows = result.all()
 
     scored: list[ScoredProduct] = []
     for position, (product, rank_score) in enumerate(rows, start=1):
+        proposable = (
+            is_product_proposable(product.is_active, product.stock_status, product.category, proposability_settings)
+            if proposability_settings is not None
+            else True
+        )
         scored.append(
             ScoredProduct(
                 product_id=product.id,
@@ -61,6 +76,7 @@ async def search_keyword(
                 score=float(rank_score),
                 rank=position,
                 match_source="keyword",
+                is_proposable=proposable,
             )
         )
 
@@ -73,6 +89,8 @@ async def search_exact_ref(
     limit: int,
     *,
     include_stale: bool = False,
+    proposability_clauses: list[ColumnElement[bool]] | None = None,
+    proposability_settings: ProposabilitySettings | None = None,
 ) -> list[ScoredProduct]:
     """Exact reference matching — ILIKE on reference column, score = 1.0."""
     stmt = (
@@ -83,6 +101,10 @@ async def search_exact_ref(
 
     if not include_stale:
         stmt = stmt.where(Product.is_stale.is_(False))
+
+    if proposability_clauses:
+        for clause in proposability_clauses:
+            stmt = stmt.where(clause)
 
     result = await session.execute(stmt)
     products = result.scalars().all()
@@ -98,6 +120,11 @@ async def search_exact_ref(
             score=1.0,
             rank=rank,
             match_source="exact_ref",
+            is_proposable=(
+                is_product_proposable(product.is_active, product.stock_status, product.category, proposability_settings)
+                if proposability_settings is not None
+                else True
+            ),
         )
         for rank, product in enumerate(products, start=1)
     ]

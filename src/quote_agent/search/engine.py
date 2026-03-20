@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from quote_agent.config import get_settings
 from quote_agent.search.keyword import is_reference_code, search_exact_ref, search_keyword
 from quote_agent.search.models import ScoredProduct, SearchRequest, SearchResult
+from quote_agent.search.proposability import build_proposability_clauses
 from quote_agent.search.vector import search_semantic
 
 if TYPE_CHECKING:
@@ -54,27 +55,37 @@ class SearchEngine:
     def __init__(self, session: AsyncSession, embedding_adapter: EmbeddingAdapter) -> None:
         self._session = session
         self._embedding = embedding_adapter
-        self._settings = get_settings().search
+        settings = get_settings()
+        self._settings = settings.search
+        self._proposability_settings = settings.proposability
 
     async def search_hybrid(self, request: SearchRequest) -> SearchResult:
         """Run hybrid search: exact ref shortcut, then semantic + keyword with RRF fusion."""
         start = time.monotonic()
         query = request.query.strip()
         limit = request.limit or self._settings.default_limit
+        prop_settings = self._proposability_settings
+        prop_clauses = build_proposability_clauses(prop_settings) if request.apply_proposability_filter else None
+        # When filter is off, pass settings so low-level functions can compute is_proposable
+        tag_settings = None if request.apply_proposability_filter else prop_settings
 
         # Fast path: if query looks like a reference code, try exact match first
         if is_reference_code(query):
             exact_results = await search_exact_ref(
-                self._session, query, limit, include_stale=request.include_stale,
+                self._session, query, limit,
+                include_stale=request.include_stale,
+                proposability_clauses=prop_clauses,
+                proposability_settings=tag_settings,
             )
             if exact_results:
                 duration = time.monotonic() - start
                 logger.info(
                     "Exact reference search completed",
                     extra={"context": {
-                                "query": query,
+                        "query": query,
                         "method": "exact_ref",
                         "results": len(exact_results),
+                        "proposability_filter": request.apply_proposability_filter,
                         "duration_s": round(duration, 4),
                     }},
                 )
@@ -94,10 +105,16 @@ class SearchEngine:
         # concurrent queries on the same connection)
         prefetch_limit = limit * _PREFETCH_MULTIPLIER
         semantic_results = await search_semantic(
-            self._session, query_embedding, prefetch_limit, include_stale=request.include_stale,
+            self._session, query_embedding, prefetch_limit,
+            include_stale=request.include_stale,
+            proposability_clauses=prop_clauses,
+            proposability_settings=tag_settings,
         )
         keyword_results = await search_keyword(
-            self._session, query, prefetch_limit, include_stale=request.include_stale,
+            self._session, query, prefetch_limit,
+            include_stale=request.include_stale,
+            proposability_clauses=prop_clauses,
+            proposability_settings=tag_settings,
         )
 
         # Fuse results using RRF
@@ -113,6 +130,7 @@ class SearchEngine:
                 "results": len(final_results),
                 "semantic_count": len(semantic_results),
                 "keyword_count": len(keyword_results),
+                "proposability_filter": request.apply_proposability_filter,
                 "duration_s": round(duration, 4),
             }},
         )
@@ -130,12 +148,18 @@ class SearchEngine:
         start = time.monotonic()
         query = request.query.strip()
         limit = request.limit or self._settings.default_limit
+        prop_settings = self._proposability_settings
+        prop_clauses = build_proposability_clauses(prop_settings) if request.apply_proposability_filter else None
+        tag_settings = None if request.apply_proposability_filter else prop_settings
 
         embeddings = await self._embedding.embed_texts([query])
         query_embedding = embeddings[0]
 
         results = await search_semantic(
-            self._session, query_embedding, limit, include_stale=request.include_stale,
+            self._session, query_embedding, limit,
+            include_stale=request.include_stale,
+            proposability_clauses=prop_clauses,
+            proposability_settings=tag_settings,
         )
 
         duration = time.monotonic() - start
@@ -145,6 +169,7 @@ class SearchEngine:
                 "query": query,
                 "method": "semantic",
                 "results": len(results),
+                "proposability_filter": request.apply_proposability_filter,
                 "duration_s": round(duration, 4),
             }},
         )
@@ -162,9 +187,15 @@ class SearchEngine:
         start = time.monotonic()
         query = request.query.strip()
         limit = request.limit or self._settings.default_limit
+        prop_settings = self._proposability_settings
+        prop_clauses = build_proposability_clauses(prop_settings) if request.apply_proposability_filter else None
+        tag_settings = None if request.apply_proposability_filter else prop_settings
 
         results = await search_keyword(
-            self._session, query, limit, include_stale=request.include_stale,
+            self._session, query, limit,
+            include_stale=request.include_stale,
+            proposability_clauses=prop_clauses,
+            proposability_settings=tag_settings,
         )
 
         duration = time.monotonic() - start
@@ -174,6 +205,7 @@ class SearchEngine:
                 "query": query,
                 "method": "keyword",
                 "results": len(results),
+                "proposability_filter": request.apply_proposability_filter,
                 "duration_s": round(duration, 4),
             }},
         )
