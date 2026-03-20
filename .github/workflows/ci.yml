@@ -56,7 +56,6 @@ jobs:
 
       - name: Integration tests
         run: uv run --no-group ml pytest tests/integration/ -v
-        continue-on-error: true
 
   docker:
     runs-on: ubuntu-latest

@@ -138,7 +138,7 @@ class TestGetCached:
         from datetime import UTC, datetime, timedelta
 
         expired_row = MagicMock()
-        expired_row.expires_at = datetime.now(UTC) - timedelta(seconds=60)
+        expired_row.expires_at = datetime.now(UTC).replace(tzinfo=None) - timedelta(seconds=60)
         expired_row.query = "tube inox 304L"
 
         session = AsyncMock()
@@ -160,7 +160,7 @@ class TestGetCached:
         row = MagicMock()
         row.query = "tube inox 304L"
         row.results_json = search_result.model_dump(mode="json")
-        row.expires_at = datetime.now(UTC) + timedelta(hours=1)
+        row.expires_at = datetime.now(UTC).replace(tzinfo=None) + timedelta(hours=1)
 
         session = AsyncMock()
         result_mock = MagicMock()
@@ -465,26 +465,18 @@ class TestSearchCacheSettings:
         assert s.ttl_seconds == 1800
         assert s.max_entries == 5000
 
-    def test_env_var_mapping(self) -> None:
+    def test_env_var_mapping(
+        self, env_vars: dict[str, str], _clear_settings_cache: None
+    ) -> None:
         """AC-5: Env vars map correctly via pydantic-settings nested delimiter."""
         import os
 
-        env = {
+        extra = {
             "SEARCH_CACHE__ENABLED": "false",
             "SEARCH_CACHE__TTL_SECONDS": "7200",
             "SEARCH_CACHE__MAX_ENTRIES": "5000",
-            # Required fields that have no defaults — provide dummy values for CI
-            "DATABASE__URL": "postgresql+asyncpg://test:test@localhost:5432/test",
-            "LLM__API_KEY": "fake-key",
-            "ERP__URL": "http://localhost:8069",
-            "ERP__DATABASE": "test",
-            "ERP__USERNAME": "test",
-            "ERP__API_KEY": "fake-key",
-            "EMAIL__IMAP_SERVER": "localhost",
-            "EMAIL__USERNAME": "test",
-            "EMAIL__PASSWORD": "fake",
         }
-        with patch.dict(os.environ, env, clear=False):
+        with patch.dict(os.environ, extra, clear=False):
             from quote_agent.config import get_settings
 
             get_settings.cache_clear()
