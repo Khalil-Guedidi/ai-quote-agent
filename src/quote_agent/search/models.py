@@ -41,5 +41,3 @@ class SearchResult(BaseModel):
     method: str
     duration_seconds: float
     from_cache: bool = False
-    jargon_expanded: bool = False
-    expanded_query: str | None = None

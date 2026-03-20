@@ -14,7 +14,6 @@ from quote_agent.search.cache import (
     get_cached,
     put_cached,
 )
-from quote_agent.search.jargon import expand_query
 from quote_agent.search.keyword import is_reference_code, search_exact_ref, search_keyword
 from quote_agent.search.models import ScoredProduct, SearchRequest, SearchResult
 from quote_agent.search.proposability import build_proposability_clauses
@@ -68,17 +67,6 @@ class SearchEngine:
         self._proposability_settings = settings.proposability
         self._cache_settings = settings.search_cache
         self._cache_enabled = settings.search_cache.enabled
-        self._jargon_enabled = settings.jargon.expansion_enabled
-        self._jargon_abbreviations = settings.jargon.abbreviations
-
-    def _apply_jargon_expansion(self, query: str) -> tuple[str, bool, str | None]:
-        """Apply jargon expansion if enabled. Returns (search_query, jargon_expanded, expanded_query)."""
-        if not self._jargon_enabled:
-            return query, False, None
-        expansion = expand_query(query, self._jargon_abbreviations)
-        if expansion.was_expanded:
-            return expansion.expanded_query, True, expansion.expanded_query
-        return query, False, None
 
     async def _check_cache(self, request: SearchRequest, method: str) -> tuple[str, SearchResult | None]:
         """Check cache for a result. Returns (cache_key, cached_result_or_None)."""
@@ -114,7 +102,6 @@ class SearchEngine:
         tag_settings = None if request.apply_proposability_filter else prop_settings
 
         # Fast path: if query looks like a reference code, try exact match first
-        # (no jargon expansion for reference codes)
         if is_reference_code(query):
             exact_results = await search_exact_ref(
                 self._session,
@@ -151,11 +138,8 @@ class SearchEngine:
 
                 return exact_result
 
-        # Jargon expansion — apply before embedding/keyword, cache key uses original query
-        search_query, jargon_expanded, expanded_query = self._apply_jargon_expansion(query)
-
-        # Generate query embedding (uses expanded query for better semantic match)
-        embeddings = await self._embedding.embed_texts([search_query])
+        # Generate query embedding
+        embeddings = await self._embedding.embed_texts([query])
         query_embedding = embeddings[0]
 
         # Run semantic and keyword search sequentially (asyncpg doesn't support
@@ -171,7 +155,7 @@ class SearchEngine:
         )
         keyword_results = await search_keyword(
             self._session,
-            search_query,
+            query,
             prefetch_limit,
             include_stale=request.include_stale,
             proposability_clauses=prop_clauses,
@@ -193,7 +177,6 @@ class SearchEngine:
                     "semantic_count": len(semantic_results),
                     "keyword_count": len(keyword_results),
                     "proposability_filter": request.apply_proposability_filter,
-                    "jargon_expanded": jargon_expanded,
                     "duration_s": round(duration, 4),
                 }
             },
@@ -205,8 +188,6 @@ class SearchEngine:
             query=query,
             method="hybrid",
             duration_seconds=round(duration, 4),
-            jargon_expanded=jargon_expanded,
-            expanded_query=expanded_query,
         )
 
         if self._cache_enabled:
@@ -231,10 +212,7 @@ class SearchEngine:
         prop_clauses = build_proposability_clauses(prop_settings) if request.apply_proposability_filter else None
         tag_settings = None if request.apply_proposability_filter else prop_settings
 
-        # Jargon expansion
-        search_query, jargon_expanded, expanded_query = self._apply_jargon_expansion(query)
-
-        embeddings = await self._embedding.embed_texts([search_query])
+        embeddings = await self._embedding.embed_texts([query])
         query_embedding = embeddings[0]
 
         results = await search_semantic(
@@ -255,7 +233,6 @@ class SearchEngine:
                     "method": "semantic",
                     "results": len(results),
                     "proposability_filter": request.apply_proposability_filter,
-                    "jargon_expanded": jargon_expanded,
                     "duration_s": round(duration, 4),
                 }
             },
@@ -267,8 +244,6 @@ class SearchEngine:
             query=query,
             method="semantic",
             duration_seconds=round(duration, 4),
-            jargon_expanded=jargon_expanded,
-            expanded_query=expanded_query,
         )
 
         if self._cache_enabled:
@@ -293,12 +268,9 @@ class SearchEngine:
         prop_clauses = build_proposability_clauses(prop_settings) if request.apply_proposability_filter else None
         tag_settings = None if request.apply_proposability_filter else prop_settings
 
-        # Jargon expansion
-        search_query, jargon_expanded, expanded_query = self._apply_jargon_expansion(query)
-
         results = await search_keyword(
             self._session,
-            search_query,
+            query,
             limit,
             include_stale=request.include_stale,
             proposability_clauses=prop_clauses,
@@ -314,7 +286,6 @@ class SearchEngine:
                     "method": "keyword",
                     "results": len(results),
                     "proposability_filter": request.apply_proposability_filter,
-                    "jargon_expanded": jargon_expanded,
                     "duration_s": round(duration, 4),
                 }
             },
@@ -326,8 +297,6 @@ class SearchEngine:
             query=query,
             method="keyword",
             duration_seconds=round(duration, 4),
-            jargon_expanded=jargon_expanded,
-            expanded_query=expanded_query,
         )
 
         if self._cache_enabled:

@@ -162,7 +162,6 @@ search/
 ├── keyword.py         # tsvector full-text search + exact reference matching
 ├── proposability.py   # SQL-level filtering (proposable-only products)
 ├── cache.py           # PostgreSQL-backed TTL cache (no Redis)
-├── jargon.py          # Query expansion (abbreviation → full term)
 └── models.py          # DTOs: SearchRequest, ScoredProduct, SearchResult
 ```
 
@@ -404,7 +403,6 @@ src/quote_agent/
 │   ├── keyword.py      # tsvector full-text + exact reference
 │   ├── proposability.py # SQL-level proposability filtering
 │   ├── cache.py        # PostgreSQL-backed TTL cache
-│   ├── jargon.py       # Query expansion (abbreviation dictionary)
 │   └── models.py       # SearchRequest, ScoredProduct, SearchResult
 ├── agent/              # LangGraph (graph, state, nodes, tools)
 ├── models/             # SQLAlchemy models + DB access (base.py, email_request.py, quote_request.py)
@@ -451,7 +449,6 @@ All search-related settings follow the existing pydantic-settings pattern and ar
 | `SearchSettings` | `SEARCH__` | Top-k, RRF weights, ef_search |
 | `SearchCacheSettings` | `SEARCH_CACHE__` | TTL, enabled flag |
 | `ProposabilitySettings` | `PROPOSABILITY__` | Filter rules, enabled flag |
-| `JargonSettings` | `JARGON__` | Abbreviation dictionary, enabled flag |
 | `EmbeddingSettings` | `EMBEDDING__` | Model name, device (cpu/cuda), dimension |
 
 ### Test Markers
@@ -504,7 +501,7 @@ addopts = "-m 'not e2e'"
 - `asyncio_mode = "auto"`: no need for `@pytest.mark.asyncio` decorator
 - E2E tests excluded by default; run with `pytest -m e2e`
 - E2E tests require real `DATABASE__URL` and `LLM__API_KEY` environment variables; search E2E tests also require a loaded BGE-M3 model
-- **Test count**: 363 (188 after Epic 2, 363 after Epic 3)
+- **Test count**: 353 (188 after Epic 2, 363 after Epic 3, 353 after Story 4.0c — 24 jargon tests removed)
 - `@requires_e2e` skip decorator checks service availability
 
 ### E2E Test Requirements
@@ -513,6 +510,23 @@ addopts = "-m 'not e2e'"
 - Cache clearing autouse fixture runs before and after each test
 - Test data identified by `e2e-test` prefix in `message_id` for deterministic cleanup
 - Cleanup respects FK constraints: delete QuoteRequests before EmailRequests
+
+---
+
+## Decisions
+
+### Jargon Dictionary Removed (Story 4.0c, 2026-03-20)
+
+Story 3.6 introduced a jargon abbreviation dictionary (10 entries: inox, Ø, lg, DN, PN, etc.) for query expansion before embedding/keyword search. The Epic 3 retrospective flagged this as a product regression — the project's "zero-preprocessing" vision relies on BGE-M3's multilingual semantic understanding handling industrial jargon natively.
+
+**Benchmark results** (25 queries across 4 categories on 100 products from catalog fixture):
+- Expansion **enabled**: 24/25 = 96.0% (abbreviation 83%, jargon 100%, cross_language 100%, exact_reference 100%)
+- Expansion **disabled**: 24/25 = 96.0% (identical breakdown)
+- **Delta: 0%** — the dictionary provided zero measurable benefit
+
+The single failure ("boulons HM M10x50") failed in both modes due to no matching product in the fixture, not a semantic search limitation.
+
+**Decision**: Remove the dictionary entirely. BGE-M3 handles all tested abbreviations (inox, DN, PN, Ø, lg, TB, RD) natively via semantic search. Removed files: `search/jargon.py`, `JargonSettings`, `jargon_expanded`/`expanded_query` fields from `SearchResult`, all jargon unit and E2E tests.
 
 ---
 
