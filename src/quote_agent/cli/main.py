@@ -144,6 +144,28 @@ def draft_create(
     )
 
 
+@app.command(name="process")
+def process_cmd(
+    description: str = typer.Argument(..., help="Quote request description to process"),
+    client: str | None = typer.Option(None, "--client", "-c", help="Client name or ID"),
+    quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
+    reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
+    urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Process a quote request through the full LangGraph agent pipeline."""
+    from quote_agent.cli.process import process as _process_impl
+
+    _process_impl(
+        description=description,
+        client=client,
+        quantity=quantity,
+        reference=reference,
+        urgency=urgency,
+        json_output=json_output,
+    )
+
+
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),

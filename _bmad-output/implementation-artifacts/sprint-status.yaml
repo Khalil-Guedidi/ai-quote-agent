@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-21  # Story 4-7 done (code review passed)
+last_updated: 2026-03-21  # Story 4-8 review
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -103,7 +103,7 @@ development_status:
   4-5-detection-export-controlled-entites-sanctionnees: done
   4-6-lecture-donnees-erp-catalogue-client: done
   4-7-creation-de-brouillon-devis-dans-erp: done
-  4-8-orchestration-agent-langgraph-pipeline-complet: backlog
+  4-8-orchestration-agent-langgraph-pipeline-complet: done
   epic-4-retrospective: optional
 
   # Epic 5: Notifications & Workflow Commercial
