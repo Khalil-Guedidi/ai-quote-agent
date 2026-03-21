@@ -1,7 +1,5 @@
 """Unit tests for the tier routing node."""
 
-import pytest
-
 from quote_agent.agent.nodes.classifier import ClassificationResult
 from quote_agent.agent.nodes.confidence_scorer import ConfidenceResult, ProductConfidence
 from quote_agent.agent.nodes.router import route_by_confidence

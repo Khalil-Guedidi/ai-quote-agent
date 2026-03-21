@@ -3,7 +3,6 @@
 import json
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from typer.testing import CliRunner
 
 from quote_agent.agent.nodes.confidence_scorer import ConfidenceResult, ProductConfidence

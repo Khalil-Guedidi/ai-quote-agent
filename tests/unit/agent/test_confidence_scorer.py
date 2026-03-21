@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from quote_agent.agent.nodes.classifier import ClassificationResult
 from quote_agent.agent.nodes.confidence_scorer import (
     UNTRUSTED_QUOTE_END,
     UNTRUSTED_QUOTE_START,
@@ -13,7 +14,6 @@ from quote_agent.agent.nodes.confidence_scorer import (
     _build_scoring_messages,
     score_confidence,
 )
-from quote_agent.agent.nodes.classifier import ClassificationResult
 from quote_agent.exceptions import AdapterError, LLMTimeoutError
 from quote_agent.search.models import ScoredProduct, SearchResult
 from quote_agent.services.extraction_models import ExtractedQuoteRequest, QuoteLineItem
