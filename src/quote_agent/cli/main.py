@@ -127,6 +127,24 @@ def erp_read(
 
 
 @app.command()
+def draft_create(
+    client: str = typer.Option(..., "--client", "-c", help="Client ID or ref"),
+    product: int = typer.Option(..., "--product", "-p", help="Product Odoo ID"),
+    quantity: float = typer.Option(..., "--quantity", "-q", help="Quantity"),
+    price: float | None = typer.Option(None, "--price", help="Unit price override"),
+    description: str | None = typer.Option(None, "--description", "-d", help="Line description"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Create a draft quote in Odoo ERP."""
+    from quote_agent.cli.draft_create import draft_create as _draft_create_impl
+
+    _draft_create_impl(
+        client=client, product=product, quantity=quantity,
+        price=price, description=description, json_output=json_output,
+    )
+
+
+@app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),
     limit: int = typer.Option(10, "--limit", "-l", help="Maximum number of results"),

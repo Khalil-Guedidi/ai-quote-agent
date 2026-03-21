@@ -80,3 +80,33 @@ class ClientFilter(BaseModel):
     search_term: str | None = None
     limit: int = 20
     offset: int = 0
+
+
+class UniversalQuoteLine(BaseModel):
+    """Single line item for a draft quote — ERP-agnostic."""
+
+    product_id: int
+    product_ref: str | None = None
+    product_name: str
+    quantity: float
+    unit_price: float
+    description: str | None = None
+
+
+class UniversalQuote(BaseModel):
+    """ERP-agnostic draft quote DTO — translated to Odoo sale.order by the adapter."""
+
+    client_id: str
+    client_name: str
+    lines: list[UniversalQuoteLine]
+    delivery_date: str | None = None
+    notes: str | None = None
+
+
+class QuoteDraftResult(BaseModel):
+    """Result of creating a draft quote in the ERP."""
+
+    odoo_id: int
+    order_reference: str
+    state: str
+    line_count: int

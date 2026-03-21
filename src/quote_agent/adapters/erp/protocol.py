@@ -5,7 +5,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from quote_agent.adapters.erp.models import Client, ClientOrderHistory, Product, ProductFilter
+    from quote_agent.adapters.erp.models import (
+        Client,
+        ClientOrderHistory,
+        Product,
+        ProductFilter,
+        QuoteDraftResult,
+        UniversalQuote,
+    )
     from quote_agent.api.health import ServiceHealth
 
 
@@ -31,4 +38,8 @@ class ERPAdapter(Protocol):
 
     async def get_product_by_id(self, product_id: int) -> Product:
         """Fetch a single product by its Odoo ID."""
+        ...
+
+    async def create_draft_quote(self, quote: UniversalQuote) -> QuoteDraftResult:
+        """Create a draft quotation in the ERP from a universal quote DTO."""
         ...

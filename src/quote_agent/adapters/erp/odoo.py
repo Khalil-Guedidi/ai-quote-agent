@@ -8,7 +8,14 @@ import time
 import xmlrpc.client
 from typing import TYPE_CHECKING, Any, TypeVar
 
-from quote_agent.adapters.erp.models import Client, ClientOrderHistory, Product, ProductFilter
+from quote_agent.adapters.erp.models import (
+    Client,
+    ClientOrderHistory,
+    Product,
+    ProductFilter,
+    QuoteDraftResult,
+    UniversalQuote,
+)
 from quote_agent.api.health import ServiceHealth
 
 if TYPE_CHECKING:
@@ -24,6 +31,7 @@ _GET_PRODUCTS_TIMEOUT = 30.0
 _GET_CLIENT_TIMEOUT = 30.0
 _GET_ORDERS_TIMEOUT = 30.0
 _GET_PRODUCT_BY_ID_TIMEOUT = 30.0
+_CREATE_DRAFT_TIMEOUT = 30.0
 
 _MAX_RETRIES = 3
 _RETRY_BASE_DELAY = 1.0
@@ -542,3 +550,98 @@ class OdooAdapter:
         logger.info("Product fetched successfully", extra={"context": ctx},
         )
         return _map_odoo_product(records[0])
+
+    async def create_draft_quote(self, quote: UniversalQuote) -> QuoteDraftResult:
+        """Create a draft quotation in Odoo with retry."""
+        return await self._retry_with_backoff(self._create_draft_quote_impl, quote)
+
+    @staticmethod
+    def _build_odoo_order_values(quote: UniversalQuote, partner_odoo_id: int) -> dict[str, Any]:
+        """Build the Odoo sale.order create values dict."""
+        order_lines: list[list[Any]] = []
+        for line in quote.lines:
+            line_vals: dict[str, Any] = {
+                "product_id": line.product_id,
+                "product_uom_qty": line.quantity,
+                "price_unit": line.unit_price,
+            }
+            if line.description:
+                line_vals["name"] = line.description
+            order_lines.append([0, 0, line_vals])
+
+        values: dict[str, Any] = {
+            "partner_id": partner_odoo_id,
+            "order_line": order_lines,
+        }
+        if quote.delivery_date:
+            values["commitment_date"] = quote.delivery_date
+
+        return values
+
+    async def _create_draft_quote_impl(self, quote: UniversalQuote) -> QuoteDraftResult:
+        """Execute the XML-RPC calls to create a draft quote in Odoo."""
+        start = time.monotonic()
+
+        # Resolve client to get Odoo integer ID
+        client = await self._get_client_impl(quote.client_id)
+        partner_odoo_id = client.odoo_id
+
+        uid = await self._ensure_uid()
+        url = self._settings.url
+        proxy = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
+        db = self._settings.database
+        api_key = self._settings.api_key.get_secret_value()
+
+        # Build order values
+        values = self._build_odoo_order_values(quote, partner_odoo_id)
+
+        # Create the sale.order
+        order_id: int = await asyncio.wait_for(
+            asyncio.to_thread(
+                proxy.execute_kw,  # type: ignore[arg-type]
+                db,
+                uid,
+                api_key,
+                "sale.order",
+                "create",
+                [values],
+            ),
+            timeout=_CREATE_DRAFT_TIMEOUT,
+        )
+
+        # Read back to get order reference
+        order_data: list[dict[str, Any]] = await asyncio.wait_for(
+            asyncio.to_thread(
+                proxy.execute_kw,  # type: ignore[arg-type]
+                db,
+                uid,
+                api_key,
+                "sale.order",
+                "read",
+                [order_id],
+                {"fields": ["name", "state", "order_line"]},
+            ),
+            timeout=_CREATE_DRAFT_TIMEOUT,
+        )
+
+        duration_ms = int((time.monotonic() - start) * 1000)
+        order_ref = order_data[0]["name"] if order_data else f"SO{order_id}"
+        order_state = order_data[0].get("state", "draft") if order_data else "draft"
+        order_lines_ids = order_data[0].get("order_line", []) if order_data else []
+
+        ctx = {
+            "component": "adapters.erp.odoo",
+            "operation": "create_draft_quote",
+            "partner_id": partner_odoo_id,
+            "product_count": len(quote.lines),
+            "draft_id": order_id,
+            "duration_ms": duration_ms,
+        }
+        logger.info("Draft quote created successfully", extra={"context": ctx})
+
+        return QuoteDraftResult(
+            odoo_id=order_id,
+            order_reference=order_ref,
+            state=order_state,
+            line_count=len(order_lines_ids),
+        )
