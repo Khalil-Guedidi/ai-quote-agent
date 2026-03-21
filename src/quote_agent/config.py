@@ -114,6 +114,15 @@ class ConfidenceScoringSettings(BaseModel):
     fallback_tier: Literal["high", "medium", "low"] = "low"
 
 
+class ReasoningSettings(BaseModel):
+    """Adaptive reasoning strategy configuration."""
+
+    timeout_seconds: int = 15
+    simple_search_limit: int = 5
+    ambiguous_search_limit: int = 10
+    complex_search_limit: int = 15
+
+
 class SearchSettings(BaseModel):
     """Hybrid search configuration."""
 
@@ -153,6 +162,7 @@ class Settings(BaseSettings):
     embedding: EmbeddingSettings = EmbeddingSettings()
     classification: ClassificationSettings = ClassificationSettings()
     confidence_scoring: ConfidenceScoringSettings = ConfidenceScoringSettings()
+    reasoning: ReasoningSettings = ReasoningSettings()
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()
