@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-21  # Story 4-8 review
+last_updated: 2026-03-22  # Epic 4 retrospective
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -92,7 +92,7 @@ development_status:
   # Epic 4: Raisonnement Adaptatif & Génération de Devis
   # Note: 3 foundation stories (4.0a, 4.0b, 4.0c) added from Epic 3 retrospective (2026-03-20)
   # All 3 block stories 4.1+
-  epic-4: in-progress
+  epic-4: done
   4-0a-fix-ci-cd-pipeline-github-actions: done
   4-0b-cli-flux-testable-search: done
   4-0c-resolution-dictionnaire-jargon: done
@@ -104,10 +104,14 @@ development_status:
   4-6-lecture-donnees-erp-catalogue-client: done
   4-7-creation-de-brouillon-devis-dans-erp: done
   4-8-orchestration-agent-langgraph-pipeline-complet: done
-  epic-4-retrospective: optional
+  epic-4-retrospective: done
 
   # Epic 5: Notifications & Workflow Commercial
+  # Note: 2 foundation stories (5.0a, 5.0b) added from Epic 4 retrospective (2026-03-22)
+  # 5.0a blocks stories 5.1+
   epic-5: backlog
+  5-0a-setup-teams-webhook-cli-notify-test: backlog
+  5-0b-fix-flaky-e2e-test-llm-splitting: backlog
   5-1-notification-devis-pret-high-confidence: backlog
   5-2-notification-multi-propositions-medium-confidence: backlog
   5-3-notification-escalade-low-confidence: backlog
