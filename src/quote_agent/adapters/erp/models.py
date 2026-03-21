@@ -45,3 +45,38 @@ class IngestionResult(BaseModel):
     unchanged: int
     stale: int
     duration_seconds: float
+
+
+class Client(BaseModel):
+    """Client (res.partner) entry from ERP."""
+
+    odoo_id: int
+    name: str
+    ref: str | None = None
+    email: str | None = None
+    phone: str | None = None
+    address: str | None = None
+    vat: str | None = None
+    is_active: bool = True
+    metadata: dict[str, Any] = {}
+
+
+class ClientOrderHistory(BaseModel):
+    """Single order line from client order history."""
+
+    order_id: str
+    date: str
+    product_ref: str | None = None
+    product_name: str
+    quantity: float
+    unit_price: float
+    total: float
+    state: str
+
+
+class ClientFilter(BaseModel):
+    """Optional filters for client search from ERP."""
+
+    search_term: str | None = None
+    limit: int = 20
+    offset: int = 0

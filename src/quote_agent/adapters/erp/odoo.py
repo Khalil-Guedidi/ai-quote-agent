@@ -6,12 +6,14 @@ import asyncio
 import logging
 import time
 import xmlrpc.client
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
-from quote_agent.adapters.erp.models import Product, ProductFilter
+from quote_agent.adapters.erp.models import Client, ClientOrderHistory, Product, ProductFilter
 from quote_agent.api.health import ServiceHealth
 
 if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
+
     from quote_agent.config import ERPSettings
 
 logger = logging.getLogger(__name__)
@@ -19,6 +21,48 @@ logger = logging.getLogger(__name__)
 _HEALTH_CHECK_TIMEOUT = 5.0
 _HEALTH_CACHE_TTL = 30.0
 _GET_PRODUCTS_TIMEOUT = 30.0
+_GET_CLIENT_TIMEOUT = 30.0
+_GET_ORDERS_TIMEOUT = 30.0
+_GET_PRODUCT_BY_ID_TIMEOUT = 30.0
+
+_MAX_RETRIES = 3
+_RETRY_BASE_DELAY = 1.0
+_RETRY_MAX_DELAY = 8.0
+
+_T = TypeVar("_T")
+
+_CLIENT_FIELDS = [
+    "id",
+    "name",
+    "ref",
+    "email",
+    "phone",
+    "street",
+    "city",
+    "zip",
+    "country_id",
+    "vat",
+    "active",
+    "customer_rank",
+]
+
+_ORDER_FIELDS = [
+    "id",
+    "name",
+    "date_order",
+    "state",
+    "amount_total",
+    "partner_id",
+]
+
+_ORDER_LINE_FIELDS = [
+    "id",
+    "product_id",
+    "name",
+    "product_uom_qty",
+    "price_unit",
+    "price_subtotal",
+]
 
 _ODOO_FIELDS = [
     "id",
@@ -84,6 +128,70 @@ def _map_odoo_product(record: dict[str, Any]) -> Product:
         stock_status=stock_status,
         is_active=is_active,
         metadata=metadata,
+    )
+
+
+def _map_odoo_client(record: dict[str, Any]) -> Client:
+    """Map an Odoo res.partner record dict to a Client DTO."""
+    odoo_id: int = record["id"]
+    name: str = record.get("name", "")
+    ref = _odoo_str(record.get("ref"))
+    email = _odoo_str(record.get("email"))
+    phone = _odoo_str(record.get("phone"))
+
+    # Build address from street, city, zip, country
+    address_parts: list[str] = []
+    street = _odoo_str(record.get("street"))
+    if street:
+        address_parts.append(street)
+    city = _odoo_str(record.get("city"))
+    zip_code = _odoo_str(record.get("zip"))
+    if city and zip_code:
+        address_parts.append(f"{zip_code} {city}")
+    elif city:
+        address_parts.append(city)
+    country = record.get("country_id")
+    if isinstance(country, (list, tuple)) and len(country) > 1:
+        address_parts.append(str(country[1]))
+    address = ", ".join(address_parts) if address_parts else None
+
+    vat = _odoo_str(record.get("vat"))
+    is_active: bool = bool(record.get("active", True))
+
+    metadata: dict[str, Any] = {}
+    customer_rank = record.get("customer_rank", 0)
+    if isinstance(customer_rank, int) and customer_rank > 0:
+        metadata["customer_rank"] = customer_rank
+
+    return Client(
+        odoo_id=odoo_id,
+        name=name,
+        ref=ref,
+        email=email,
+        phone=phone,
+        address=address,
+        vat=vat,
+        is_active=is_active,
+        metadata=metadata,
+    )
+
+
+def _map_odoo_order_line(
+    line: dict[str, Any], order_name: str, order_date: str, order_state: str,
+) -> ClientOrderHistory:
+    """Map an Odoo sale.order.line record to a ClientOrderHistory DTO."""
+    product = line.get("product_id")
+    product_name = product[1] if isinstance(product, (list, tuple)) and len(product) > 1 else "Unknown"
+
+    return ClientOrderHistory(
+        order_id=order_name,
+        date=order_date,
+        product_ref=None,  # Not available on order line directly
+        product_name=product_name,
+        quantity=float(line.get("product_uom_qty", 0)),
+        unit_price=float(line.get("price_unit", 0)),
+        total=float(line.get("price_subtotal", 0)),
+        state=order_state,
     )
 
 
@@ -205,3 +313,232 @@ class OdooAdapter:
         )
 
         return [_map_odoo_product(record) for record in records]
+
+    async def _retry_with_backoff(
+        self,
+        operation: Callable[..., Coroutine[Any, Any, _T]],
+        *args: Any,
+    ) -> _T:
+        """Retry an async operation with exponential backoff."""
+        for attempt in range(1, _MAX_RETRIES + 1):
+            try:
+                return await operation(*args)
+            except (ConnectionRefusedError, OSError, xmlrpc.client.Error) as exc:
+                if attempt == _MAX_RETRIES:
+                    logger.error(
+                        "ERP operation failed after %d retries — queuing for later retry: %s",
+                        _MAX_RETRIES,
+                        exc,
+                        extra={
+                            "context": {
+                                "component": "adapters.erp.odoo",
+                                "operation": operation.__name__,
+                                "retries_exhausted": True,
+                                "max_retries": _MAX_RETRIES,
+                            },
+                        },
+                    )
+                    raise
+                delay = min(_RETRY_BASE_DELAY * (2 ** (attempt - 1)), _RETRY_MAX_DELAY)
+                logger.warning(
+                    "ERP retry %d/%d after %.1fs: %s",
+                    attempt,
+                    _MAX_RETRIES,
+                    delay,
+                    exc,
+                    extra={"context": {"component": "adapters.erp.odoo", "attempt": attempt, "delay": delay}},
+                )
+                await asyncio.sleep(delay)
+        msg = "Unreachable"  # pragma: no cover
+        raise RuntimeError(msg)  # pragma: no cover
+
+    async def get_client(self, client_id: str) -> Client:
+        """Fetch a single client by ID or ref from Odoo with retry."""
+        return await self._retry_with_backoff(self._get_client_impl, client_id)
+
+    async def _get_client_impl(self, client_id: str) -> Client:
+        """Execute the XML-RPC call to fetch a client."""
+        start = time.monotonic()
+        uid = await self._ensure_uid()
+        url = self._settings.url
+        proxy = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
+        db = self._settings.database
+        api_key = self._settings.api_key.get_secret_value()
+
+        # Support both numeric ID and string ref
+        try:
+            numeric_id = int(client_id)
+            domain: list[Any] = [("id", "=", numeric_id)]
+        except ValueError:
+            domain = [("ref", "=", client_id)]
+
+        records: list[dict[str, Any]] = await asyncio.wait_for(
+            asyncio.to_thread(
+                proxy.execute_kw,  # type: ignore[arg-type]
+                db,
+                uid,
+                api_key,
+                "res.partner",
+                "search_read",
+                [domain],
+                {"fields": _CLIENT_FIELDS, "limit": 1},
+            ),
+            timeout=_GET_CLIENT_TIMEOUT,
+        )
+
+        duration_ms = int((time.monotonic() - start) * 1000)
+        ctx = {
+            "component": "adapters.erp.odoo",
+            "operation": "get_client",
+            "client_id": client_id,
+            "duration_ms": duration_ms,
+        }
+        if not records:
+            logger.info("Client not found: %s", client_id, extra={"context": ctx})
+            msg = f"Client not found: {client_id}"
+            raise ValueError(msg)
+
+        logger.info("Client fetched successfully", extra={"context": ctx})
+        return _map_odoo_client(records[0])
+
+    async def get_client_orders(self, client_id: str, limit: int = 20) -> list[ClientOrderHistory]:
+        """Fetch recent order history for a client with retry."""
+        return await self._retry_with_backoff(self._get_client_orders_impl, client_id, limit)
+
+    async def _get_client_orders_impl(self, client_id: str, limit: int) -> list[ClientOrderHistory]:
+        """Execute the XML-RPC calls to fetch client order history."""
+        start = time.monotonic()
+        # First resolve client to get the numeric partner ID
+        client = await self._get_client_impl(client_id)
+        partner_odoo_id = client.odoo_id
+
+        uid = await self._ensure_uid()
+        url = self._settings.url
+        proxy = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
+        db = self._settings.database
+        api_key = self._settings.api_key.get_secret_value()
+
+        # Fetch orders (sale + done states only)
+        order_domain: list[Any] = [
+            ("partner_id", "=", partner_odoo_id),
+            ("state", "in", ["sale", "done"]),
+        ]
+
+        orders: list[dict[str, Any]] = await asyncio.wait_for(
+            asyncio.to_thread(
+                proxy.execute_kw,  # type: ignore[arg-type]
+                db,
+                uid,
+                api_key,
+                "sale.order",
+                "search_read",
+                [order_domain],
+                {
+                    "fields": _ORDER_FIELDS,
+                    "limit": limit,
+                    "order": "date_order desc",
+                },
+            ),
+            timeout=_GET_ORDERS_TIMEOUT,
+        )
+
+        if not orders:
+            duration_ms = int((time.monotonic() - start) * 1000)
+            ctx = {
+                "component": "adapters.erp.odoo",
+                "operation": "get_client_orders",
+                "client_id": client_id,
+                "duration_ms": duration_ms,
+            }
+            logger.info("No orders found for client", extra={"context": ctx})
+            return []
+
+        # Fetch order lines
+        order_ids = [o["id"] for o in orders]
+        lines: list[dict[str, Any]] = await asyncio.wait_for(
+            asyncio.to_thread(
+                proxy.execute_kw,  # type: ignore[arg-type]
+                db,
+                uid,
+                api_key,
+                "sale.order.line",
+                "search_read",
+                [[("order_id", "in", order_ids)]],
+                {"fields": _ORDER_LINE_FIELDS},
+            ),
+            timeout=_GET_ORDERS_TIMEOUT,
+        )
+
+        # Build order lookup: order_id -> (name, date, state)
+        order_lookup: dict[int, tuple[str, str, str]] = {}
+        for order in orders:
+            order_id: int = order["id"]
+            order_name: str = order.get("name", f"SO{order_id}")
+            date_str = str(order.get("date_order", ""))
+            state: str = order.get("state", "unknown")
+            order_lookup[order_id] = (order_name, date_str, state)
+
+        # Map lines to DTOs
+        result: list[ClientOrderHistory] = []
+        for line in lines:
+            line_order_id = line.get("order_id")
+            if isinstance(line_order_id, (list, tuple)):
+                line_order_id = line_order_id[0]
+            if line_order_id in order_lookup:
+                order_name, date_str, state = order_lookup[line_order_id]
+                result.append(_map_odoo_order_line(line, order_name, date_str, state))
+
+        duration_ms = int((time.monotonic() - start) * 1000)
+        ctx = {
+            "component": "adapters.erp.odoo",
+            "operation": "get_client_orders",
+            "client_id": client_id,
+            "order_count": len(orders),
+            "line_count": len(result),
+            "duration_ms": duration_ms,
+        }
+        logger.info("Client orders fetched successfully", extra={"context": ctx})
+        return result
+
+    async def get_product_by_id(self, product_id: int) -> Product:
+        """Fetch a single product by its Odoo ID with retry."""
+        return await self._retry_with_backoff(self._get_product_by_id_impl, product_id)
+
+    async def _get_product_by_id_impl(self, product_id: int) -> Product:
+        """Execute the XML-RPC call to fetch a single product."""
+        start = time.monotonic()
+        uid = await self._ensure_uid()
+        url = self._settings.url
+        proxy = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
+        db = self._settings.database
+        api_key = self._settings.api_key.get_secret_value()
+
+        records: list[dict[str, Any]] = await asyncio.wait_for(
+            asyncio.to_thread(
+                proxy.execute_kw,  # type: ignore[arg-type]
+                db,
+                uid,
+                api_key,
+                "product.product",
+                "search_read",
+                [[("id", "=", product_id)]],
+                {"fields": _ODOO_FIELDS, "limit": 1},
+            ),
+            timeout=_GET_PRODUCT_BY_ID_TIMEOUT,
+        )
+
+        duration_ms = int((time.monotonic() - start) * 1000)
+        ctx = {
+            "component": "adapters.erp.odoo",
+            "operation": "get_product_by_id",
+            "product_id": product_id,
+            "duration_ms": duration_ms,
+        }
+        if not records:
+            logger.info("Product not found: %d", product_id, extra={"context": ctx})
+            msg = f"Product not found: {product_id}"
+            raise ValueError(msg)
+
+        logger.info("Product fetched successfully", extra={"context": ctx},
+        )
+        return _map_odoo_product(records[0])

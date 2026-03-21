@@ -113,6 +113,20 @@ def compliance(
 
 
 @app.command()
+def erp_read(
+    client: str | None = typer.Option(None, "--client", "-c", help="Client ID or ref to read from Odoo"),
+    product: int | None = typer.Option(None, "--product", "-p", help="Product Odoo ID to read"),
+    orders: str | None = typer.Option(None, "--orders", "-o", help="Client ID to fetch order history"),
+    limit: int = typer.Option(20, "--limit", "-l", help="Max orders to fetch"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Read client data, product details, or order history from Odoo ERP."""
+    from quote_agent.cli.erp_read import erp_read as _erp_read_impl
+
+    _erp_read_impl(client=client, product=product, orders=orders, limit=limit, json_output=json_output)
+
+
+@app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),
     limit: int = typer.Option(10, "--limit", "-l", help="Maximum number of results"),
