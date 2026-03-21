@@ -7,6 +7,7 @@ from unittest.mock import AsyncMock, patch
 
 from typer.testing import CliRunner
 
+from quote_agent.agent.nodes.compliance_checker import ComplianceCheckResult, ComplianceFlag
 from quote_agent.agent.nodes.self_reviewer import SelfReviewResult, ValidationStep
 from quote_agent.cli.main import app
 
@@ -47,12 +48,34 @@ def _make_review_result(
     )
 
 
+def _make_compliant_result() -> ComplianceCheckResult:
+    """Build a compliant ComplianceCheckResult."""
+    return ComplianceCheckResult(is_compliant=True, flags=[], check_duration_ms=100)
+
+
+def _make_blocked_compliance_result() -> ComplianceCheckResult:
+    """Build a blocked ComplianceCheckResult."""
+    return ComplianceCheckResult(
+        is_compliant=False,
+        flags=[
+            ComplianceFlag(
+                flag_type="sanctioned_entity",
+                severity="block",
+                detail="Entity 'DPRK Trading Corp' matches OFAC SDN",
+                matched_term="DPRK Trading",
+            ),
+        ],
+        check_duration_ms=500,
+    )
+
+
 class TestReviewFormattedOutputApproved:
     """Formatted output for approved case."""
 
     def test_displays_approved_verdict(self) -> None:
         review = _make_review_result(approved=True)
-        mock = AsyncMock(return_value=review)
+        compliance = _make_compliant_result()
+        mock = AsyncMock(return_value=(review, compliance))
         with patch("quote_agent.cli.review._run_review", mock):
             result = runner.invoke(app, ["review", "Tube inox 304L DN50"])
 
@@ -61,7 +84,8 @@ class TestReviewFormattedOutputApproved:
 
     def test_displays_validation_steps(self) -> None:
         review = _make_review_result(approved=True)
-        mock = AsyncMock(return_value=review)
+        compliance = _make_compliant_result()
+        mock = AsyncMock(return_value=(review, compliance))
         with patch("quote_agent.cli.review._run_review", mock):
             result = runner.invoke(app, ["review", "Tube inox 304L DN50"])
 
@@ -81,7 +105,8 @@ class TestReviewFormattedOutputRejected:
             approved=False,
             failure_reasons=["Incoherence detected: Product 1 is a valve, not a tube"],
         )
-        mock = AsyncMock(return_value=review)
+        compliance = _make_compliant_result()
+        mock = AsyncMock(return_value=(review, compliance))
         with patch("quote_agent.cli.review._run_review", mock):
             result = runner.invoke(app, ["review", "Tube inox 304L DN50"])
 
@@ -96,7 +121,8 @@ class TestReviewFormattedOutputRejected:
             failure_reasons=["Anomalies detected"],
             anomaly_flags=["Suspicious product name pattern"],
         )
-        mock = AsyncMock(return_value=review)
+        compliance = _make_compliant_result()
+        mock = AsyncMock(return_value=(review, compliance))
         with patch("quote_agent.cli.review._run_review", mock):
             result = runner.invoke(app, ["review", "Tube inox 304L DN50"])
 
@@ -110,15 +136,17 @@ class TestReviewJsonOutput:
 
     def test_json_output_when_json_flag_set(self) -> None:
         review = _make_review_result(approved=True)
-        mock = AsyncMock(return_value=review)
+        compliance = _make_compliant_result()
+        mock = AsyncMock(return_value=(review, compliance))
         with patch("quote_agent.cli.review._run_review", mock):
             result = runner.invoke(app, ["review", "--json", "Tube inox 304L DN50"])
 
         assert result.exit_code == 0
         data = json.loads(result.output)
-        assert data["approved"] is True
-        assert len(data["steps"]) == 4
-        assert data["review_duration_ms"] == 225
+        assert data["review"]["approved"] is True
+        assert len(data["review"]["steps"]) == 4
+        assert data["review"]["review_duration_ms"] == 225
+        assert data["compliance"]["is_compliant"] is True
 
 
 class TestReviewErrorHandling:
@@ -132,3 +160,32 @@ class TestReviewErrorHandling:
         assert result.exit_code == 1
         assert "Error:" in result.output
         assert "Connection failed" in result.output
+
+
+class TestReviewPipelineIncludesCompliance:
+    """AC-8: Review pipeline includes compliance step."""
+
+    def test_review_pipeline_includes_compliance_step(self) -> None:
+        """AC-8: Review output includes compliance section."""
+        review = _make_review_result(approved=True)
+        compliance = _make_compliant_result()
+        mock = AsyncMock(return_value=(review, compliance))
+        with patch("quote_agent.cli.review._run_review", mock):
+            result = runner.invoke(app, ["review", "Tube inox 304L DN50"])
+
+        assert result.exit_code == 0
+        assert "Compliance" in result.output
+        assert "COMPLIANT" in result.output
+
+    def test_compliance_block_overrides_self_review_approved(self) -> None:
+        """AC-8: Compliance block overrides self-review approved."""
+        review = _make_review_result(approved=True)
+        compliance = _make_blocked_compliance_result()
+        mock = AsyncMock(return_value=(review, compliance))
+        with patch("quote_agent.cli.review._run_review", mock):
+            result = runner.invoke(app, ["review", "Steel plates", "--client", "DPRK Corp"])
+
+        assert result.exit_code == 0
+        assert "APPROVED" in result.output  # self-review approved
+        assert "BLOCKED" in result.output  # but compliance blocks
+        assert "cannot be auto-processed" in result.output

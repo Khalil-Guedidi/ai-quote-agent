@@ -80,9 +80,10 @@ def review(
     quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
     reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
     urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
+    client: str | None = typer.Option(None, "--client", "-c", help="Client name for sanctions check"),
     json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
 ) -> None:
-    """Run full pipeline with self-review validation gate."""
+    """Run full pipeline with self-review validation gate and compliance check."""
     from quote_agent.cli.review import review as _review_impl
 
     _review_impl(
@@ -90,6 +91,23 @@ def review(
         quantity=quantity,
         reference=reference,
         urgency=urgency,
+        client=client,
+        json_output=json_output,
+    )
+
+
+@app.command()
+def compliance(
+    description: str = typer.Argument(..., help="Product description to check for compliance"),
+    client: str | None = typer.Option(None, "--client", "-c", help="Client name to check against sanctions lists"),
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Run export control and sanctions compliance check."""
+    from quote_agent.cli.compliance import compliance as _compliance_impl
+
+    _compliance_impl(
+        description=description,
+        client=client,
         json_output=json_output,
     )
 

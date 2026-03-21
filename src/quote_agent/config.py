@@ -131,6 +131,22 @@ class SelfReviewSettings(BaseModel):
     min_quantity: float = 0
 
 
+class ComplianceSettings(BaseModel):
+    """Compliance check configuration."""
+
+    timeout_seconds: int = 15
+    export_control_keywords: list[str] = Field(default_factory=lambda: [
+        "dual-use", "military", "nuclear", "uranium", "centrifuge",
+        "cryptographic", "night-vision", "thermal-imaging", "drone",
+        "missile", "chemical-precursor", "biological", "explosif",
+        "arme", "munition", "radar", "satellite",
+    ])
+    sanctioned_entity_keywords: list[str] = Field(default_factory=lambda: [
+        "DPRK", "North Korea", "Iran", "Syria", "Cuba", "Crimea",
+        "Donetsk", "Luhansk", "Wagner", "Hezbollah", "Hamas",
+    ])
+
+
 class SearchSettings(BaseModel):
     """Hybrid search configuration."""
 
@@ -172,6 +188,7 @@ class Settings(BaseSettings):
     confidence_scoring: ConfidenceScoringSettings = ConfidenceScoringSettings()
     reasoning: ReasoningSettings = ReasoningSettings()
     self_review: SelfReviewSettings = SelfReviewSettings()
+    compliance: ComplianceSettings = ComplianceSettings()
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()
