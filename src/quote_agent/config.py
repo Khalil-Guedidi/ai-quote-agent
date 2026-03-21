@@ -123,6 +123,14 @@ class ReasoningSettings(BaseModel):
     complex_search_limit: int = 15
 
 
+class SelfReviewSettings(BaseModel):
+    """Self-review validation configuration."""
+
+    timeout_seconds: int = 10
+    max_quantity: float = 1_000_000
+    min_quantity: float = 0
+
+
 class SearchSettings(BaseModel):
     """Hybrid search configuration."""
 
@@ -163,6 +171,7 @@ class Settings(BaseSettings):
     classification: ClassificationSettings = ClassificationSettings()
     confidence_scoring: ConfidenceScoringSettings = ConfidenceScoringSettings()
     reasoning: ReasoningSettings = ReasoningSettings()
+    self_review: SelfReviewSettings = SelfReviewSettings()
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()
