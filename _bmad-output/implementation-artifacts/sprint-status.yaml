@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-22  # Story 5.1 done (code review passed)
+last_updated: 2026-03-22  # Story 5.2 done
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -113,7 +113,7 @@ development_status:
   5-0a-setup-teams-webhook-cli-notify-test: done
   5-0b-fix-flaky-e2e-test-llm-splitting: done
   5-1-notification-devis-pret-high-confidence: done
-  5-2-notification-multi-propositions-medium-confidence: backlog
+  5-2-notification-multi-propositions-medium-confidence: done
   5-3-notification-escalade-low-confidence: backlog
   5-4-resume-batch-matinal-rapport-hebdomadaire-manager: backlog
   5-5-regles-de-timing-batching-des-notifications: backlog

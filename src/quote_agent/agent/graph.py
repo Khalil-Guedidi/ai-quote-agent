@@ -29,9 +29,11 @@ logger = logging.getLogger(__name__)
 def _route_after_router(state: AgentState) -> str:
     """Decide next node after the router based on routing action."""
     decision = state.get("routing_decision")
-    if decision is not None and decision.action == "proceed_to_draft":
-        return "review"
-    # For proposals / escalate / out_of_scope → end
+    if decision is not None:
+        if decision.action == "proceed_to_draft":
+            return "review"
+        if decision.action == "generate_proposals":
+            return "notify_proposals"
     return "end"
 
 
@@ -73,7 +75,7 @@ def build_agent_graph(
     from quote_agent.agent.nodes.classifier import classify_request
     from quote_agent.agent.nodes.compliance_checker import check_compliance
     from quote_agent.agent.nodes.confidence_scorer import score_confidence
-    from quote_agent.agent.nodes.notifier import notify_quote_ready
+    from quote_agent.agent.nodes.notifier import notify_multi_proposal, notify_quote_ready
     from quote_agent.agent.nodes.reasoning_strategy import apply_reasoning_strategy
     from quote_agent.agent.nodes.router import route_by_confidence
     from quote_agent.agent.nodes.self_reviewer import self_review
@@ -250,6 +252,14 @@ def build_agent_graph(
             logger.warning("Node notify failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify"}
 
+    async def notify_proposals_node(state: AgentState) -> dict[str, Any]:
+        try:
+            adapter = get_notification_adapter()
+            return await notify_multi_proposal(state, adapter, settings.erp)
+        except Exception as exc:
+            logger.warning("Node notify_proposals failed (non-blocking)", extra={"context": {"error": str(exc)}})
+            return {"notification_result": None, "current_node": "notify_proposals"}
+
     # -- Wire the graph ----------------------------------------------------
 
     graph: StateGraph[AgentState] = StateGraph(AgentState)
@@ -262,6 +272,7 @@ def build_agent_graph(
     graph.add_node("compliance", compliance_node)
     graph.add_node("draft", draft_node)
     graph.add_node("notify", notify_node)
+    graph.add_node("notify_proposals", notify_proposals_node)
 
     # Linear edges: START → classify → reason → score → route
     graph.add_edge(START, "classify")
@@ -269,11 +280,11 @@ def build_agent_graph(
     graph.add_edge("reason", "score")
     graph.add_edge("score", "route")
 
-    # Conditional: route → review (proceed_to_draft) OR END (everything else)
+    # Conditional: route → review (high) | notify_proposals (medium) | END (low/out_of_scope)
     graph.add_conditional_edges(
         "route",
         _route_after_router,
-        {"review": "review", "end": END},
+        {"review": "review", "notify_proposals": "notify_proposals", "end": END},
     )
 
     # Linear: review → compliance
@@ -289,6 +300,9 @@ def build_agent_graph(
     # draft → notify → END
     graph.add_edge("draft", "notify")
     graph.add_edge("notify", END)
+
+    # notify_proposals → END (medium-confidence path)
+    graph.add_edge("notify_proposals", END)
 
     return graph.compile()
 

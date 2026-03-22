@@ -1,4 +1,4 @@
-"""Notification node — sends a Teams card when a high-confidence draft is ready."""
+"""Notification nodes — fire-and-forget Teams cards for quote-ready and multi-proposal."""
 
 from __future__ import annotations
 
@@ -67,3 +67,57 @@ async def notify_quote_ready(
         logger.warning("Notification send raised an exception", exc_info=True)
 
     return {"notification_result": result, "current_node": "notify"}
+
+
+async def notify_multi_proposal(
+    state: AgentState,
+    notification_adapter: TeamsAdapter,
+    erp_settings: ERPSettings,
+) -> dict[str, object]:
+    """Send a multi-proposal notification when the agent is uncertain.
+
+    This node is fire-and-forget: notification failures are logged but never
+    propagate as pipeline errors.
+    """
+    routing_decision = state.get("routing_decision")
+    if routing_decision is None:
+        logger.warning("notify_multi_proposal: no routing_decision in state, skipping notification")
+        return {"notification_result": None, "current_node": "notify_proposals"}
+
+    raw_request = state["raw_request"]
+    client_name = raw_request.client_name or "?"
+    proposals = routing_decision.proposals
+
+    erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+
+    payload = NotificationPayload(
+        title="Propositions",
+        message=f"Pas sûr à 100% sur le produit. Voici mes {len(proposals)} options",
+        card_type="multi-proposal",
+        data={
+            "client": client_name,
+            "proposals": [
+                {
+                    "name": p.name,
+                    "reference": p.reference,
+                    "confidence_pct": str(round(p.confidence * 100)),
+                    "match_quality": p.match_quality,
+                }
+                for p in proposals
+            ],
+            "erp_url": erp_url,
+        },
+    )
+
+    result: NotificationResult | None = None
+    try:
+        result = await notification_adapter.send_notification(payload)
+        if not result.success:
+            logger.warning(
+                "Notification send returned failure",
+                extra={"context": {"error": result.error, "status_code": result.status_code}},
+            )
+    except Exception:
+        logger.warning("Notification send raised an exception", exc_info=True)
+
+    return {"notification_result": result, "current_node": "notify_proposals"}

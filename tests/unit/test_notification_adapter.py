@@ -595,3 +595,139 @@ def test_cli_notify_test_custom_message(
     call_args = mock_adapter.send_notification.call_args
     payload = call_args[0][0]
     assert payload.message == "Custom test msg"
+
+
+# --- _build_multi_proposal_card() Tests ---
+
+
+def _multi_proposal_payload() -> NotificationPayload:
+    """Build a standard multi-proposal payload for tests."""
+    return NotificationPayload(
+        title="Propositions",
+        message="Pas sûr à 100% sur le produit. Voici mes 3 options",
+        card_type="multi-proposal",
+        data={
+            "client": "Durand",
+            "proposals": [
+                {
+                    "name": "Tube Inox 304L DN50",
+                    "reference": "TUB-304L-50",
+                    "confidence_pct": "78",
+                    "match_quality": "Good semantic match on material and diameter",
+                },
+                {
+                    "name": "Tube Inox 316L DN50",
+                    "reference": "TUB-316L-50",
+                    "confidence_pct": "65",
+                    "match_quality": "Similar dimensions, different grade",
+                },
+                {
+                    "name": "Tube Acier DN50",
+                    "reference": "TUB-ACR-50",
+                    "confidence_pct": "42",
+                    "match_quality": "Same diameter, different material",
+                },
+            ],
+            "erp_url": "https://odoo.example.com/web#model=sale.order&view_type=list",
+        },
+    )
+
+
+def test_build_multi_proposal_card_has_amber_accent(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: multi-proposal card uses amber accent container (style=warning)."""
+    payload = _multi_proposal_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+    accent_container = card["body"][0]
+
+    assert accent_container["type"] == "Container"
+    assert accent_container["style"] == "warning"
+    assert accent_container["items"][0]["text"] == "Q — AI Quote Agent"
+    assert accent_container["items"][0]["weight"] == "Bolder"
+    assert accent_container["items"][0]["color"] == "Light"
+
+
+def test_build_multi_proposal_card_has_proposals_rendered(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: multi-proposal card renders each proposal as a ColumnSet row."""
+    payload = _multi_proposal_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    # Find ColumnSets in body (proposals)
+    column_sets = [b for b in card["body"] if b["type"] == "ColumnSet"]
+    assert len(column_sets) == 3
+
+    # First proposal
+    first = column_sets[0]
+    assert len(first["columns"]) == 3
+    assert first["columns"][0]["items"][0]["text"] == "Tube Inox 304L DN50"
+    assert first["columns"][0]["items"][0]["weight"] == "Bolder"
+    assert first["columns"][1]["items"][0]["text"] == "Good semantic match on material and diameter"
+    assert first["columns"][1]["items"][0]["isSubtle"] is True
+    assert first["columns"][2]["items"][0]["text"] == "78%"
+    assert first["columns"][2]["items"][0]["weight"] == "Bolder"
+
+
+def test_build_multi_proposal_card_has_erp_link(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: multi-proposal card has 'Voir dans l'ERP' OpenUrl action."""
+    payload = _multi_proposal_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert "actions" in card
+    assert len(card["actions"]) == 1
+    action = card["actions"][0]
+    assert action["type"] == "Action.OpenUrl"
+    assert action["title"] == "Voir dans l'ERP"
+    assert action["url"] == "https://odoo.example.com/web#model=sale.order&view_type=list"
+
+
+def test_build_multi_proposal_card_has_message(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: multi-proposal card displays the casual French message."""
+    payload = _multi_proposal_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    message_blocks = [b for b in card["body"] if b.get("type") == "TextBlock" and b.get("wrap") is True]
+    assert len(message_blocks) >= 1
+    assert any("Pas sûr à 100%" in b["text"] for b in message_blocks)
+
+
+def test_build_multi_proposal_card_schema_valid(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-4: multi-proposal card conforms to Adaptive Card v1.4 structure."""
+    payload = _multi_proposal_payload()
+    envelope = adapter._build_adaptive_card(payload)
+
+    assert envelope["type"] == "message"
+    assert len(envelope["attachments"]) == 1
+    attachment = envelope["attachments"][0]
+    assert attachment["contentType"] == "application/vnd.microsoft.card.adaptive"
+
+    card = attachment["content"]
+    assert card["type"] == "AdaptiveCard"
+    assert card["version"] == "1.4"
+    assert "$schema" in card
+
+
+def test_build_multi_proposal_card_dispatches_correctly(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: card_type='multi-proposal' dispatches to the multi-proposal builder, not generic."""
+    payload = _multi_proposal_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    # Must have warning style (not accent from generic)
+    assert card["body"][0]["style"] == "warning"
+    # Must have actions (generic has none)
+    assert "actions" in card

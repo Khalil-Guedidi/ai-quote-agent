@@ -46,6 +46,8 @@ class TeamsAdapter:
         """Build a Teams Adaptive Card JSON from a NotificationPayload."""
         if payload.card_type == "quote-ready":
             card = self._build_quote_ready_card(payload)
+        elif payload.card_type == "multi-proposal":
+            card = self._build_multi_proposal_card(payload)
         else:
             card = self._build_generic_card(payload)
         return {
@@ -132,6 +134,94 @@ class TeamsAdapter:
                         {"title": "Confiance", "value": f"{data.get('confidence_pct', '')}%"},
                     ],
                 },
+            ],
+            "actions": [
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "Voir dans l'ERP",
+                    "url": data.get("erp_url", ""),
+                },
+            ],
+        }
+
+    def _build_multi_proposal_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build a multi-proposal Adaptive Card with amber accent and proposal rows."""
+        data = payload.data
+        proposals = data.get("proposals", [])
+        proposal_rows: list[dict[str, Any]] = []
+        for proposal in proposals:
+            proposal_rows.append(
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "width": "stretch",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": proposal.get("name", ""),
+                                    "weight": "Bolder",
+                                    "wrap": True,
+                                },
+                            ],
+                        },
+                        {
+                            "type": "Column",
+                            "width": "stretch",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": proposal.get("match_quality", ""),
+                                    "isSubtle": True,
+                                    "wrap": True,
+                                },
+                            ],
+                        },
+                        {
+                            "type": "Column",
+                            "width": "auto",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"{proposal.get('confidence_pct', '')}%",
+                                    "weight": "Bolder",
+                                },
+                            ],
+                        },
+                    ],
+                }
+            )
+
+        return {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.4",
+            "body": [
+                {
+                    "type": "Container",
+                    "style": "warning",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Q \u2014 AI Quote Agent",
+                            "weight": "Bolder",
+                            "color": "Light",
+                        },
+                    ],
+                },
+                {
+                    "type": "TextBlock",
+                    "text": datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
+                    "size": "Small",
+                    "isSubtle": True,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": payload.message,
+                    "wrap": True,
+                },
+                *proposal_rows,
             ],
             "actions": [
                 {
