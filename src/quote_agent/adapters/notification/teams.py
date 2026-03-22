@@ -42,6 +42,11 @@ class TeamsAdapter:
         self._last_health: ServiceHealth | None = None
         self._last_health_time: float = 0.0
 
+    @property
+    def hostname(self) -> str:
+        """Public accessor for the webhook hostname."""
+        return self._hostname
+
     def _build_adaptive_card(self, payload: NotificationPayload) -> dict[str, Any]:
         """Build a Teams Adaptive Card JSON from a NotificationPayload."""
         if payload.card_type == "quote-ready":
@@ -50,6 +55,12 @@ class TeamsAdapter:
             card = self._build_multi_proposal_card(payload)
         elif payload.card_type == "escalation":
             card = self._build_escalation_card(payload)
+        elif payload.card_type == "batch-summary":
+            card = self._build_batch_summary_card(payload)
+        elif payload.card_type == "manager-weekly":
+            card = self._build_manager_weekly_card(payload)
+        elif payload.card_type == "manager-stats":
+            card = self._build_manager_stats_card(payload)
         else:
             card = self._build_generic_card(payload)
         return {
@@ -319,6 +330,210 @@ class TeamsAdapter:
                     "type": "Action.OpenUrl",
                     "title": "Voir dans l'ERP",
                     "url": data.get("erp_url", ""),
+                },
+            ],
+        }
+
+    def _build_batch_summary_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build a batch summary Adaptive Card with accent bar and tier counts."""
+        data = payload.data
+        return {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.4",
+            "body": [
+                {
+                    "type": "Container",
+                    "style": "accent",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Q \u2014 AI Quote Agent",
+                            "weight": "Bolder",
+                            "color": "Light",
+                        },
+                    ],
+                },
+                {
+                    "type": "TextBlock",
+                    "text": datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
+                    "size": "Small",
+                    "isSubtle": True,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": payload.message,
+                    "wrap": True,
+                },
+                {
+                    "type": "FactSet",
+                    "facts": [
+                        {"title": "Prêts", "value": str(data.get("high", 0))},
+                        {"title": "Choix nécessaire", "value": str(data.get("medium", 0))},
+                        {"title": "Expertise nécessaire", "value": str(data.get("low", 0))},
+                        {"title": "Total", "value": str(data.get("total", 0))},
+                    ],
+                },
+            ],
+            "actions": [
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "Voir la file ERP",
+                    "url": data.get("erp_url", ""),
+                },
+            ],
+        }
+
+    def _build_manager_weekly_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build a manager weekly report Adaptive Card with per-rep breakdown."""
+        data = payload.data
+        rep_breakdown = data.get("rep_breakdown", [])
+        rep_rows: list[dict[str, Any]] = []
+        for rep in rep_breakdown:
+            rep_rows.append(
+                {
+                    "type": "ColumnSet",
+                    "columns": [
+                        {
+                            "type": "Column",
+                            "width": "stretch",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": rep.get("rep_name", ""),
+                                    "weight": "Bolder",
+                                },
+                            ],
+                        },
+                        {
+                            "type": "Column",
+                            "width": "auto",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": str(rep.get("quotes_count", 0)),
+                                },
+                            ],
+                        },
+                        {
+                            "type": "Column",
+                            "width": "auto",
+                            "items": [
+                                {
+                                    "type": "TextBlock",
+                                    "text": f"{rep.get('avg_confidence_pct', 0)}%",
+                                },
+                            ],
+                        },
+                    ],
+                }
+            )
+
+        trend_pct = data.get("trend_pct", 0)
+        trend_direction = data.get("trend_direction", "stable")
+        trend_arrow = "\u25b2" if trend_direction == "up" else "\u25bc" if trend_direction == "down" else "\u25b6"
+        trend_text = f"{trend_arrow} {'+' if trend_pct > 0 else ''}{trend_pct}% vs semaine précédente"
+
+        return {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.4",
+            "body": [
+                {
+                    "type": "Container",
+                    "style": "accent",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Q \u2014 AI Quote Agent",
+                            "weight": "Bolder",
+                            "color": "Light",
+                        },
+                    ],
+                },
+                {
+                    "type": "TextBlock",
+                    "text": datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
+                    "size": "Small",
+                    "isSubtle": True,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": payload.message,
+                    "wrap": True,
+                },
+                {
+                    "type": "FactSet",
+                    "facts": [
+                        {"title": "Total traités", "value": str(data.get("total", 0))},
+                        {"title": "Confiance moyenne", "value": f"{data.get('avg_confidence', 0)}%"},
+                        {"title": "Tendance", "value": trend_text},
+                    ],
+                },
+                *rep_rows,
+            ],
+            "actions": [
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "Voir la file ERP",
+                    "url": data.get("erp_url", ""),
+                },
+            ],
+        }
+
+    def _build_manager_stats_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build a manager on-demand stats Adaptive Card."""
+        data = payload.data
+        facts: list[dict[str, str]] = []
+        if "total" in data:
+            facts.append({"title": "Total traités", "value": str(data["total"])})
+        if "avg_confidence" in data:
+            facts.append({"title": "Confiance moyenne", "value": f"{data['avg_confidence']}%"})
+        if "high" in data:
+            facts.append({"title": "Prêts", "value": str(data["high"])})
+        if "medium" in data:
+            facts.append({"title": "Choix nécessaire", "value": str(data["medium"])})
+        if "low" in data:
+            facts.append({"title": "Expertise nécessaire", "value": str(data["low"])})
+
+        return {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.4",
+            "body": [
+                {
+                    "type": "Container",
+                    "style": "accent",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Q \u2014 AI Quote Agent",
+                            "weight": "Bolder",
+                            "color": "Light",
+                        },
+                    ],
+                },
+                {
+                    "type": "TextBlock",
+                    "text": datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
+                    "size": "Small",
+                    "isSubtle": True,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": payload.message,
+                    "wrap": True,
+                },
+                {
+                    "type": "FactSet",
+                    "facts": facts,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": "Commandes disponibles: stats jour, stats semaine, stats mois",
+                    "size": "Small",
+                    "isSubtle": True,
+                    "wrap": True,
                 },
             ],
         }

@@ -157,6 +157,16 @@ class SearchSettings(BaseModel):
     hnsw_ef_search: int = 100
 
 
+class NotificationScheduleSettings(BaseModel):
+    """Scheduled notification timing configuration."""
+
+    batch_summary_hour: int = 8
+    batch_summary_minute: int = 0
+    weekly_report_day: int = 0  # Monday
+    weekly_report_hour: int = 8
+    weekly_report_minute: int = 0
+
+
 class AppSettings(BaseModel):
     """Application-level configuration."""
 
@@ -192,6 +202,7 @@ class Settings(BaseSettings):
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()
+    notification_schedule: NotificationScheduleSettings = NotificationScheduleSettings()
     app: AppSettings = AppSettings()
 
 

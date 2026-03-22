@@ -867,3 +867,320 @@ def test_build_escalation_card_dispatches_correctly(
     assert card["body"][0]["style"] == "attention"
     # Must have actions (generic has none)
     assert "actions" in card
+
+
+# --- _build_batch_summary_card() Tests ---
+
+
+def _batch_summary_payload() -> NotificationPayload:
+    """Build a standard batch summary payload for tests."""
+    return NotificationPayload(
+        title="Résumé du jour",
+        message="Bonjour ! J'ai traité 5 devis. 2 prêts, 2 besoin de ton choix, 1 besoin de ton expertise",
+        card_type="batch-summary",
+        data={
+            "total": 5,
+            "high": 2,
+            "medium": 2,
+            "low": 1,
+            "erp_url": "https://odoo.example.com/web#model=sale.order&view_type=list",
+        },
+    )
+
+
+def test_build_batch_summary_card_has_accent_style(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: batch-summary card uses accent container (style=accent)."""
+    payload = _batch_summary_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert card["body"][0]["type"] == "Container"
+    assert card["body"][0]["style"] == "accent"
+    assert card["body"][0]["items"][0]["text"] == "Q — AI Quote Agent"
+    assert card["body"][0]["items"][0]["weight"] == "Bolder"
+    assert card["body"][0]["items"][0]["color"] == "Light"
+
+
+def test_build_batch_summary_card_has_tier_factset(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: batch-summary card includes FactSet with tier counts and total."""
+    payload = _batch_summary_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    factsets = [b for b in card["body"] if b["type"] == "FactSet"]
+    assert len(factsets) == 1
+    facts = factsets[0]["facts"]
+    fact_dict = {f["title"]: f["value"] for f in facts}
+    assert fact_dict["Prêts"] == "2"
+    assert fact_dict["Choix nécessaire"] == "2"
+    assert fact_dict["Expertise nécessaire"] == "1"
+    assert fact_dict["Total"] == "5"
+
+
+def test_build_batch_summary_card_has_erp_link(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: batch-summary card has 'Voir la file ERP' OpenUrl action."""
+    payload = _batch_summary_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert "actions" in card
+    assert len(card["actions"]) == 1
+    action = card["actions"][0]
+    assert action["type"] == "Action.OpenUrl"
+    assert action["title"] == "Voir la file ERP"
+    assert action["url"] == "https://odoo.example.com/web#model=sale.order&view_type=list"
+
+
+def test_build_batch_summary_card_has_message(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: batch-summary card displays the casual French message."""
+    payload = _batch_summary_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    message_blocks = [b for b in card["body"] if b.get("type") == "TextBlock" and b.get("wrap") is True]
+    assert any("J'ai traité 5 devis" in b["text"] for b in message_blocks)
+
+
+def test_build_batch_summary_card_schema_valid(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: batch-summary card conforms to Adaptive Card v1.4 structure."""
+    payload = _batch_summary_payload()
+    envelope = adapter._build_adaptive_card(payload)
+
+    assert envelope["type"] == "message"
+    card = envelope["attachments"][0]["content"]
+    assert card["type"] == "AdaptiveCard"
+    assert card["version"] == "1.4"
+    assert "$schema" in card
+
+
+# --- _build_manager_weekly_card() Tests ---
+
+
+def _manager_weekly_payload() -> NotificationPayload:
+    """Build a standard manager weekly payload for tests."""
+    return NotificationPayload(
+        title="Rapport hebdomadaire",
+        message="Voici le récap de la semaine. 15 devis traités, confiance moyenne 82%",
+        card_type="manager-weekly",
+        data={
+            "total": 15,
+            "avg_confidence": 82,
+            "trend_pct": 10,
+            "trend_direction": "up",
+            "rep_breakdown": [
+                {"rep_name": "alice@test.com", "quotes_count": 8, "avg_confidence_pct": 88},
+                {"rep_name": "bob@test.com", "quotes_count": 7, "avg_confidence_pct": 75},
+            ],
+            "erp_url": "https://odoo.example.com/web#model=sale.order&view_type=list",
+        },
+    )
+
+
+def test_build_manager_weekly_card_has_accent_style(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-2: manager-weekly card uses accent container."""
+    payload = _manager_weekly_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert card["body"][0]["style"] == "accent"
+    assert card["body"][0]["items"][0]["text"] == "Q — AI Quote Agent"
+
+
+def test_build_manager_weekly_card_has_summary_factset(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-2: manager-weekly card has FactSet with total, avg confidence, and trend."""
+    payload = _manager_weekly_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    factsets = [b for b in card["body"] if b["type"] == "FactSet"]
+    assert len(factsets) == 1
+    facts = factsets[0]["facts"]
+    fact_dict = {f["title"]: f["value"] for f in facts}
+    assert fact_dict["Total traités"] == "15"
+    assert fact_dict["Confiance moyenne"] == "82%"
+    assert "▲" in fact_dict["Tendance"]
+    assert "+10%" in fact_dict["Tendance"]
+
+
+def test_build_manager_weekly_card_has_rep_breakdown(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-2: manager-weekly card renders per-rep ColumnSet rows."""
+    payload = _manager_weekly_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    column_sets = [b for b in card["body"] if b["type"] == "ColumnSet"]
+    assert len(column_sets) == 2
+
+    first = column_sets[0]
+    assert len(first["columns"]) == 3
+    assert first["columns"][0]["items"][0]["text"] == "alice@test.com"
+    assert first["columns"][1]["items"][0]["text"] == "8"
+    assert first["columns"][2]["items"][0]["text"] == "88%"
+
+
+def test_build_manager_weekly_card_has_erp_link(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-2: manager-weekly card has ERP queue link."""
+    payload = _manager_weekly_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert "actions" in card
+    action = card["actions"][0]
+    assert action["type"] == "Action.OpenUrl"
+    assert action["title"] == "Voir la file ERP"
+
+
+def test_build_manager_weekly_card_down_trend(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-2: manager-weekly card shows down arrow for negative trend."""
+    payload = NotificationPayload(
+        title="Rapport",
+        message="Récap",
+        card_type="manager-weekly",
+        data={
+            "total": 5,
+            "avg_confidence": 60,
+            "trend_pct": -20,
+            "trend_direction": "down",
+            "rep_breakdown": [],
+            "erp_url": "",
+        },
+    )
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    factsets = [b for b in card["body"] if b["type"] == "FactSet"]
+    trend_fact = next(f for f in factsets[0]["facts"] if f["title"] == "Tendance")
+    assert "▼" in trend_fact["value"]
+    assert "-20%" in trend_fact["value"]
+
+
+# --- _build_manager_stats_card() Tests ---
+
+
+def _manager_stats_payload() -> NotificationPayload:
+    """Build a standard manager stats payload for tests."""
+    return NotificationPayload(
+        title="Stats manager",
+        message="Stats du jour : 8 devis traités",
+        card_type="manager-stats",
+        data={
+            "total": 8,
+            "high": 3,
+            "medium": 3,
+            "low": 2,
+            "avg_confidence": 75,
+        },
+    )
+
+
+def test_build_manager_stats_card_has_accent_style(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-3: manager-stats card uses accent container."""
+    payload = _manager_stats_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert card["body"][0]["style"] == "accent"
+
+
+def test_build_manager_stats_card_has_stats_factset(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-3: manager-stats card has FactSet with requested metrics."""
+    payload = _manager_stats_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    factsets = [b for b in card["body"] if b["type"] == "FactSet"]
+    assert len(factsets) == 1
+    fact_titles = [f["title"] for f in factsets[0]["facts"]]
+    assert "Total traités" in fact_titles
+    assert "Confiance moyenne" in fact_titles
+
+
+def test_build_manager_stats_card_has_available_commands(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-3: manager-stats card displays available commands text."""
+    payload = _manager_stats_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    text_blocks = [b for b in card["body"] if b.get("type") == "TextBlock"]
+    assert any("Commandes disponibles" in b.get("text", "") for b in text_blocks)
+
+
+def test_build_manager_stats_card_schema_valid(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-3: manager-stats card conforms to Adaptive Card v1.4 structure."""
+    payload = _manager_stats_payload()
+    envelope = adapter._build_adaptive_card(payload)
+
+    assert envelope["type"] == "message"
+    card = envelope["attachments"][0]["content"]
+    assert card["type"] == "AdaptiveCard"
+    assert card["version"] == "1.4"
+
+
+# --- Dispatch Tests for new card types ---
+
+
+def test_build_adaptive_card_dispatches_batch_summary(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: card_type='batch-summary' dispatches to batch summary builder."""
+    payload = _batch_summary_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert card["body"][0]["style"] == "accent"
+    assert "actions" in card
+    factsets = [b for b in card["body"] if b["type"] == "FactSet"]
+    assert len(factsets) == 1
+
+
+def test_build_adaptive_card_dispatches_manager_weekly(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-2: card_type='manager-weekly' dispatches to manager weekly builder."""
+    payload = _manager_weekly_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert card["body"][0]["style"] == "accent"
+    assert "actions" in card
+
+
+def test_build_adaptive_card_dispatches_manager_stats(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-3: card_type='manager-stats' dispatches to manager stats builder."""
+    payload = _manager_stats_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert card["body"][0]["style"] == "accent"
+    # manager-stats has no actions (no ERP link)
+    assert "actions" not in card

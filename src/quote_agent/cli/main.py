@@ -179,6 +179,36 @@ def notify_test(
     _notify_test_impl(message=message, json_output=json_output)
 
 
+@app.command(name="batch-summary")
+def batch_summary_cmd(
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Send a batch summary notification for today's processed quotes."""
+    from quote_agent.cli.batch_notify import batch_summary as _batch_summary_impl
+
+    _batch_summary_impl(json_output=json_output)
+
+
+@app.command(name="weekly-report")
+def weekly_report_cmd(
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Send a weekly report notification for the last 7 days."""
+    from quote_agent.cli.batch_notify import weekly_report as _weekly_report_impl
+
+    _weekly_report_impl(json_output=json_output)
+
+
+@app.command(name="manager-stats")
+def manager_stats_cmd(
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Send an on-demand manager stats notification."""
+    from quote_agent.cli.batch_notify import manager_stats as _manager_stats_impl
+
+    _manager_stats_impl(json_output=json_output)
+
+
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),
