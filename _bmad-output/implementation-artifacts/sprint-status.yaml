@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-22  # Story 5.5 done (code review passed)
+last_updated: 2026-03-22  # Story 5.6 in-progress
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -117,7 +117,7 @@ development_status:
   5-3-notification-escalade-low-confidence: done
   5-4-resume-batch-matinal-rapport-hebdomadaire-manager: done
   5-5-regles-de-timing-batching-des-notifications: done
-  5-6-adapter-pattern-multi-canal-consistance: backlog
+  5-6-adapter-pattern-multi-canal-consistance: in-progress
   epic-5-retrospective: optional
 
   # Epic 6: Mémoire, Apprentissage & Boucle de Feedback
@@ -173,5 +173,5 @@ development_status:
   t-11-confidence-tiers-post: done              # after 4.1–4.2
   t-12-memory-architecture-post: done      # after 4.6–4.7 or Epic 6
   t-13-intelligence-recap-post: done          # after Epic 4
-  t-14-human-ai-collaboration-post: backlog        # after 5.2–5.3
+  t-14-human-ai-collaboration-post: done      # after 5.2–5.3
   t-15-full-loop-recap-post: backlog               # after Epic 5
