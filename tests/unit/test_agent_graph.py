@@ -146,15 +146,15 @@ class TestRouteAfterRouter:
         state: AgentState = AgentState(routing_decision=_mock_routing("generate_proposals"))  # type: ignore[typeddict-item]
         assert _route_after_router(state) == "notify_proposals"
 
-    def test_escalate_routes_to_end(self) -> None:
-        """AC-3: escalate → end."""
+    def test_escalate_routes_to_notify_escalation(self) -> None:
+        """AC-3 (5.3): escalate → notify_escalation node."""
         state: AgentState = AgentState(routing_decision=_mock_routing("escalate"))  # type: ignore[typeddict-item]
-        assert _route_after_router(state) == "end"
+        assert _route_after_router(state) == "notify_escalation"
 
-    def test_notify_out_of_scope_routes_to_end(self) -> None:
-        """AC-3: notify_out_of_scope → end."""
+    def test_notify_out_of_scope_routes_to_notify_escalation(self) -> None:
+        """AC-3 (5.3): notify_out_of_scope → notify_escalation node."""
         state: AgentState = AgentState(routing_decision=_mock_routing("notify_out_of_scope"))  # type: ignore[typeddict-item]
-        assert _route_after_router(state) == "end"
+        assert _route_after_router(state) == "notify_escalation"
 
     def test_none_routing_decision_routes_to_end(self) -> None:
         """AC-4: Missing routing decision (error state) → end."""
@@ -241,6 +241,15 @@ class TestGraphCompilation:
         )
         node_names = list(graph.get_graph().nodes.keys())
         assert "notify_proposals" in node_names
+
+    def test_notify_escalation_node_is_wired(self) -> None:
+        """AC-3 (5.3): notify_escalation node exists in the graph."""
+        graph = build_agent_graph(
+            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(confidence_scoring=MagicMock()),
+        )
+        node_names = list(graph.get_graph().nodes.keys())
+        assert "notify_escalation" in node_names
 
 
 # ---------------------------------------------------------------------------
@@ -347,16 +356,30 @@ class TestGraphExecution:
         mock_adapter.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_escalate_skips_draft(self) -> None:
-        """AC-3: escalate → END without review/compliance/draft."""
+    async def test_escalate_routes_through_notify_escalation(self) -> None:
+        """AC-3 (5.3): escalate → notify_escalation → END (no review/draft)."""
+        from datetime import UTC, datetime
+
+        from quote_agent.adapters.notification.models import NotificationResult
+
         request = _make_request()
         state = create_initial_state(request)
 
+        classification = _mock_classification("complex")
+        reasoning = _mock_reasoning()
+        confidence = _mock_confidence(tier="low", score=0.3)
+        routing = _mock_routing("escalate")
+
+        mock_notif_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        mock_adapter = AsyncMock()
+        mock_adapter.send_notification = AsyncMock(return_value=mock_notif_result)
+
         with (
-            patch(_CLASSIFY, new_callable=AsyncMock, return_value=_mock_classification("complex")),
-            patch(_REASON, new_callable=AsyncMock, return_value=_mock_reasoning()),
-            patch(_SCORE, new_callable=AsyncMock, return_value=_mock_confidence(tier="low", score=0.3)),
-            patch(_ROUTE, return_value=_mock_routing("escalate")),
+            patch(_CLASSIFY, new_callable=AsyncMock, return_value=classification),
+            patch(_REASON, new_callable=AsyncMock, return_value=reasoning),
+            patch(_SCORE, new_callable=AsyncMock, return_value=confidence),
+            patch(_ROUTE, return_value=routing),
+            patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
@@ -367,18 +390,35 @@ class TestGraphExecution:
         assert result["final_action"] == "escalate"
         assert result.get("self_review") is None
         assert result.get("draft_result") is None
+        # AC-3: Notification was sent via notify_escalation node
+        assert result["current_node"] == "notify_escalation"
+        mock_adapter.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_out_of_scope_skips_draft(self) -> None:
-        """AC-3: notify_out_of_scope → END."""
+    async def test_out_of_scope_routes_through_notify_escalation(self) -> None:
+        """AC-3 (5.3): notify_out_of_scope → notify_escalation → END."""
+        from datetime import UTC, datetime
+
+        from quote_agent.adapters.notification.models import NotificationResult
+
         request = _make_request()
         state = create_initial_state(request)
 
+        classification = _mock_classification("out_of_scope")
+        reasoning = _mock_reasoning()
+        confidence = _mock_confidence(tier="low", score=0.1)
+        routing = _mock_routing("notify_out_of_scope")
+
+        mock_notif_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        mock_adapter = AsyncMock()
+        mock_adapter.send_notification = AsyncMock(return_value=mock_notif_result)
+
         with (
-            patch(_CLASSIFY, new_callable=AsyncMock, return_value=_mock_classification("out_of_scope")),
-            patch(_REASON, new_callable=AsyncMock, return_value=_mock_reasoning()),
-            patch(_SCORE, new_callable=AsyncMock, return_value=_mock_confidence(tier="low", score=0.1)),
-            patch(_ROUTE, return_value=_mock_routing("notify_out_of_scope")),
+            patch(_CLASSIFY, new_callable=AsyncMock, return_value=classification),
+            patch(_REASON, new_callable=AsyncMock, return_value=reasoning),
+            patch(_SCORE, new_callable=AsyncMock, return_value=confidence),
+            patch(_ROUTE, return_value=routing),
+            patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
@@ -388,6 +428,9 @@ class TestGraphExecution:
 
         assert result["final_action"] == "notify_out_of_scope"
         assert result.get("draft_result") is None
+        # AC-3: Notification was sent via notify_escalation node
+        assert result["current_node"] == "notify_escalation"
+        mock_adapter.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_review_rejection_skips_draft(self) -> None:

@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from quote_agent.adapters.notification.models import NotificationResult
-from quote_agent.agent.nodes.notifier import notify_multi_proposal, notify_quote_ready
+from quote_agent.agent.nodes.notifier import notify_escalation, notify_multi_proposal, notify_quote_ready
 from quote_agent.agent.state import AgentState, create_initial_state
 from quote_agent.services.extraction_models import ExtractedQuoteRequest, QuoteLineItem
 
@@ -272,4 +272,190 @@ class TestNotifyMultiProposalMissingRouting:
         adapter.send_notification.assert_not_called()
         assert result["notification_result"] is None
         assert result["current_node"] == "notify_proposals"
+        assert "error" not in result
+
+
+# --- notify_escalation() Tests ---
+
+
+def _make_escalation_state(
+    *,
+    with_routing: bool = True,
+    with_escalation_context: bool = True,
+    with_classification: bool = True,
+) -> AgentState:
+    """Build a realistic AgentState for escalation notifier tests."""
+    request = ExtractedQuoteRequest(
+        client_name="Durand",
+        client_identifier="DUR-001",
+        line_items=[QuoteLineItem(description="Pièce spéciale custom", quantity=10.0)],
+        raw_text="Pièce spéciale custom",
+    )
+    state = create_initial_state(request)
+
+    if with_classification:
+        classification = MagicMock()
+        classification.reasons = ["Demande complexe", "Produit non standard"]
+        state["classification"] = classification
+
+    if with_routing:
+        routing = MagicMock()
+        routing.action = "escalate"
+        routing.confidence = 0.28
+
+        if with_escalation_context:
+            escalation_ctx = MagicMock()
+            escalation_ctx.understood = "Client demande des pièces spéciales"
+            escalation_ctx.uncertain = "Spécifications exactes non fournies"
+            escalation_ctx.suggested_next_steps = [
+                "Demander des precisions au client",
+                "Verifier les references",
+            ]
+            routing.escalation_context = escalation_ctx
+        else:
+            routing.escalation_context = None
+
+        state["routing_decision"] = routing
+
+    return state  # type: ignore[return-value]
+
+
+class TestNotifyEscalationSuccess:
+    """AC-3: Escalation notification sent for low-confidence routing."""
+
+    @pytest.mark.asyncio
+    async def test_sends_notification_with_escalation_payload(self) -> None:
+        """AC-1, AC-2: notify_escalation calls send_notification with escalation payload."""
+        state = _make_escalation_state()
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        await notify_escalation(state, adapter, _make_erp_settings())
+
+        adapter.send_notification.assert_called_once()
+        payload = adapter.send_notification.call_args[0][0]
+        assert payload.card_type == "escalation"
+        assert payload.data["client"] == "Durand"
+        assert payload.data["understood"] == "Client demande des pièces spéciales"
+        assert payload.data["uncertain"] == "Spécifications exactes non fournies"
+        assert len(payload.data["suggested_next_steps"]) == 2
+        assert payload.data["confidence_pct"] == "28"
+        assert "sale.order" in payload.data["erp_url"]
+        assert "view_type=list" in payload.data["erp_url"]
+
+    @pytest.mark.asyncio
+    async def test_returns_notification_result_in_state(self) -> None:
+        """AC-3: Successful notification result stored in state."""
+        state = _make_escalation_state()
+        expected_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(return_value=expected_result)
+
+        result = await notify_escalation(state, adapter, _make_erp_settings())
+
+        assert result["notification_result"] is expected_result
+        assert result["current_node"] == "notify_escalation"
+
+    @pytest.mark.asyncio
+    async def test_message_includes_client_name(self) -> None:
+        """AC-1: Message text includes the client name."""
+        state = _make_escalation_state()
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        await notify_escalation(state, adapter, _make_erp_settings())
+
+        payload = adapter.send_notification.call_args[0][0]
+        assert "Durand" in payload.message
+        assert "Celui-là est compliqué" in payload.message
+
+
+class TestNotifyEscalationOutOfScope:
+    """AC-3: Out-of-scope fallback when escalation_context is None."""
+
+    @pytest.mark.asyncio
+    async def test_builds_fallback_context_from_classification(self) -> None:
+        """AC-2: out_of_scope with no escalation_context uses classification reasons."""
+        state = _make_escalation_state(with_escalation_context=False)
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        await notify_escalation(state, adapter, _make_erp_settings())
+
+        payload = adapter.send_notification.call_args[0][0]
+        assert "Demande complexe" in payload.data["understood"]
+        assert "Produit non standard" in payload.data["understood"]
+        assert "périmètre" in payload.data["uncertain"]
+        assert len(payload.data["suggested_next_steps"]) == 2
+
+    @pytest.mark.asyncio
+    async def test_builds_fallback_without_classification(self) -> None:
+        """AC-2: out_of_scope with no escalation_context and no classification uses default."""
+        state = _make_escalation_state(with_escalation_context=False, with_classification=False)
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        await notify_escalation(state, adapter, _make_erp_settings())
+
+        payload = adapter.send_notification.call_args[0][0]
+        assert payload.data["understood"] == "Demande classée hors périmètre"
+
+
+class TestNotifyEscalationFailure:
+    """AC-4: Notification failure must not block the pipeline (fire-and-forget)."""
+
+    @pytest.mark.asyncio
+    async def test_adapter_error_does_not_set_state_error(self) -> None:
+        """AC-4: Notification send failure → state has no error key."""
+        state = _make_escalation_state()
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(
+                success=False, error="Connection refused", timestamp=datetime.now(tz=UTC)
+            )
+        )
+
+        result = await notify_escalation(state, adapter, _make_erp_settings())
+
+        assert "error" not in result
+        assert result["notification_result"] is not None
+        assert result["notification_result"].success is False
+        assert result["current_node"] == "notify_escalation"
+
+    @pytest.mark.asyncio
+    async def test_adapter_exception_does_not_propagate(self) -> None:
+        """AC-4: Exception from adapter is caught, not propagated."""
+        state = _make_escalation_state()
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(side_effect=RuntimeError("Network error"))
+
+        result = await notify_escalation(state, adapter, _make_erp_settings())
+
+        assert "error" not in result
+        assert result["notification_result"] is None
+        assert result["current_node"] == "notify_escalation"
+
+
+class TestNotifyEscalationMissingRouting:
+    """Edge case: no routing_decision in state."""
+
+    @pytest.mark.asyncio
+    async def test_skips_notification_when_no_routing_decision(self) -> None:
+        """AC-4: Missing routing_decision → graceful skip, no error."""
+        state = _make_escalation_state(with_routing=False)
+        adapter = AsyncMock()
+
+        result = await notify_escalation(state, adapter, _make_erp_settings())
+
+        adapter.send_notification.assert_not_called()
+        assert result["notification_result"] is None
+        assert result["current_node"] == "notify_escalation"
         assert "error" not in result

@@ -1,4 +1,4 @@
-"""Notification nodes — fire-and-forget Teams cards for quote-ready and multi-proposal."""
+"""Notification nodes — fire-and-forget Teams cards for quote-ready, multi-proposal, and escalation."""
 
 from __future__ import annotations
 
@@ -121,3 +121,64 @@ async def notify_multi_proposal(
         logger.warning("Notification send raised an exception", exc_info=True)
 
     return {"notification_result": result, "current_node": "notify_proposals"}
+
+
+async def notify_escalation(
+    state: AgentState,
+    notification_adapter: TeamsAdapter,
+    erp_settings: ERPSettings,
+) -> dict[str, object]:
+    """Send an escalation notification when the agent cannot process a request.
+
+    This node is fire-and-forget: notification failures are logged but never
+    propagate as pipeline errors.
+    """
+    routing_decision = state.get("routing_decision")
+    if routing_decision is None:
+        logger.warning("notify_escalation: no routing_decision in state, skipping notification")
+        return {"notification_result": None, "current_node": "notify_escalation"}
+
+    raw_request = state["raw_request"]
+    client_name = raw_request.client_name or "?"
+
+    escalation_ctx = routing_decision.escalation_context
+    if escalation_ctx is not None:
+        understood = escalation_ctx.understood
+        uncertain = escalation_ctx.uncertain
+        steps = escalation_ctx.suggested_next_steps
+    else:
+        # Fallback for out_of_scope — build context from classification
+        classification = state.get("classification")
+        understood = "; ".join(classification.reasons) if classification else "Demande classée hors périmètre"
+        uncertain = "Cette demande ne correspond pas au périmètre de l'agent (pas un produit catalogue)"
+        steps = ["Traiter la demande manuellement", "Vérifier si le client a besoin d'un autre service"]
+
+    confidence_pct = str(round(routing_decision.confidence * 100))
+    erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+
+    payload = NotificationPayload(
+        title="Escalade",
+        message=f"Celui-là est compliqué. {client_name} demande quelque chose que je ne suis pas sûr de comprendre.",
+        card_type="escalation",
+        data={
+            "client": client_name,
+            "understood": understood,
+            "uncertain": uncertain,
+            "suggested_next_steps": steps,
+            "confidence_pct": confidence_pct,
+            "erp_url": erp_url,
+        },
+    )
+
+    result: NotificationResult | None = None
+    try:
+        result = await notification_adapter.send_notification(payload)
+        if not result.success:
+            logger.warning(
+                "Notification send returned failure",
+                extra={"context": {"error": result.error, "status_code": result.status_code}},
+            )
+    except Exception:
+        logger.warning("Notification send raised an exception", exc_info=True)
+
+    return {"notification_result": result, "current_node": "notify_escalation"}

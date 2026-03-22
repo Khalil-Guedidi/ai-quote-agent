@@ -731,3 +731,139 @@ def test_build_multi_proposal_card_dispatches_correctly(
     assert card["body"][0]["style"] == "warning"
     # Must have actions (generic has none)
     assert "actions" in card
+
+
+# --- _build_escalation_card() Tests ---
+
+
+def _escalation_payload() -> NotificationPayload:
+    """Build a standard escalation payload for tests."""
+    return NotificationPayload(
+        title="Escalade",
+        message="Celui-là est compliqué. Durand demande quelque chose que je ne suis pas sûr de comprendre.",
+        card_type="escalation",
+        data={
+            "client": "Durand",
+            "understood": "Client demande des tubes inox; quantité 100 pièces",
+            "uncertain": "Diamètre et grade exacts non précisés",
+            "suggested_next_steps": [
+                "Demander des precisions au client sur les produits souhaites",
+                "Verifier les references produit avec le client",
+                "Proposer un appel pour clarifier les besoins",
+            ],
+            "confidence_pct": "28",
+            "erp_url": "https://odoo.example.com/web#model=sale.order&view_type=list",
+        },
+    )
+
+
+def test_build_escalation_card_has_red_accent(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: escalation card uses red accent container (style=attention)."""
+    payload = _escalation_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+    accent_container = card["body"][0]
+
+    assert accent_container["type"] == "Container"
+    assert accent_container["style"] == "attention"
+    assert accent_container["items"][0]["text"] == "Q — AI Quote Agent"
+    assert accent_container["items"][0]["weight"] == "Bolder"
+    assert accent_container["items"][0]["color"] == "Light"
+
+
+def test_build_escalation_card_has_context_sections(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-2: escalation card renders understood, uncertain, and next steps sections."""
+    payload = _escalation_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    # Find all containers (skip first accent container)
+    containers = [b for b in card["body"] if b["type"] == "Container"]
+    # accent + understood + uncertain + steps = 4 containers
+    assert len(containers) == 4
+
+    # "Ce que j'ai compris" section
+    understood_container = containers[1]
+    assert understood_container["items"][0]["text"] == "Ce que j'ai compris"
+    assert understood_container["items"][0]["weight"] == "Bolder"
+    assert understood_container["items"][1]["text"] == "Client demande des tubes inox; quantité 100 pièces"
+    assert understood_container["items"][1]["wrap"] is True
+
+    # "Ce qui est flou" section
+    uncertain_container = containers[2]
+    assert uncertain_container["items"][0]["text"] == "Ce qui est flou"
+    assert uncertain_container["items"][0]["weight"] == "Bolder"
+    assert uncertain_container["items"][1]["text"] == "Diamètre et grade exacts non précisés"
+    assert uncertain_container["items"][1]["wrap"] is True
+    assert uncertain_container["items"][1]["isSubtle"] is True
+
+    # "Prochaines étapes suggérées" section
+    steps_container = containers[3]
+    assert steps_container["items"][0]["text"] == "Prochaines étapes suggérées"
+    assert steps_container["items"][0]["weight"] == "Bolder"
+    assert len(steps_container["items"]) == 4  # label + 3 steps
+    assert steps_container["items"][1]["text"].startswith("• ")
+
+
+def test_build_escalation_card_has_erp_link(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: escalation card has 'Voir dans l'ERP' OpenUrl action."""
+    payload = _escalation_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert "actions" in card
+    assert len(card["actions"]) == 1
+    action = card["actions"][0]
+    assert action["type"] == "Action.OpenUrl"
+    assert action["title"] == "Voir dans l'ERP"
+    assert action["url"] == "https://odoo.example.com/web#model=sale.order&view_type=list"
+
+
+def test_build_escalation_card_has_casual_french_message(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: escalation card displays the casual French escalation message."""
+    payload = _escalation_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    message_blocks = [b for b in card["body"] if b.get("type") == "TextBlock" and b.get("wrap") is True]
+    assert any("Celui-là est compliqué" in b["text"] for b in message_blocks)
+
+
+def test_build_escalation_card_schema_valid(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-4: escalation card conforms to Adaptive Card v1.4 structure."""
+    payload = _escalation_payload()
+    envelope = adapter._build_adaptive_card(payload)
+
+    assert envelope["type"] == "message"
+    assert len(envelope["attachments"]) == 1
+    attachment = envelope["attachments"][0]
+    assert attachment["contentType"] == "application/vnd.microsoft.card.adaptive"
+
+    card = attachment["content"]
+    assert card["type"] == "AdaptiveCard"
+    assert card["version"] == "1.4"
+    assert "$schema" in card
+
+
+def test_build_escalation_card_dispatches_correctly(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: card_type='escalation' dispatches to the escalation builder, not generic."""
+    payload = _escalation_payload()
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    # Must have attention style (not accent from generic)
+    assert card["body"][0]["style"] == "attention"
+    # Must have actions (generic has none)
+    assert "actions" in card

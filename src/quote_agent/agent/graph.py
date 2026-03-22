@@ -34,6 +34,8 @@ def _route_after_router(state: AgentState) -> str:
             return "review"
         if decision.action == "generate_proposals":
             return "notify_proposals"
+        if decision.action in ("escalate", "notify_out_of_scope"):
+            return "notify_escalation"
     return "end"
 
 
@@ -75,7 +77,7 @@ def build_agent_graph(
     from quote_agent.agent.nodes.classifier import classify_request
     from quote_agent.agent.nodes.compliance_checker import check_compliance
     from quote_agent.agent.nodes.confidence_scorer import score_confidence
-    from quote_agent.agent.nodes.notifier import notify_multi_proposal, notify_quote_ready
+    from quote_agent.agent.nodes.notifier import notify_escalation, notify_multi_proposal, notify_quote_ready
     from quote_agent.agent.nodes.reasoning_strategy import apply_reasoning_strategy
     from quote_agent.agent.nodes.router import route_by_confidence
     from quote_agent.agent.nodes.self_reviewer import self_review
@@ -260,6 +262,14 @@ def build_agent_graph(
             logger.warning("Node notify_proposals failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify_proposals"}
 
+    async def notify_escalation_node(state: AgentState) -> dict[str, Any]:
+        try:
+            adapter = get_notification_adapter()
+            return await notify_escalation(state, adapter, settings.erp)
+        except Exception as exc:
+            logger.warning("Node notify_escalation failed (non-blocking)", extra={"context": {"error": str(exc)}})
+            return {"notification_result": None, "current_node": "notify_escalation"}
+
     # -- Wire the graph ----------------------------------------------------
 
     graph: StateGraph[AgentState] = StateGraph(AgentState)
@@ -273,6 +283,7 @@ def build_agent_graph(
     graph.add_node("draft", draft_node)
     graph.add_node("notify", notify_node)
     graph.add_node("notify_proposals", notify_proposals_node)
+    graph.add_node("notify_escalation", notify_escalation_node)
 
     # Linear edges: START → classify → reason → score → route
     graph.add_edge(START, "classify")
@@ -280,11 +291,16 @@ def build_agent_graph(
     graph.add_edge("reason", "score")
     graph.add_edge("score", "route")
 
-    # Conditional: route → review (high) | notify_proposals (medium) | END (low/out_of_scope)
+    # Conditional: route → review (high) | notify_proposals (medium) | notify_escalation (low/out_of_scope) | END
     graph.add_conditional_edges(
         "route",
         _route_after_router,
-        {"review": "review", "notify_proposals": "notify_proposals", "end": END},
+        {
+            "review": "review",
+            "notify_proposals": "notify_proposals",
+            "notify_escalation": "notify_escalation",
+            "end": END,
+        },
     )
 
     # Linear: review → compliance
@@ -303,6 +319,9 @@ def build_agent_graph(
 
     # notify_proposals → END (medium-confidence path)
     graph.add_edge("notify_proposals", END)
+
+    # notify_escalation → END (low-confidence / out-of-scope path)
+    graph.add_edge("notify_escalation", END)
 
     return graph.compile()
 

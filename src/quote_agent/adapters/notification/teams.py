@@ -48,6 +48,8 @@ class TeamsAdapter:
             card = self._build_quote_ready_card(payload)
         elif payload.card_type == "multi-proposal":
             card = self._build_multi_proposal_card(payload)
+        elif payload.card_type == "escalation":
+            card = self._build_escalation_card(payload)
         else:
             card = self._build_generic_card(payload)
         return {
@@ -222,6 +224,95 @@ class TeamsAdapter:
                     "wrap": True,
                 },
                 *proposal_rows,
+            ],
+            "actions": [
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "Voir dans l'ERP",
+                    "url": data.get("erp_url", ""),
+                },
+            ],
+        }
+
+    def _build_escalation_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build an escalation Adaptive Card with red accent and context sections."""
+        data = payload.data
+        suggested_steps = data.get("suggested_next_steps", [])
+        step_blocks: list[dict[str, Any]] = [
+            {"type": "TextBlock", "text": f"• {step}", "wrap": True}
+            for step in suggested_steps
+        ]
+
+        return {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.4",
+            "body": [
+                {
+                    "type": "Container",
+                    "style": "attention",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Q \u2014 AI Quote Agent",
+                            "weight": "Bolder",
+                            "color": "Light",
+                        },
+                    ],
+                },
+                {
+                    "type": "TextBlock",
+                    "text": datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
+                    "size": "Small",
+                    "isSubtle": True,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": payload.message,
+                    "wrap": True,
+                },
+                {
+                    "type": "Container",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Ce que j'ai compris",
+                            "weight": "Bolder",
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": data.get("understood", ""),
+                            "wrap": True,
+                        },
+                    ],
+                },
+                {
+                    "type": "Container",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Ce qui est flou",
+                            "weight": "Bolder",
+                        },
+                        {
+                            "type": "TextBlock",
+                            "text": data.get("uncertain", ""),
+                            "wrap": True,
+                            "isSubtle": True,
+                        },
+                    ],
+                },
+                {
+                    "type": "Container",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Prochaines étapes suggérées",
+                            "weight": "Bolder",
+                        },
+                        *step_blocks,
+                    ],
+                },
             ],
             "actions": [
                 {
