@@ -1,6 +1,6 @@
 """Notification dispatcher — coordination layer between pipeline nodes and adapter.
 
-Sits between LangGraph notifier nodes and the TeamsAdapter. Nodes determine
+Sits between LangGraph notifier nodes and the notification adapter. Nodes determine
 WHICH notification to send; the dispatcher controls WHEN and WHETHER to send it.
 """
 
@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from quote_agent.adapters.notification.models import NotificationPayload
-    from quote_agent.adapters.notification.teams import TeamsAdapter
+    from quote_agent.adapters.notification.protocol import NotificationAdapter
     from quote_agent.services.notification_throttle import NotificationBatcher, NotificationThrottle
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 async def dispatch_quote_notification(
     *,
     payload: NotificationPayload | None,
-    adapter: TeamsAdapter,
+    adapter: NotificationAdapter,
     throttle: NotificationThrottle,
     batcher: NotificationBatcher,
 ) -> dict[str, object]:
@@ -39,7 +39,7 @@ async def dispatch_quote_notification(
     if payload is None:
         return {"sent": False, "reason": "no-payload", "notification_result": None}
 
-    recipient = adapter.hostname
+    recipient: str = getattr(adapter, "hostname", "unknown")
 
     # Always record the event for burst detection
     batcher.record_event(recipient)

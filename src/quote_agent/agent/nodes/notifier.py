@@ -1,4 +1,4 @@
-"""Notification nodes — fire-and-forget Teams cards for quote-ready, multi-proposal, and escalation."""
+"""Notification nodes — fire-and-forget notifications for quote-ready, multi-proposal, and escalation."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from quote_agent.adapters.notification.models import NotificationPayload
 
 if TYPE_CHECKING:
     from quote_agent.adapters.notification.models import NotificationResult
-    from quote_agent.adapters.notification.teams import TeamsAdapter
+    from quote_agent.adapters.notification.protocol import NotificationAdapter
     from quote_agent.agent.state import AgentState
     from quote_agent.config import ERPSettings
     from quote_agent.services.notification_throttle import NotificationBatcher, NotificationThrottle
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 async def notify_quote_ready(
     state: AgentState,
-    notification_adapter: TeamsAdapter,
+    notification_adapter: NotificationAdapter,
     erp_settings: ERPSettings,
     throttle: NotificationThrottle | None = None,
     batcher: NotificationBatcher | None = None,
@@ -82,7 +82,7 @@ async def notify_quote_ready(
 
 async def notify_multi_proposal(
     state: AgentState,
-    notification_adapter: TeamsAdapter,
+    notification_adapter: NotificationAdapter,
     erp_settings: ERPSettings,
     throttle: NotificationThrottle | None = None,
     batcher: NotificationBatcher | None = None,
@@ -146,7 +146,7 @@ async def notify_multi_proposal(
 
 async def notify_escalation(
     state: AgentState,
-    notification_adapter: TeamsAdapter,
+    notification_adapter: NotificationAdapter,
     erp_settings: ERPSettings,
     throttle: NotificationThrottle | None = None,
     batcher: NotificationBatcher | None = None,

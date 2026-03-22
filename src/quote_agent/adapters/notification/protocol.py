@@ -1,4 +1,11 @@
-"""Protocol definition for notification adapters."""
+"""Protocol definition for notification adapters.
+
+Design decision: ``format_card`` is intentionally NOT part of this Protocol.
+Card formatting is channel-specific (Teams uses Adaptive Cards, Slack uses Block Kit,
+email uses HTML, webhooks use plain JSON). Each adapter transforms the universal
+``NotificationPayload`` into its channel-specific format internally via
+``send_notification()``.
+"""
 
 from __future__ import annotations
 

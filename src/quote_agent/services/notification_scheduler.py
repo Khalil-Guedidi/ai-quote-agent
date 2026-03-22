@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-    from quote_agent.adapters.notification.teams import TeamsAdapter
+    from quote_agent.adapters.notification.protocol import NotificationAdapter
     from quote_agent.config import ERPSettings, NotificationScheduleSettings
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class NotificationScheduler:
         *,
         schedule_settings: NotificationScheduleSettings,
         session_factory: async_sessionmaker[AsyncSession],
-        adapter: TeamsAdapter,
+        adapter: NotificationAdapter,
         erp_settings: ERPSettings,
     ) -> None:
         self._settings = schedule_settings
@@ -78,7 +78,7 @@ class NotificationScheduler:
         """Return True if the scheduler should start (enabled + webhook configured)."""
         if not self._settings.scheduler_enabled:
             return False
-        return bool(self._adapter.hostname)
+        return bool(getattr(self._adapter, "hostname", ""))
 
     def start(self) -> None:
         """Spawn background tasks for daily and weekly sends."""

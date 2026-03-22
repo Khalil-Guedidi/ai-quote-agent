@@ -24,7 +24,7 @@ async def _run_batch_summary() -> tuple[NotificationResult | None, str]:
     factory = _get_session_factory()
     async with factory() as session:
         result = await send_batch_summary(session, adapter, settings.erp)
-    return result, adapter.hostname
+    return result, getattr(adapter, "hostname", "unknown")
 
 
 async def _run_weekly_report() -> tuple[NotificationResult | None, str]:
@@ -39,7 +39,7 @@ async def _run_weekly_report() -> tuple[NotificationResult | None, str]:
     factory = _get_session_factory()
     async with factory() as session:
         result = await send_weekly_report(session, adapter, settings.erp)
-    return result, adapter.hostname
+    return result, getattr(adapter, "hostname", "unknown")
 
 
 async def _run_manager_stats() -> tuple[NotificationResult | None, str]:
@@ -52,7 +52,7 @@ async def _run_manager_stats() -> tuple[NotificationResult | None, str]:
     factory = _get_session_factory()
     async with factory() as session:
         result = await send_manager_stats(session, adapter)
-    return result, adapter.hostname
+    return result, getattr(adapter, "hostname", "unknown")
 
 
 def _display_result(result: NotificationResult | None, hostname: str, json_output: bool) -> None:

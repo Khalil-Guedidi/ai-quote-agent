@@ -11,7 +11,7 @@ from quote_agent.services.notification_stats import get_daily_summary, get_weekl
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from quote_agent.adapters.notification.teams import TeamsAdapter
+    from quote_agent.adapters.notification.protocol import NotificationAdapter
     from quote_agent.config import ConfidenceScoringSettings, ERPSettings
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 async def send_batch_summary(
     session: AsyncSession,
-    adapter: TeamsAdapter,
+    adapter: NotificationAdapter,
     erp_settings: ERPSettings,
     confidence_settings: ConfidenceScoringSettings | None = None,
 ) -> NotificationResult | None:
@@ -73,7 +73,7 @@ async def send_batch_summary(
 
 async def send_weekly_report(
     session: AsyncSession,
-    adapter: TeamsAdapter,
+    adapter: NotificationAdapter,
     erp_settings: ERPSettings,
 ) -> NotificationResult | None:
     """Send the weekly manager report notification.
@@ -117,7 +117,7 @@ async def send_weekly_report(
 
 async def send_manager_stats(
     session: AsyncSession,
-    adapter: TeamsAdapter,
+    adapter: NotificationAdapter,
     confidence_settings: ConfidenceScoringSettings | None = None,
 ) -> NotificationResult | None:
     """Send on-demand manager stats notification.

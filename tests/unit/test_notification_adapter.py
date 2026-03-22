@@ -354,7 +354,7 @@ def test_cli_notify_test_success_output(
     from quote_agent.cli.main import app
 
     mock_adapter = MagicMock()
-    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.hostname = "test.webhook.office.com"
     mock_adapter.send_notification = AsyncMock(
         return_value=NotificationResult(
             success=True,
@@ -384,7 +384,7 @@ def test_cli_notify_test_failure_output(
     from quote_agent.cli.main import app
 
     mock_adapter = MagicMock()
-    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.hostname = "test.webhook.office.com"
     mock_adapter.send_notification = AsyncMock(
         return_value=NotificationResult(
             success=False,
@@ -413,7 +413,7 @@ def test_cli_notify_test_json_output(
     from quote_agent.cli.main import app
 
     mock_adapter = MagicMock()
-    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.hostname = "test.webhook.office.com"
     mock_adapter.send_notification = AsyncMock(
         return_value=NotificationResult(
             success=True,
@@ -578,7 +578,7 @@ def test_cli_notify_test_custom_message(
     from quote_agent.cli.main import app
 
     mock_adapter = MagicMock()
-    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.hostname = "test.webhook.office.com"
     mock_adapter.send_notification = AsyncMock(
         return_value=NotificationResult(
             success=True,
@@ -1184,3 +1184,254 @@ def test_build_adaptive_card_dispatches_manager_stats(
     assert card["body"][0]["style"] == "accent"
     # manager-stats has no actions (no ERP link)
     assert "actions" not in card
+
+
+# =============================================================================
+# Story 5.6 — Adapter Pattern Multi-Canal & Consistance
+# =============================================================================
+
+
+# --- Factory Routing Tests (AC: #2) ---
+
+
+def test_factory_returns_teams_adapter_when_channel_teams(
+    env_vars: dict[str, str],
+    _clear_settings_cache: None,
+) -> None:
+    """AC-2: get_notification_adapter() returns TeamsAdapter when channel='teams'."""
+    import os
+
+    os.environ["NOTIFICATION__CHANNEL"] = "teams"
+    os.environ["NOTIFICATION__TEAMS_WEBHOOK_URL"] = "https://test.webhook.office.com/webhook/test"
+    from quote_agent.config import get_settings
+
+    get_settings.cache_clear()
+    get_notification_adapter.cache_clear()
+
+    adapter = get_notification_adapter()
+
+    assert isinstance(adapter, TeamsAdapter)
+    assert isinstance(adapter, NotificationAdapter)
+
+    get_notification_adapter.cache_clear()
+    get_settings.cache_clear()
+    os.environ.pop("NOTIFICATION__CHANNEL", None)
+    os.environ.pop("NOTIFICATION__TEAMS_WEBHOOK_URL", None)
+
+
+def test_factory_returns_log_adapter_when_channel_log(
+    env_vars: dict[str, str],
+    _clear_settings_cache: None,
+) -> None:
+    """AC-2: get_notification_adapter() returns LogAdapter when channel='log'."""
+    import os
+
+    from quote_agent.adapters.notification.log import LogAdapter
+
+    os.environ["NOTIFICATION__CHANNEL"] = "log"
+    from quote_agent.config import get_settings
+
+    get_settings.cache_clear()
+    get_notification_adapter.cache_clear()
+
+    adapter = get_notification_adapter()
+
+    assert isinstance(adapter, LogAdapter)
+    assert isinstance(adapter, NotificationAdapter)
+
+    get_notification_adapter.cache_clear()
+    get_settings.cache_clear()
+    os.environ.pop("NOTIFICATION__CHANNEL", None)
+
+
+def test_factory_raises_configuration_error_for_unknown_channel(
+    env_vars: dict[str, str],
+    _clear_settings_cache: None,
+) -> None:
+    """AC-2: get_notification_adapter() raises ConfigurationError for unknown channel."""
+    import os
+
+    os.environ["NOTIFICATION__CHANNEL"] = "unknown"
+    from quote_agent.config import get_settings
+
+    get_settings.cache_clear()
+    get_notification_adapter.cache_clear()
+
+    with pytest.raises(ConfigurationError, match="Unknown notification channel: unknown"):
+        get_notification_adapter()
+
+    get_notification_adapter.cache_clear()
+    get_settings.cache_clear()
+    os.environ.pop("NOTIFICATION__CHANNEL", None)
+
+
+# --- LogAdapter Tests (AC: #2) ---
+
+
+def test_log_adapter_satisfies_protocol() -> None:
+    """AC-2: LogAdapter satisfies NotificationAdapter Protocol (isinstance check)."""
+    from quote_agent.adapters.notification.log import LogAdapter
+
+    adapter = LogAdapter()
+    assert isinstance(adapter, NotificationAdapter)
+
+
+async def test_log_adapter_send_notification_returns_success() -> None:
+    """AC-2: LogAdapter.send_notification() returns success result."""
+    from quote_agent.adapters.notification.log import LogAdapter
+
+    adapter = LogAdapter()
+    payload = NotificationPayload(title="Test", message="Hello Log")
+    result = await adapter.send_notification(payload)
+
+    assert result.success is True
+    assert result.status_code == 200
+    assert result.timestamp is not None
+    assert result.error is None
+
+
+async def test_log_adapter_health_check_returns_healthy() -> None:
+    """AC-2: LogAdapter.health_check() returns healthy."""
+    from quote_agent.adapters.notification.log import LogAdapter
+
+    adapter = LogAdapter()
+    health = await adapter.health_check()
+
+    assert health.status == "healthy"
+    assert health.error is None
+
+
+def test_log_adapter_hostname_returns_log_local() -> None:
+    """AC-2: LogAdapter.hostname returns 'log://local' for recipient tracking."""
+    from quote_agent.adapters.notification.log import LogAdapter
+
+    adapter = LogAdapter()
+    assert adapter.hostname == "log://local"
+
+
+# --- Structural Consistency Tests (AC: #1, #3) ---
+
+_CARD_TYPE_STYLE_MAP = {
+    "quote-ready": "good",
+    "multi-proposal": "warning",
+    "escalation": "attention",
+    "batch-summary": "accent",
+    "manager-weekly": "accent",
+    "manager-stats": "accent",
+    "test": "accent",
+}
+
+_CARD_TYPE_PAYLOADS: dict[str, NotificationPayload] = {
+    "quote-ready": NotificationPayload(
+        title="Devis prêt",
+        message="Salut ! Devis pour Durand prêt.",
+        card_type="quote-ready",
+        data={
+            "client": "Durand",
+            "product": "Tube Inox 304L",
+            "quantity": "100",
+            "confidence_pct": "92",
+            "erp_url": "https://odoo.example.com/web#id=42",
+        },
+    ),
+    "multi-proposal": _multi_proposal_payload(),
+    "escalation": _escalation_payload(),
+    "batch-summary": _batch_summary_payload(),
+    "manager-weekly": _manager_weekly_payload(),
+    "manager-stats": _manager_stats_payload(),
+    "test": NotificationPayload(title="Test", message="Hello Teams"),
+}
+
+
+@pytest.mark.parametrize("card_type", list(_CARD_TYPE_STYLE_MAP.keys()))
+def test_structural_consistency_accent_bar(
+    adapter: TeamsAdapter,
+    card_type: str,
+) -> None:
+    """AC-1: Every card type has accent bar Container as first body element with correct style."""
+    payload = _CARD_TYPE_PAYLOADS[card_type]
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    accent_container = card["body"][0]
+    assert accent_container["type"] == "Container"
+    assert accent_container["style"] == _CARD_TYPE_STYLE_MAP[card_type]
+
+
+@pytest.mark.parametrize("card_type", list(_CARD_TYPE_STYLE_MAP.keys()))
+def test_structural_consistency_bot_avatar(
+    adapter: TeamsAdapter,
+    card_type: str,
+) -> None:
+    """AC-1: Every card type has 'Q — AI Quote Agent' TextBlock inside accent container."""
+    payload = _CARD_TYPE_PAYLOADS[card_type]
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    bot_text = card["body"][0]["items"][0]
+    assert bot_text["text"] == "Q \u2014 AI Quote Agent"
+    assert bot_text["weight"] == "Bolder"
+    assert bot_text["color"] == "Light"
+
+
+@pytest.mark.parametrize("card_type", list(_CARD_TYPE_STYLE_MAP.keys()))
+def test_structural_consistency_timestamp(
+    adapter: TeamsAdapter,
+    card_type: str,
+) -> None:
+    """AC-1: Every card type has UTC timestamp TextBlock as second body element."""
+    payload = _CARD_TYPE_PAYLOADS[card_type]
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    timestamp_block = card["body"][1]
+    assert timestamp_block["type"] == "TextBlock"
+    assert timestamp_block["isSubtle"] is True
+    assert timestamp_block["size"] == "Small"
+
+
+_CARD_TYPES_WITH_ACTIONS = {"quote-ready", "multi-proposal", "escalation", "batch-summary", "manager-weekly"}
+
+
+@pytest.mark.parametrize("card_type", list(_CARD_TYPES_WITH_ACTIONS))
+def test_structural_consistency_action_openurl_french(
+    adapter: TeamsAdapter,
+    card_type: str,
+) -> None:
+    """AC-1: All card types with actions include Action.OpenUrl with French label."""
+    payload = _CARD_TYPE_PAYLOADS[card_type]
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert "actions" in card
+    assert len(card["actions"]) >= 1
+    action = card["actions"][0]
+    assert action["type"] == "Action.OpenUrl"
+    # French label (contains "Voir" or "ERP")
+    assert any(word in action["title"] for word in ("Voir", "ERP"))
+
+
+# --- Dispatch with LogAdapter (AC: #2) ---
+
+
+async def test_dispatch_works_with_log_adapter() -> None:
+    """AC-2: dispatch_quote_notification works with LogAdapter (no Teams dependency)."""
+    from quote_agent.adapters.notification.log import LogAdapter
+    from quote_agent.services.notification_dispatcher import dispatch_quote_notification
+    from quote_agent.services.notification_throttle import NotificationBatcher, NotificationThrottle
+
+    adapter = LogAdapter()
+    throttle = NotificationThrottle(rate_limit_seconds=0.0)
+    batcher = NotificationBatcher(burst_threshold=100, burst_window_seconds=60.0)
+    payload = NotificationPayload(title="Test", message="Log dispatch test")
+
+    result = await dispatch_quote_notification(
+        payload=payload,
+        adapter=adapter,
+        throttle=throttle,
+        batcher=batcher,
+    )
+
+    assert result["sent"] is True
+    assert result["reason"] == "sent"
+    assert result["notification_result"] is not None

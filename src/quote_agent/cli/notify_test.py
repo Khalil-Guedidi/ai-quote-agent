@@ -22,7 +22,7 @@ async def _run_notify_test(message: str) -> tuple[NotificationResult, str]:
         message=message,
     )
     result = await adapter.send_notification(payload)
-    return result, adapter._hostname
+    return result, getattr(adapter, "hostname", "unknown")
 
 
 def _format_result(result: NotificationResult, hostname: str) -> None:
