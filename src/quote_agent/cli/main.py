@@ -209,6 +209,16 @@ def manager_stats_cmd(
     _manager_stats_impl(json_output=json_output)
 
 
+@app.command(name="scheduler-status")
+def scheduler_status_cmd(
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Check notification scheduler status and next scheduled sends."""
+    from quote_agent.cli.scheduler_status import scheduler_status as _scheduler_status_impl
+
+    _scheduler_status_impl(json_output=json_output)
+
+
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),

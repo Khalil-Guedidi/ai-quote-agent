@@ -246,10 +246,19 @@ def build_agent_graph(
             logger.error("Node draft failed", extra={"context": {"error": str(exc)}})
             return {"error": f"draft: {exc}", "current_node": "draft"}
 
+    # -- Throttle + batcher singletons (shared across all notify nodes) ----
+    from quote_agent.services.notification_throttle import NotificationBatcher, NotificationThrottle
+
+    throttle = NotificationThrottle(rate_limit_seconds=float(settings.notification_batch.rate_limit_seconds))
+    batcher = NotificationBatcher(
+        burst_threshold=settings.notification_batch.burst_threshold,
+        burst_window_seconds=float(settings.notification_batch.burst_window_seconds),
+    )
+
     async def notify_node(state: AgentState) -> dict[str, Any]:
         try:
             adapter = get_notification_adapter()
-            return await notify_quote_ready(state, adapter, settings.erp)
+            return await notify_quote_ready(state, adapter, settings.erp, throttle, batcher)
         except Exception as exc:
             logger.warning("Node notify failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify"}
@@ -257,7 +266,7 @@ def build_agent_graph(
     async def notify_proposals_node(state: AgentState) -> dict[str, Any]:
         try:
             adapter = get_notification_adapter()
-            return await notify_multi_proposal(state, adapter, settings.erp)
+            return await notify_multi_proposal(state, adapter, settings.erp, throttle, batcher)
         except Exception as exc:
             logger.warning("Node notify_proposals failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify_proposals"}
@@ -265,7 +274,7 @@ def build_agent_graph(
     async def notify_escalation_node(state: AgentState) -> dict[str, Any]:
         try:
             adapter = get_notification_adapter()
-            return await notify_escalation(state, adapter, settings.erp)
+            return await notify_escalation(state, adapter, settings.erp, throttle, batcher)
         except Exception as exc:
             logger.warning("Node notify_escalation failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify_escalation"}

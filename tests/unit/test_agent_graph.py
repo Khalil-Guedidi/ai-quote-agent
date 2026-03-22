@@ -113,6 +113,20 @@ def _mock_draft_result() -> MagicMock:
     return mock
 
 
+def _make_settings_mock(**overrides: object) -> MagicMock:
+    """Create a mock Settings with required sub-models for graph construction."""
+    from quote_agent.config import NotificationBatchSettings
+
+    batch = NotificationBatchSettings()
+    mock = MagicMock(
+        confidence_scoring=MagicMock(),
+        notification_batch=batch,
+    )
+    for key, val in overrides.items():
+        setattr(mock, key, val)
+    return mock
+
+
 def _make_session_factory() -> AsyncMock:
     """Create a mock async session factory that works as async context manager."""
     mock_session = AsyncMock()
@@ -210,7 +224,7 @@ class TestGraphCompilation:
         """AC-1: build_agent_graph returns a compiled graph."""
         graph = build_agent_graph(
             MagicMock(), _make_session_factory(), MagicMock(),
-            MagicMock(confidence_scoring=MagicMock()),
+            _make_settings_mock(),
         )
         assert graph is not None
 
@@ -218,7 +232,7 @@ class TestGraphCompilation:
         """AC-6: Compiled graph has ainvoke method."""
         graph = build_agent_graph(
             MagicMock(), _make_session_factory(), MagicMock(),
-            MagicMock(confidence_scoring=MagicMock()),
+            _make_settings_mock(),
         )
         assert hasattr(graph, "ainvoke")
 
@@ -226,7 +240,7 @@ class TestGraphCompilation:
         """AC-1 (5.1): notify node exists and sits between draft and END."""
         graph = build_agent_graph(
             MagicMock(), _make_session_factory(), MagicMock(),
-            MagicMock(confidence_scoring=MagicMock()),
+            _make_settings_mock(),
         )
         node_names = list(graph.get_graph().nodes.keys())
         assert "notify" in node_names
@@ -237,7 +251,7 @@ class TestGraphCompilation:
         """AC-3 (5.2): notify_proposals node exists in the graph."""
         graph = build_agent_graph(
             MagicMock(), _make_session_factory(), MagicMock(),
-            MagicMock(confidence_scoring=MagicMock()),
+            _make_settings_mock(),
         )
         node_names = list(graph.get_graph().nodes.keys())
         assert "notify_proposals" in node_names
@@ -246,7 +260,7 @@ class TestGraphCompilation:
         """AC-3 (5.3): notify_escalation node exists in the graph."""
         graph = build_agent_graph(
             MagicMock(), _make_session_factory(), MagicMock(),
-            MagicMock(confidence_scoring=MagicMock()),
+            _make_settings_mock(),
         )
         node_names = list(graph.get_graph().nodes.keys())
         assert "notify_escalation" in node_names
@@ -296,7 +310,7 @@ class TestGraphExecution:
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), erp,
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -342,7 +356,7 @@ class TestGraphExecution:
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -383,7 +397,7 @@ class TestGraphExecution:
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -422,7 +436,7 @@ class TestGraphExecution:
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -448,7 +462,7 @@ class TestGraphExecution:
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -472,7 +486,7 @@ class TestGraphExecution:
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -497,7 +511,7 @@ class TestGraphErrorHandling:
         with patch(_CLASSIFY, new_callable=AsyncMock, side_effect=RuntimeError("LLM timeout")):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -517,7 +531,7 @@ class TestGraphErrorHandling:
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 
@@ -552,7 +566,7 @@ class TestGraphErrorHandling:
             erp = AsyncMock()
             graph = build_agent_graph(
                 MagicMock(), session_factory, erp,
-                MagicMock(confidence_scoring=MagicMock()),
+                _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
 

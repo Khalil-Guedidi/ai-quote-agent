@@ -57,9 +57,36 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.email_poller = poller
     poller_task = asyncio.create_task(poller.run())
 
+    # Start notification scheduler (daily batch summary + weekly report)
+    from quote_agent.adapters.notification import get_notification_adapter
+    from quote_agent.services.notification_scheduler import NotificationScheduler
+
+    notification_adapter = get_notification_adapter()
+    scheduler = NotificationScheduler(
+        schedule_settings=settings.notification_schedule,
+        session_factory=session_factory,
+        adapter=notification_adapter,
+        erp_settings=settings.erp,
+    )
+
+    if scheduler.should_run():
+        scheduler.start()
+        app.state.notification_scheduler = scheduler
+        logger.info("Notification scheduler started")
+    else:
+        scheduler = None
+        logger.info("Notification scheduler disabled (scheduler_enabled=%s, webhook=%s)",
+                     settings.notification_schedule.scheduler_enabled,
+                     bool(settings.notification.teams_webhook_url))
+
     yield
 
     logger.info("Application shutting down")
+
+    if scheduler is not None:
+        scheduler.stop()
+        logger.info("Notification scheduler stopped")
+
     await poller.stop()
     poller_task.cancel()
     with contextlib.suppress(asyncio.CancelledError):

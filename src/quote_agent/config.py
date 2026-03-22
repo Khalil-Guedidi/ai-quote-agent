@@ -157,9 +157,18 @@ class SearchSettings(BaseModel):
     hnsw_ef_search: int = 100
 
 
+class NotificationBatchSettings(BaseModel):
+    """Notification batching and rate limiting configuration."""
+
+    burst_threshold: int = 5
+    burst_window_seconds: int = 600
+    rate_limit_seconds: int = 60
+
+
 class NotificationScheduleSettings(BaseModel):
     """Scheduled notification timing configuration."""
 
+    scheduler_enabled: bool = True
     batch_summary_hour: int = 8
     batch_summary_minute: int = 0
     weekly_report_day: int = 0  # Monday
@@ -202,6 +211,7 @@ class Settings(BaseSettings):
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()
+    notification_batch: NotificationBatchSettings = NotificationBatchSettings()
     notification_schedule: NotificationScheduleSettings = NotificationScheduleSettings()
     app: AppSettings = AppSettings()
 

@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from quote_agent.adapters.notification.teams import TeamsAdapter
     from quote_agent.agent.state import AgentState
     from quote_agent.config import ERPSettings
+    from quote_agent.services.notification_throttle import NotificationBatcher, NotificationThrottle
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,8 @@ async def notify_quote_ready(
     state: AgentState,
     notification_adapter: TeamsAdapter,
     erp_settings: ERPSettings,
+    throttle: NotificationThrottle | None = None,
+    batcher: NotificationBatcher | None = None,
 ) -> dict[str, object]:
     """Send a quote-ready notification after successful draft creation.
 
@@ -56,15 +59,23 @@ async def notify_quote_ready(
     )
 
     result: NotificationResult | None = None
-    try:
-        result = await notification_adapter.send_notification(payload)
-        if not result.success:
-            logger.warning(
-                "Notification send returned failure",
-                extra={"context": {"error": result.error, "status_code": result.status_code}},
-            )
-    except Exception:
-        logger.warning("Notification send raised an exception", exc_info=True)
+    if throttle is not None and batcher is not None:
+        from quote_agent.services.notification_dispatcher import dispatch_quote_notification
+
+        dispatch_result = await dispatch_quote_notification(
+            payload=payload, adapter=notification_adapter, throttle=throttle, batcher=batcher
+        )
+        result = dispatch_result.get("notification_result")  # type: ignore[assignment]
+    else:
+        try:
+            result = await notification_adapter.send_notification(payload)
+            if not result.success:
+                logger.warning(
+                    "Notification send returned failure",
+                    extra={"context": {"error": result.error, "status_code": result.status_code}},
+                )
+        except Exception:
+            logger.warning("Notification send raised an exception", exc_info=True)
 
     return {"notification_result": result, "current_node": "notify"}
 
@@ -73,6 +84,8 @@ async def notify_multi_proposal(
     state: AgentState,
     notification_adapter: TeamsAdapter,
     erp_settings: ERPSettings,
+    throttle: NotificationThrottle | None = None,
+    batcher: NotificationBatcher | None = None,
 ) -> dict[str, object]:
     """Send a multi-proposal notification when the agent is uncertain.
 
@@ -110,15 +123,23 @@ async def notify_multi_proposal(
     )
 
     result: NotificationResult | None = None
-    try:
-        result = await notification_adapter.send_notification(payload)
-        if not result.success:
-            logger.warning(
-                "Notification send returned failure",
-                extra={"context": {"error": result.error, "status_code": result.status_code}},
-            )
-    except Exception:
-        logger.warning("Notification send raised an exception", exc_info=True)
+    if throttle is not None and batcher is not None:
+        from quote_agent.services.notification_dispatcher import dispatch_quote_notification
+
+        dispatch_result = await dispatch_quote_notification(
+            payload=payload, adapter=notification_adapter, throttle=throttle, batcher=batcher
+        )
+        result = dispatch_result.get("notification_result")  # type: ignore[assignment]
+    else:
+        try:
+            result = await notification_adapter.send_notification(payload)
+            if not result.success:
+                logger.warning(
+                    "Notification send returned failure",
+                    extra={"context": {"error": result.error, "status_code": result.status_code}},
+                )
+        except Exception:
+            logger.warning("Notification send raised an exception", exc_info=True)
 
     return {"notification_result": result, "current_node": "notify_proposals"}
 
@@ -127,6 +148,8 @@ async def notify_escalation(
     state: AgentState,
     notification_adapter: TeamsAdapter,
     erp_settings: ERPSettings,
+    throttle: NotificationThrottle | None = None,
+    batcher: NotificationBatcher | None = None,
 ) -> dict[str, object]:
     """Send an escalation notification when the agent cannot process a request.
 
@@ -171,14 +194,22 @@ async def notify_escalation(
     )
 
     result: NotificationResult | None = None
-    try:
-        result = await notification_adapter.send_notification(payload)
-        if not result.success:
-            logger.warning(
-                "Notification send returned failure",
-                extra={"context": {"error": result.error, "status_code": result.status_code}},
-            )
-    except Exception:
-        logger.warning("Notification send raised an exception", exc_info=True)
+    if throttle is not None and batcher is not None:
+        from quote_agent.services.notification_dispatcher import dispatch_quote_notification
+
+        dispatch_result = await dispatch_quote_notification(
+            payload=payload, adapter=notification_adapter, throttle=throttle, batcher=batcher
+        )
+        result = dispatch_result.get("notification_result")  # type: ignore[assignment]
+    else:
+        try:
+            result = await notification_adapter.send_notification(payload)
+            if not result.success:
+                logger.warning(
+                    "Notification send returned failure",
+                    extra={"context": {"error": result.error, "status_code": result.status_code}},
+                )
+        except Exception:
+            logger.warning("Notification send raised an exception", exc_info=True)
 
     return {"notification_result": result, "current_node": "notify_escalation"}
