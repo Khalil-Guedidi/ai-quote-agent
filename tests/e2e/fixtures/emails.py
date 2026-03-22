@@ -36,20 +36,30 @@ def simple_french_quote() -> IncomingEmail:
 
 
 def multi_product_quote() -> IncomingEmail:
-    """3-4 distinct products in one email — tests multi-line-item extraction."""
+    """Two clearly distinct requests in one email — tests multi-request splitting.
+
+    Group A: Stainless steel piping for a shipyard project in Marseille.
+    Group B: Structural steel for a warehouse construction in Lyon.
+    The two groups have different projects, delivery addresses, and product families,
+    making the splitting decision unambiguous for the LLM.
+    """
     return IncomingEmail(
         message_id=_unique_message_id(),
-        subject=f"Devis urgent multi-produits {datetime.now(UTC).replace(tzinfo=None).isoformat()}",
+        subject=f"Devis multi-projets {datetime.now(UTC).replace(tzinfo=None).isoformat()}",
         sender="marie.martin@ferrotechnic.fr",
         recipients=["devis@quote-agent.local"],
         raw_content=(
             "Bonjour,\n\n"
-            "Nous avons besoin des produits suivants pour notre chantier naval:\n\n"
+            "Nous avons deux projets en cours et souhaitons un devis pour chacun:\n\n"
+            "PROJET 1 — Chantier naval de Marseille (ref: CN-2026-041)\n"
+            "Livraison sur site portuaire, 13002 Marseille, sous 2 semaines.\n"
             "1. 200 tubes inox 304L diametre 25mm longueur 6m\n"
-            "2. 50 plaques acier S235 epaisseur 10mm format 2000x1000\n"
-            "3. 100 brides PN16 DN50 inox 316L\n"
-            "4. 30 coudes 90deg inox 304 diametre 25mm\n\n"
-            "Livraison souhaitee sur site a Marseille sous 2 semaines.\n\n"
+            "2. 100 brides PN16 DN50 inox 316L\n\n"
+            "PROJET 2 — Construction entrepot logistique Lyon (ref: EL-2026-087)\n"
+            "Livraison depot ZI Corbas, 69960 Lyon, sous 4 semaines.\n"
+            "3. 50 poutres IPE 200 acier S235 longueur 12m\n"
+            "4. 80 plaques acier S355 epaisseur 15mm format 2500x1250\n\n"
+            "Merci de nous adresser deux devis separes.\n\n"
             "Cordialement,\n"
             "Marie Martin\n"
             "Directrice Achats\n"

@@ -40,6 +40,7 @@ class OpenAICompatAdapter:
             "base_url": settings.base_url,
             "timeout": settings.timeout,
             "max_retries": settings.max_retries,
+            "temperature": 0,
         }
         self._default_model = ChatOpenAI(model=settings.default_model, **self._common_kwargs)
         self._simple_model = ChatOpenAI(model=settings.simple_model, **self._common_kwargs)
