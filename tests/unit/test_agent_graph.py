@@ -222,6 +222,17 @@ class TestGraphCompilation:
         )
         assert hasattr(graph, "ainvoke")
 
+    def test_notify_node_is_wired_after_draft(self) -> None:
+        """AC-1 (5.1): notify node exists and sits between draft and END."""
+        graph = build_agent_graph(
+            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(confidence_scoring=MagicMock()),
+        )
+        node_names = list(graph.get_graph().nodes.keys())
+        assert "notify" in node_names
+        # notify should come after draft in the node list
+        assert node_names.index("notify") > node_names.index("draft")
+
 
 # ---------------------------------------------------------------------------
 # Test: Full graph execution paths
@@ -233,7 +244,7 @@ class TestGraphExecution:
 
     @pytest.mark.asyncio
     async def test_proceed_to_draft_full_path(self) -> None:
-        """AC-5, AC-6: High confidence → review → compliance → draft → END."""
+        """AC-5, AC-6: High confidence → review → compliance → draft → notify → END."""
         request = _make_request()
         state = create_initial_state(request)
 
@@ -248,6 +259,14 @@ class TestGraphExecution:
         erp = AsyncMock()
         erp.create_draft_quote = AsyncMock(return_value=draft_result)
 
+        from datetime import UTC, datetime
+
+        from quote_agent.adapters.notification.models import NotificationResult
+
+        mock_notif_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        mock_adapter = AsyncMock()
+        mock_adapter.send_notification = AsyncMock(return_value=mock_notif_result)
+
         with (
             patch(_CLASSIFY, new_callable=AsyncMock, return_value=classification),
             patch(_REASON, new_callable=AsyncMock, return_value=reasoning),
@@ -255,6 +274,7 @@ class TestGraphExecution:
             patch(_ROUTE, return_value=routing),
             patch(_REVIEW, new_callable=AsyncMock, return_value=review_result),
             patch(_COMPLIANCE, new_callable=AsyncMock, return_value=compliance_result),
+            patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), erp,
@@ -271,6 +291,10 @@ class TestGraphExecution:
         assert result["draft_result"] is draft_result
         assert result["final_action"] == "proceed_to_draft"
         assert result.get("error") is None
+        # Verify notify node actually executed
+        assert result["notification_result"] is mock_notif_result
+        assert result["current_node"] == "notify"
+        mock_adapter.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_generate_proposals_skips_draft(self) -> None:

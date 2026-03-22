@@ -432,6 +432,140 @@ def test_cli_notify_test_json_output(
     assert data["webhook_hostname"] == "test.webhook.office.com"
 
 
+# --- _build_quote_ready_card() Tests ---
+
+
+def test_build_quote_ready_card_has_green_accent(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: quote-ready card uses green accent container (style=good)."""
+    payload = NotificationPayload(
+        title="Devis prêt",
+        message="Salut ! Devis pour Durand prêt. Check quand t'as le temps.",
+        card_type="quote-ready",
+        data={
+            "client": "Durand",
+            "product": "Tube Inox 304L",
+            "quantity": "100",
+            "confidence_pct": "92",
+            "erp_url": "https://odoo.example.com/web#id=42&model=sale.order&view_type=form",
+        },
+    )
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+    accent_container = card["body"][0]
+
+    assert accent_container["type"] == "Container"
+    assert accent_container["style"] == "good"
+    assert accent_container["items"][0]["text"] == "Q — AI Quote Agent"
+
+
+def test_build_quote_ready_card_has_factset(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: quote-ready card includes FactSet with Client, Product, Quantity, Confidence."""
+    payload = NotificationPayload(
+        title="Devis prêt",
+        message="Salut ! Devis pour Durand prêt. Check quand t'as le temps.",
+        card_type="quote-ready",
+        data={
+            "client": "Durand",
+            "product": "Tube Inox 304L",
+            "quantity": "100",
+            "confidence_pct": "92",
+            "erp_url": "https://odoo.example.com/web#id=42&model=sale.order&view_type=form",
+        },
+    )
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    # Find FactSet in body
+    factsets = [b for b in card["body"] if b["type"] == "FactSet"]
+    assert len(factsets) == 1
+    facts = factsets[0]["facts"]
+    fact_titles = [f["title"] for f in facts]
+    assert "Client" in fact_titles
+    assert "Produit" in fact_titles
+    assert "Quantité" in fact_titles
+    assert "Confiance" in fact_titles
+
+    # Verify values
+    fact_dict = {f["title"]: f["value"] for f in facts}
+    assert fact_dict["Client"] == "Durand"
+    assert fact_dict["Produit"] == "Tube Inox 304L"
+    assert fact_dict["Quantité"] == "100"
+    assert fact_dict["Confiance"] == "92%"
+
+
+def test_build_quote_ready_card_has_openurl_action(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: quote-ready card has 'Voir dans l'ERP' OpenUrl action button."""
+    erp_url = "https://odoo.example.com/web#id=42&model=sale.order&view_type=form"
+    payload = NotificationPayload(
+        title="Devis prêt",
+        message="Salut ! Devis pour Durand prêt. Check quand t'as le temps.",
+        card_type="quote-ready",
+        data={
+            "client": "Durand",
+            "product": "Tube Inox 304L",
+            "quantity": "100",
+            "confidence_pct": "92",
+            "erp_url": erp_url,
+        },
+    )
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert "actions" in card
+    assert len(card["actions"]) == 1
+    action = card["actions"][0]
+    assert action["type"] == "Action.OpenUrl"
+    assert action["title"] == "Voir dans l'ERP"
+    assert action["url"] == erp_url
+
+
+def test_build_quote_ready_card_has_casual_french_message(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: quote-ready card displays the casual French message."""
+    msg = "Salut ! Devis pour Durand prêt. Check quand t'as le temps."
+    payload = NotificationPayload(
+        title="Devis prêt",
+        message=msg,
+        card_type="quote-ready",
+        data={
+            "client": "Durand",
+            "product": "Tube Inox 304L",
+            "quantity": "100",
+            "confidence_pct": "92",
+            "erp_url": "https://odoo.example.com/web#id=42&model=sale.order&view_type=form",
+        },
+    )
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    # Find the message text block (should have wrap=True)
+    message_blocks = [b for b in card["body"] if b.get("type") == "TextBlock" and b.get("wrap") is True]
+    assert len(message_blocks) == 1
+    assert message_blocks[0]["text"] == msg
+
+
+def test_build_adaptive_card_dispatches_to_generic_for_test_type(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-1: card_type='test' still uses the generic card (no FactSet, no actions)."""
+    payload = NotificationPayload(title="Test", message="Hello Teams")
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    # Generic card: accent style, no FactSet, no actions
+    assert card["body"][0]["style"] == "accent"
+    factsets = [b for b in card["body"] if b.get("type") == "FactSet"]
+    assert len(factsets) == 0
+    assert "actions" not in card
+
+
 @patch("quote_agent.adapters.notification.get_notification_adapter")
 def test_cli_notify_test_custom_message(
     mock_get_adapter: MagicMock,

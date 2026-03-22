@@ -12,6 +12,7 @@ from typing_extensions import TypedDict
 
 # Runtime imports — LangGraph resolves these via get_type_hints()
 from quote_agent.adapters.erp.models import QuoteDraftResult
+from quote_agent.adapters.notification.models import NotificationResult
 from quote_agent.agent.nodes.classifier import ClassificationResult
 from quote_agent.agent.nodes.compliance_checker import ComplianceCheckResult
 from quote_agent.agent.nodes.confidence_scorer import ConfidenceResult
@@ -41,6 +42,7 @@ class AgentState(TypedDict, total=False):
 
     # --- Outputs ---
     draft_result: QuoteDraftResult | None
+    notification_result: NotificationResult | None
 
     # --- Meta ---
     error: str | None
@@ -59,6 +61,7 @@ def create_initial_state(request: ExtractedQuoteRequest) -> dict[str, Any]:
         "self_review": None,
         "compliance": None,
         "draft_result": None,
+        "notification_result": None,
         "error": None,
         "current_node": "",
         "final_action": "",

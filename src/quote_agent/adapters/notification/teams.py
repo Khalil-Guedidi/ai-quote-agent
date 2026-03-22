@@ -44,7 +44,23 @@ class TeamsAdapter:
 
     def _build_adaptive_card(self, payload: NotificationPayload) -> dict[str, Any]:
         """Build a Teams Adaptive Card JSON from a NotificationPayload."""
-        card: dict[str, Any] = {
+        if payload.card_type == "quote-ready":
+            card = self._build_quote_ready_card(payload)
+        else:
+            card = self._build_generic_card(payload)
+        return {
+            "type": "message",
+            "attachments": [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "content": card,
+                },
+            ],
+        }
+
+    def _build_generic_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build the default generic Adaptive Card."""
+        return {
             "type": "AdaptiveCard",
             "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
             "version": "1.4",
@@ -74,12 +90,54 @@ class TeamsAdapter:
                 },
             ],
         }
+
+    def _build_quote_ready_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build a quote-ready Adaptive Card with green accent, FactSet, and ERP link."""
+        data = payload.data
         return {
-            "type": "message",
-            "attachments": [
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.4",
+            "body": [
                 {
-                    "contentType": "application/vnd.microsoft.card.adaptive",
-                    "content": card,
+                    "type": "Container",
+                    "style": "good",
+                    "bleed": True,
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Q \u2014 AI Quote Agent",
+                            "weight": "Bolder",
+                            "color": "Light",
+                        },
+                    ],
+                },
+                {
+                    "type": "TextBlock",
+                    "text": datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
+                    "size": "Small",
+                    "isSubtle": True,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": payload.message,
+                    "wrap": True,
+                },
+                {
+                    "type": "FactSet",
+                    "facts": [
+                        {"title": "Client", "value": data.get("client", "")},
+                        {"title": "Produit", "value": data.get("product", "")},
+                        {"title": "Quantité", "value": data.get("quantity", "")},
+                        {"title": "Confiance", "value": f"{data.get('confidence_pct', '')}%"},
+                    ],
+                },
+            ],
+            "actions": [
+                {
+                    "type": "Action.OpenUrl",
+                    "title": "Voir dans l'ERP",
+                    "url": data.get("erp_url", ""),
                 },
             ],
         }

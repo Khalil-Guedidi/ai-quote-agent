@@ -21,6 +21,7 @@ class TestAgentState:
             "self_review",
             "compliance",
             "draft_result",
+            "notification_result",
             "error",
             "current_node",
             "final_action",
@@ -58,6 +59,7 @@ class TestCreateInitialState:
         assert state["self_review"] is None
         assert state["compliance"] is None
         assert state["draft_result"] is None
+        assert state["notification_result"] is None
         assert state["error"] is None
         assert state["current_node"] == ""
         assert state["final_action"] == ""
