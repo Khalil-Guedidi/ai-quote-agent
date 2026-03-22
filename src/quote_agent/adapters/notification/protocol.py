@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from quote_agent.adapters.notification.models import NotificationPayload, NotificationResult
     from quote_agent.api.health import ServiceHealth
 
 
@@ -16,5 +17,6 @@ class NotificationAdapter(Protocol):
         """Check notification channel connectivity, return health status."""
         ...
 
-    # Future methods (Epic 5):
-    # async def send_notification(...) -> NotificationResult
+    async def send_notification(self, payload: NotificationPayload) -> NotificationResult:
+        """Send a notification through the channel, return delivery result."""
+        ...

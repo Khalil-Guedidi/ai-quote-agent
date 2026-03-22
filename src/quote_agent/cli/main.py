@@ -166,6 +166,19 @@ def process_cmd(
     )
 
 
+@app.command(name="notify-test")
+def notify_test(
+    message: str = typer.Option(
+        "Test notification from AI Quote Agent", "--message", "-m", help="Custom test message"
+    ),
+    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+) -> None:
+    """Send a test notification to Teams via the configured webhook."""
+    from quote_agent.cli.notify_test import notify_test as _notify_test_impl
+
+    _notify_test_impl(message=message, json_output=json_output)
+
+
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),

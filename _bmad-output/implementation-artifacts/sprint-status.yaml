@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-22  # Story T.13 done
+last_updated: 2026-03-22  # Story 5.0a done (code review passed)
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -109,8 +109,8 @@ development_status:
   # Epic 5: Notifications & Workflow Commercial
   # Note: 2 foundation stories (5.0a, 5.0b) added from Epic 4 retrospective (2026-03-22)
   # 5.0a blocks stories 5.1+
-  epic-5: backlog
-  5-0a-setup-teams-webhook-cli-notify-test: backlog
+  epic-5: in-progress
+  5-0a-setup-teams-webhook-cli-notify-test: done
   5-0b-fix-flaky-e2e-test-llm-splitting: backlog
   5-1-notification-devis-pret-high-confidence: backlog
   5-2-notification-multi-propositions-medium-confidence: backlog

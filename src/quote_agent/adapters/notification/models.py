@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel
+from datetime import datetime  # noqa: TC003
+from typing import Any
+
+from pydantic import BaseModel, Field
 
 
 class TeamsWebhookInfo(BaseModel):
@@ -11,6 +14,19 @@ class TeamsWebhookInfo(BaseModel):
     hostname: str
 
 
-# Future DTOs (Epic 5):
-# - NotificationPayload: message content, recipient, priority, card template
-# - NotificationResult: delivery status, message ID, timestamp
+class NotificationPayload(BaseModel):
+    """Payload for sending a notification via any channel."""
+
+    title: str
+    message: str
+    card_type: str = "test"
+    data: dict[str, Any] = Field(default_factory=dict)
+
+
+class NotificationResult(BaseModel):
+    """Result of a notification delivery attempt."""
+
+    success: bool
+    status_code: int | None = None
+    error: str | None = None
+    timestamp: datetime

@@ -1,18 +1,21 @@
-"""Tests for the notification adapter — health check, caching, protocol compliance, and health endpoint."""
+"""Tests for the notification adapter — health check, send, caching, protocol, CLI, and health endpoint."""
 
 from __future__ import annotations
 
+import json
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
 from httpx import ASGITransport, AsyncClient
+from typer.testing import CliRunner
 
 from quote_agent.adapters.email import get_email_adapter
 from quote_agent.adapters.erp import get_erp_adapter
 from quote_agent.adapters.llm import get_llm_adapter
 from quote_agent.adapters.notification import get_notification_adapter
+from quote_agent.adapters.notification.models import NotificationPayload, NotificationResult
 from quote_agent.adapters.notification.protocol import NotificationAdapter
 from quote_agent.adapters.notification.teams import TeamsAdapter
 from quote_agent.exceptions import ConfigurationError
@@ -182,3 +185,279 @@ async def test_health_endpoint_includes_notification_service() -> None:
     assert body["data"]["services"]["notification"]["status"] == "healthy"
 
     app.dependency_overrides.clear()
+
+
+# --- send_notification() Tests ---
+
+
+def _mock_httpx_client(status_code: int = 200) -> tuple[MagicMock, AsyncMock]:
+    """Helper to create a mock httpx client returning a given status code."""
+    mock_response = MagicMock()
+    mock_response.status_code = status_code
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.post = AsyncMock(return_value=mock_response)
+    mock_cls = MagicMock(return_value=mock_client)
+    return mock_cls, mock_client
+
+
+@pytest.fixture()
+def test_payload() -> NotificationPayload:
+    """Standard test notification payload."""
+    return NotificationPayload(title="Test", message="Hello Teams")
+
+
+@patch("quote_agent.adapters.notification.teams.httpx.AsyncClient")
+async def test_send_notification_returns_success_on_200(
+    mock_client_cls: MagicMock,
+    adapter: TeamsAdapter,
+    test_payload: NotificationPayload,
+) -> None:
+    """AC-1: send_notification() returns success=True on HTTP 200."""
+    mock_cls, _mock_client = _mock_httpx_client(200)
+    mock_client_cls.return_value = mock_cls.return_value
+
+    result = await adapter.send_notification(test_payload)
+
+    assert result.success is True
+    assert result.status_code == 200
+    assert result.error is None
+    assert result.timestamp is not None
+
+
+@patch("quote_agent.adapters.notification.teams.httpx.AsyncClient")
+async def test_send_notification_returns_failure_on_connection_error(
+    mock_client_cls: MagicMock,
+    adapter: TeamsAdapter,
+    test_payload: NotificationPayload,
+) -> None:
+    """AC-1: send_notification() returns success=False on connection error."""
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.post = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
+    mock_client_cls.return_value = mock_client
+
+    result = await adapter.send_notification(test_payload)
+
+    assert result.success is False
+    assert result.status_code is None
+    assert "Connection refused" in (result.error or "")
+
+
+@patch("quote_agent.adapters.notification.teams.httpx.AsyncClient")
+async def test_send_notification_returns_failure_on_timeout(
+    mock_client_cls: MagicMock,
+    adapter: TeamsAdapter,
+    test_payload: NotificationPayload,
+) -> None:
+    """AC-1: send_notification() returns success=False on timeout."""
+    mock_client = AsyncMock()
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+    mock_client.post = AsyncMock(side_effect=httpx.TimeoutException("Timed out"))
+    mock_client_cls.return_value = mock_client
+
+    result = await adapter.send_notification(test_payload)
+
+    assert result.success is False
+    assert "Timed out" in (result.error or "")
+
+
+@patch("quote_agent.adapters.notification.teams.httpx.AsyncClient")
+async def test_send_notification_returns_failure_on_http_error(
+    mock_client_cls: MagicMock,
+    adapter: TeamsAdapter,
+    test_payload: NotificationPayload,
+) -> None:
+    """AC-1: send_notification() returns success=False on HTTP 4xx/5xx."""
+    mock_cls, _mock_client = _mock_httpx_client(500)
+    mock_client_cls.return_value = mock_cls.return_value
+
+    result = await adapter.send_notification(test_payload)
+
+    assert result.success is False
+    assert result.status_code == 500
+    assert result.error is None
+    assert result.timestamp is not None
+
+
+# --- _build_adaptive_card() Tests ---
+
+
+def test_build_adaptive_card_has_valid_schema(
+    adapter: TeamsAdapter,
+    test_payload: NotificationPayload,
+) -> None:
+    """AC-4: Card JSON conforms to Adaptive Card schema structure."""
+    envelope = adapter._build_adaptive_card(test_payload)
+
+    assert envelope["type"] == "message"
+    assert len(envelope["attachments"]) == 1
+    attachment = envelope["attachments"][0]
+    assert attachment["contentType"] == "application/vnd.microsoft.card.adaptive"
+
+    card = attachment["content"]
+    assert card["type"] == "AdaptiveCard"
+    assert card["version"] == "1.4"
+    assert "$schema" in card
+
+
+def test_build_adaptive_card_body_structure(
+    adapter: TeamsAdapter,
+    test_payload: NotificationPayload,
+) -> None:
+    """AC-4: Card body has accent container, timestamp, and message."""
+    envelope = adapter._build_adaptive_card(test_payload)
+    body = envelope["attachments"][0]["content"]["body"]
+
+    assert len(body) == 3
+    # Accent container with bot name
+    assert body[0]["type"] == "Container"
+    assert body[0]["style"] == "accent"
+    assert body[0]["items"][0]["text"] == "Q \u2014 AI Quote Agent"
+    # Timestamp
+    assert body[1]["type"] == "TextBlock"
+    assert body[1]["isSubtle"] is True
+    # Message
+    assert body[2]["type"] == "TextBlock"
+    assert body[2]["text"] == "Hello Teams"
+    assert body[2]["wrap"] is True
+
+
+# --- Protocol Compliance with send_notification ---
+
+
+def test_adapter_conforms_to_protocol_with_send(adapter: TeamsAdapter) -> None:
+    """AC-3: TeamsAdapter still satisfies NotificationAdapter after adding send_notification."""
+    assert isinstance(adapter, NotificationAdapter)
+    assert hasattr(adapter, "send_notification")
+    assert hasattr(adapter, "health_check")
+
+
+# --- CLI notify-test Tests ---
+
+
+runner = CliRunner()
+
+
+@patch("quote_agent.adapters.notification.get_notification_adapter")
+def test_cli_notify_test_success_output(
+    mock_get_adapter: MagicMock,
+    env_vars: dict[str, str],
+    _clear_settings_cache: None,
+) -> None:
+    """AC-5: CLI displays success status and webhook hostname."""
+    from datetime import UTC, datetime
+
+    from quote_agent.cli.main import app
+
+    mock_adapter = MagicMock()
+    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.send_notification = AsyncMock(
+        return_value=NotificationResult(
+            success=True,
+            status_code=200,
+            timestamp=datetime.now(tz=UTC),
+        )
+    )
+    mock_get_adapter.return_value = mock_adapter
+
+    result = runner.invoke(app, ["notify-test"])
+
+    assert result.exit_code == 0
+    assert "success" in result.output.lower()
+    assert "200" in result.output
+    assert "test.webhook.office.com" in result.output
+
+
+@patch("quote_agent.adapters.notification.get_notification_adapter")
+def test_cli_notify_test_failure_output(
+    mock_get_adapter: MagicMock,
+    env_vars: dict[str, str],
+    _clear_settings_cache: None,
+) -> None:
+    """AC-5: CLI displays failure status on send error."""
+    from datetime import UTC, datetime
+
+    from quote_agent.cli.main import app
+
+    mock_adapter = MagicMock()
+    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.send_notification = AsyncMock(
+        return_value=NotificationResult(
+            success=False,
+            error="Connection refused",
+            timestamp=datetime.now(tz=UTC),
+        )
+    )
+    mock_get_adapter.return_value = mock_adapter
+
+    result = runner.invoke(app, ["notify-test"])
+
+    assert result.exit_code == 1
+    assert "failure" in result.output.lower()
+    assert "Connection refused" in result.output
+
+
+@patch("quote_agent.adapters.notification.get_notification_adapter")
+def test_cli_notify_test_json_output(
+    mock_get_adapter: MagicMock,
+    env_vars: dict[str, str],
+    _clear_settings_cache: None,
+) -> None:
+    """AC-5: CLI --json flag produces valid JSON with webhook_hostname."""
+    from datetime import UTC, datetime
+
+    from quote_agent.cli.main import app
+
+    mock_adapter = MagicMock()
+    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.send_notification = AsyncMock(
+        return_value=NotificationResult(
+            success=True,
+            status_code=200,
+            timestamp=datetime.now(tz=UTC),
+        )
+    )
+    mock_get_adapter.return_value = mock_adapter
+
+    result = runner.invoke(app, ["notify-test", "--json"])
+
+    assert result.exit_code == 0
+    data = json.loads(result.output)
+    assert data["success"] is True
+    assert data["status_code"] == 200
+    assert data["webhook_hostname"] == "test.webhook.office.com"
+
+
+@patch("quote_agent.adapters.notification.get_notification_adapter")
+def test_cli_notify_test_custom_message(
+    mock_get_adapter: MagicMock,
+    env_vars: dict[str, str],
+    _clear_settings_cache: None,
+) -> None:
+    """AC-5: CLI --message option passes custom message to adapter."""
+    from datetime import UTC, datetime
+
+    from quote_agent.cli.main import app
+
+    mock_adapter = MagicMock()
+    mock_adapter._hostname = "test.webhook.office.com"
+    mock_adapter.send_notification = AsyncMock(
+        return_value=NotificationResult(
+            success=True,
+            status_code=200,
+            timestamp=datetime.now(tz=UTC),
+        )
+    )
+    mock_get_adapter.return_value = mock_adapter
+
+    result = runner.invoke(app, ["notify-test", "--message", "Custom test msg"])
+
+    assert result.exit_code == 0
+    # Verify the adapter was called with the custom message
+    call_args = mock_adapter.send_notification.call_args
+    payload = call_args[0][0]
+    assert payload.message == "Custom test msg"

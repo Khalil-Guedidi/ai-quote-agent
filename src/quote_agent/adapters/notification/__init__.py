@@ -5,7 +5,11 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import TYPE_CHECKING
 
-from quote_agent.adapters.notification.models import TeamsWebhookInfo
+from quote_agent.adapters.notification.models import (
+    NotificationPayload,
+    NotificationResult,
+    TeamsWebhookInfo,
+)
 from quote_agent.adapters.notification.protocol import NotificationAdapter
 
 if TYPE_CHECKING:
@@ -13,6 +17,8 @@ if TYPE_CHECKING:
 
 __all__ = [
     "NotificationAdapter",
+    "NotificationPayload",
+    "NotificationResult",
     "TeamsWebhookInfo",
     "get_notification_adapter",
 ]

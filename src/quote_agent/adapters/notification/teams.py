@@ -4,11 +4,13 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import TYPE_CHECKING
+from datetime import UTC, datetime
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlparse
 
 import httpx
 
+from quote_agent.adapters.notification.models import NotificationPayload, NotificationResult
 from quote_agent.api.health import ServiceHealth
 from quote_agent.exceptions import ConfigurationError
 
@@ -18,11 +20,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _HEALTH_CHECK_TIMEOUT = 5.0
+_SEND_TIMEOUT = 5.0
 _HEALTH_CACHE_TTL = 30.0
 
 
 class TeamsAdapter:
-    """Notification adapter for Microsoft Teams via incoming webhooks (health check only)."""
+    """Notification adapter for Microsoft Teams via incoming webhooks."""
 
     def __init__(self, settings: NotificationSettings) -> None:
         url = settings.teams_webhook_url
@@ -38,6 +41,70 @@ class TeamsAdapter:
         self._hostname = urlparse(url).hostname or "unknown"
         self._last_health: ServiceHealth | None = None
         self._last_health_time: float = 0.0
+
+    def _build_adaptive_card(self, payload: NotificationPayload) -> dict[str, Any]:
+        """Build a Teams Adaptive Card JSON from a NotificationPayload."""
+        card: dict[str, Any] = {
+            "type": "AdaptiveCard",
+            "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+            "version": "1.4",
+            "body": [
+                {
+                    "type": "Container",
+                    "style": "accent",
+                    "items": [
+                        {
+                            "type": "TextBlock",
+                            "text": "Q \u2014 AI Quote Agent",
+                            "weight": "Bolder",
+                            "color": "Light",
+                        },
+                    ],
+                },
+                {
+                    "type": "TextBlock",
+                    "text": datetime.now(tz=UTC).strftime("%Y-%m-%d %H:%M UTC"),
+                    "size": "Small",
+                    "isSubtle": True,
+                },
+                {
+                    "type": "TextBlock",
+                    "text": payload.message,
+                    "wrap": True,
+                },
+            ],
+        }
+        return {
+            "type": "message",
+            "attachments": [
+                {
+                    "contentType": "application/vnd.microsoft.card.adaptive",
+                    "content": card,
+                },
+            ],
+        }
+
+    async def send_notification(self, payload: NotificationPayload) -> NotificationResult:
+        """Send a notification as a Teams Adaptive Card via the configured webhook."""
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    self._webhook_url,
+                    json=self._build_adaptive_card(payload),
+                    timeout=_SEND_TIMEOUT,
+                )
+            return NotificationResult(
+                success=response.status_code < 400,
+                status_code=response.status_code,
+                timestamp=datetime.now(tz=UTC),
+            )
+        except (httpx.ConnectError, httpx.TimeoutException, httpx.InvalidURL, OSError) as exc:
+            logger.warning("Notification send failed (%s): %s", self._hostname, exc)
+            return NotificationResult(
+                success=False,
+                error=str(exc),
+                timestamp=datetime.now(tz=UTC),
+            )
 
     async def health_check(self) -> ServiceHealth:
         """Check Teams webhook reachability with 30s caching."""
