@@ -40,16 +40,16 @@ def _route_after_router(state: AgentState) -> str:
 
 
 def _route_after_compliance(state: AgentState) -> str:
-    """Decide whether to proceed to draft or skip based on review + compliance."""
+    """Decide whether to proceed to draft or notify rejection based on review + compliance."""
     review_result = state.get("self_review")
     if review_result is not None and not review_result.approved:
-        return "end"
+        return "notify_rejection"
 
     compliance_result = state.get("compliance")
     if compliance_result is not None:
         has_block = any(f.severity == "block" for f in compliance_result.flags)
         if has_block:
-            return "end"
+            return "notify_rejection"
 
     return "draft"
 
@@ -77,7 +77,12 @@ def build_agent_graph(
     from quote_agent.agent.nodes.classifier import classify_request
     from quote_agent.agent.nodes.compliance_checker import check_compliance
     from quote_agent.agent.nodes.confidence_scorer import score_confidence
-    from quote_agent.agent.nodes.notifier import notify_escalation, notify_multi_proposal, notify_quote_ready
+    from quote_agent.agent.nodes.notifier import (
+        notify_escalation,
+        notify_multi_proposal,
+        notify_quote_ready,
+        notify_rejection,
+    )
     from quote_agent.agent.nodes.reasoning_strategy import apply_reasoning_strategy
     from quote_agent.agent.nodes.router import route_by_confidence
     from quote_agent.agent.nodes.self_reviewer import self_review
@@ -279,6 +284,14 @@ def build_agent_graph(
             logger.warning("Node notify_escalation failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify_escalation"}
 
+    async def notify_rejection_node(state: AgentState) -> dict[str, Any]:
+        try:
+            adapter = get_notification_adapter()
+            return await notify_rejection(state, adapter, settings.erp, throttle, batcher)
+        except Exception as exc:
+            logger.warning("Node notify_rejection failed (non-blocking)", extra={"context": {"error": str(exc)}})
+            return {"notification_result": None, "current_node": "notify_rejection"}
+
     # -- Wire the graph ----------------------------------------------------
 
     graph: StateGraph[AgentState] = StateGraph(AgentState)
@@ -293,6 +306,7 @@ def build_agent_graph(
     graph.add_node("notify", notify_node)
     graph.add_node("notify_proposals", notify_proposals_node)
     graph.add_node("notify_escalation", notify_escalation_node)
+    graph.add_node("notify_rejection", notify_rejection_node)
 
     # Linear edges: START → classify → reason → score → route
     graph.add_edge(START, "classify")
@@ -315,11 +329,11 @@ def build_agent_graph(
     # Linear: review → compliance
     graph.add_edge("review", "compliance")
 
-    # Conditional: compliance → draft (approved + compliant) OR END
+    # Conditional: compliance → draft (approved + compliant) OR notify_rejection (rejected/blocked)
     graph.add_conditional_edges(
         "compliance",
         _route_after_compliance,
-        {"draft": "draft", "end": END},
+        {"draft": "draft", "notify_rejection": "notify_rejection"},
     )
 
     # draft → notify → END
@@ -331,6 +345,9 @@ def build_agent_graph(
 
     # notify_escalation → END (low-confidence / out-of-scope path)
     graph.add_edge("notify_escalation", END)
+
+    # notify_rejection → END (review-rejected / compliance-blocked path)
+    graph.add_edge("notify_rejection", END)
 
     return graph.compile()
 

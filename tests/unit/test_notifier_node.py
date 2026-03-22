@@ -8,7 +8,12 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from quote_agent.adapters.notification.models import NotificationResult
-from quote_agent.agent.nodes.notifier import notify_escalation, notify_multi_proposal, notify_quote_ready
+from quote_agent.agent.nodes.notifier import (
+    notify_escalation,
+    notify_multi_proposal,
+    notify_quote_ready,
+    notify_rejection,
+)
 from quote_agent.agent.state import AgentState, create_initial_state
 from quote_agent.services.extraction_models import ExtractedQuoteRequest, QuoteLineItem
 
@@ -459,3 +464,174 @@ class TestNotifyEscalationMissingRouting:
         assert result["notification_result"] is None
         assert result["current_node"] == "notify_escalation"
         assert "error" not in result
+
+
+# --- notify_rejection() Tests ---
+
+
+def _make_rejection_state(
+    *,
+    review_approved: bool = False,
+    compliance_block: bool = False,
+) -> AgentState:
+    """Build a realistic AgentState for rejection notifier tests."""
+    request = ExtractedQuoteRequest(
+        client_name="Durand",
+        client_identifier="DUR-001",
+        line_items=[QuoteLineItem(description="Tube Inox 304L", quantity=100.0)],
+        raw_text="Tube Inox 304L",
+    )
+    state = create_initial_state(request)
+
+    review = MagicMock()
+    review.approved = review_approved
+    review.failure_reasons = [] if review_approved else ["Product not in catalog"]
+    review.anomaly_flags = [] if review_approved else ["Price anomaly detected"]
+    state["self_review"] = review
+
+    compliance = MagicMock()
+    if compliance_block:
+        flag = MagicMock()
+        flag.severity = "block"
+        flag.flag_type = "export_control"
+        flag.detail = "Export controlled item"
+        flag.matched_term = "nuclear"
+        compliance.flags = [flag]
+    else:
+        compliance.flags = []
+    state["compliance"] = compliance
+
+    return state  # type: ignore[return-value]
+
+
+class TestNotifyRejectionReviewRejected:
+    """AC-1, AC-3 (5.5.1): Notification sent when self-review rejects a quote."""
+
+    @pytest.mark.asyncio
+    async def test_sends_escalation_card_for_review_rejection(self) -> None:
+        """AC-1, AC-3: notify_rejection sends escalation card with review rejection context."""
+        state = _make_rejection_state(review_approved=False, compliance_block=False)
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        result = await notify_rejection(state, adapter, _make_erp_settings())
+
+        adapter.send_notification.assert_called_once()
+        payload = adapter.send_notification.call_args[0][0]
+        assert payload.card_type == "escalation"
+        assert payload.title == "Escalade — Rejet auto-review"
+        assert "Durand" in payload.message
+        assert "auto-vérification" in payload.message
+        assert payload.data["client"] == "Durand"
+        assert "Product not in catalog" in payload.data["uncertain"]
+        assert payload.data["confidence_pct"] == "0"
+        assert "sale.order" in payload.data["erp_url"]
+        assert result["current_node"] == "notify_rejection"
+        assert result["notification_result"] is not None
+
+
+class TestNotifyRejectionComplianceBlocked:
+    """AC-2, AC-3 (5.5.1): Notification sent when compliance blocks a quote."""
+
+    @pytest.mark.asyncio
+    async def test_sends_escalation_card_for_compliance_block(self) -> None:
+        """AC-2, AC-3: notify_rejection sends escalation card with compliance block context."""
+        state = _make_rejection_state(review_approved=True, compliance_block=True)
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        result = await notify_rejection(state, adapter, _make_erp_settings())
+
+        adapter.send_notification.assert_called_once()
+        payload = adapter.send_notification.call_args[0][0]
+        assert payload.card_type == "escalation"
+        assert payload.title == "Escalade — Blocage conformité"
+        assert "conformité" in payload.message
+        assert "Export controlled item" in payload.data["uncertain"]
+        assert payload.data["confidence_pct"] == "0"
+        assert result["current_node"] == "notify_rejection"
+
+
+class TestNotifyRejectionDispatchIntegration:
+    """AC-4 (5.5.1): Notification dispatched through throttle+batcher when available."""
+
+    @pytest.mark.asyncio
+    async def test_dispatches_through_throttle_batcher(self) -> None:
+        """AC-4: notify_rejection uses dispatch_quote_notification when throttle+batcher provided."""
+        from unittest.mock import patch
+
+        state = _make_rejection_state()
+        adapter = AsyncMock()
+        throttle = MagicMock()
+        batcher = MagicMock()
+
+        mock_dispatch_result = {"notification_result": NotificationResult(
+            success=True, status_code=200, timestamp=datetime.now(tz=UTC)
+        )}
+
+        with patch(
+            "quote_agent.services.notification_dispatcher.dispatch_quote_notification",
+            new_callable=AsyncMock,
+            return_value=mock_dispatch_result,
+        ) as mock_dispatch:
+            result = await notify_rejection(
+                state, adapter, _make_erp_settings(), throttle=throttle, batcher=batcher
+            )
+
+        mock_dispatch.assert_called_once()
+        adapter.send_notification.assert_not_called()
+        assert result["notification_result"] is not None
+
+    @pytest.mark.asyncio
+    async def test_direct_send_without_throttle_batcher(self) -> None:
+        """AC-4: notify_rejection sends directly when no throttle/batcher."""
+        state = _make_rejection_state()
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        result = await notify_rejection(state, adapter, _make_erp_settings())
+
+        adapter.send_notification.assert_called_once()
+        assert result["notification_result"] is not None
+
+
+class TestNotifyRejectionFireAndForget:
+    """AC-4 (5.5.1): Notification failure must not block the pipeline."""
+
+    @pytest.mark.asyncio
+    async def test_adapter_exception_does_not_propagate(self) -> None:
+        """AC-4: Exception from adapter is caught, not propagated."""
+        state = _make_rejection_state()
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(side_effect=RuntimeError("Network error"))
+
+        result = await notify_rejection(state, adapter, _make_erp_settings())
+
+        assert "error" not in result
+        assert result["notification_result"] is None
+        assert result["current_node"] == "notify_rejection"
+
+
+class TestNotifyRejectionCompliancePrecedence:
+    """AC-3 (5.5.1): Compliance block takes precedence when both review and compliance fail."""
+
+    @pytest.mark.asyncio
+    async def test_compliance_block_takes_precedence_over_review_rejection(self) -> None:
+        """AC-3: When both self_review rejected and compliance blocked, compliance message shown."""
+        state = _make_rejection_state(review_approved=False, compliance_block=True)
+        adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(
+            return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        )
+
+        await notify_rejection(state, adapter, _make_erp_settings())
+
+        payload = adapter.send_notification.call_args[0][0]
+        assert payload.title == "Escalade — Blocage conformité"
+        assert "conformité" in payload.message

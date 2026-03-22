@@ -213,3 +213,93 @@ async def notify_escalation(
             logger.warning("Notification send raised an exception", exc_info=True)
 
     return {"notification_result": result, "current_node": "notify_escalation"}
+
+
+async def notify_rejection(
+    state: AgentState,
+    notification_adapter: NotificationAdapter,
+    erp_settings: ERPSettings,
+    throttle: NotificationThrottle | None = None,
+    batcher: NotificationBatcher | None = None,
+) -> dict[str, object]:
+    """Send an escalation notification when self-review rejects or compliance blocks a quote.
+
+    This node is fire-and-forget: notification failures are logged but never
+    propagate as pipeline errors.
+    """
+    raw_request = state["raw_request"]
+    client_name = raw_request.client_name or "?"
+
+    # Determine rejection source — compliance block takes precedence
+    compliance_result = state.get("compliance")
+    review_result = state.get("self_review")
+
+    has_compliance_block = (
+        compliance_result is not None
+        and any(f.severity == "block" for f in compliance_result.flags)
+    )
+
+    if has_compliance_block:
+        title = "Escalade — Blocage conformité"
+        blocked_flags = [f for f in compliance_result.flags if f.severity == "block"]  # type: ignore[union-attr]
+        uncertain = "; ".join(f.detail for f in blocked_flags)
+        message = (
+            f"J'ai reçu une demande de {client_name} mais le contrôle de conformité a détecté un blocage."
+        )
+    else:
+        title = "Escalade — Rejet auto-review"
+        failure_reasons = review_result.failure_reasons if review_result else []
+        anomaly_flags = review_result.anomaly_flags if review_result else []
+        all_reasons = failure_reasons + anomaly_flags
+        uncertain = "; ".join(all_reasons) if all_reasons else "Raison inconnue"
+        message = (
+            f"J'ai reçu une demande de {client_name} mais mon auto-vérification a trouvé des problèmes."
+        )
+
+    # Build understood from raw_request
+    items_summary = ", ".join(
+        f"{item.description} (x{item.quantity})" if item.quantity else item.description
+        for item in raw_request.line_items
+    ) if raw_request.line_items else "Aucun article identifié"
+    understood = f"Client: {client_name} — {items_summary}"
+
+    erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+
+    payload = NotificationPayload(
+        title=title,
+        message=message,
+        card_type="escalation",
+        data={
+            "client": client_name,
+            "understood": understood,
+            "uncertain": uncertain,
+            "suggested_next_steps": [
+                "Vérifier la demande originale",
+                "Créer le devis manuellement si pertinent",
+                "Contacter le client pour clarifier",
+            ],
+            "confidence_pct": "0",
+            "erp_url": erp_url,
+        },
+    )
+
+    result: NotificationResult | None = None
+    if throttle is not None and batcher is not None:
+        from quote_agent.services.notification_dispatcher import dispatch_quote_notification
+
+        dispatch_result = await dispatch_quote_notification(
+            payload=payload, adapter=notification_adapter, throttle=throttle, batcher=batcher
+        )
+        result = dispatch_result.get("notification_result")  # type: ignore[assignment]
+    else:
+        try:
+            result = await notification_adapter.send_notification(payload)
+            if not result.success:
+                logger.warning(
+                    "Notification send returned failure",
+                    extra={"context": {"error": result.error, "status_code": result.status_code}},
+                )
+        except Exception:
+            logger.warning("Notification send raised an exception", exc_info=True)
+
+    return {"notification_result": result, "current_node": "notify_rejection"}

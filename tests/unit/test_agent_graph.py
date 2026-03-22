@@ -187,21 +187,21 @@ class TestRouteAfterCompliance:
         )
         assert _route_after_compliance(state) == "draft"
 
-    def test_rejected_review_routes_to_end(self) -> None:
-        """AC-3: Rejected review → end (skip draft)."""
+    def test_rejected_review_routes_to_notify_rejection(self) -> None:
+        """AC-1 (5.5.1): Rejected review → notify_rejection (not end)."""
         state: AgentState = AgentState(  # type: ignore[typeddict-item]
             self_review=_mock_review(approved=False),
             compliance=_mock_compliance(compliant=True),
         )
-        assert _route_after_compliance(state) == "end"
+        assert _route_after_compliance(state) == "notify_rejection"
 
-    def test_compliance_block_routes_to_end(self) -> None:
-        """AC-3: Compliance block → end (skip draft)."""
+    def test_compliance_block_routes_to_notify_rejection(self) -> None:
+        """AC-2 (5.5.1): Compliance block → notify_rejection (not end)."""
         state: AgentState = AgentState(  # type: ignore[typeddict-item]
             self_review=_mock_review(approved=True),
             compliance=_mock_compliance(compliant=False, has_block=True),
         )
-        assert _route_after_compliance(state) == "end"
+        assert _route_after_compliance(state) == "notify_rejection"
 
     def test_none_review_routes_to_draft(self) -> None:
         """Edge case: missing review defaults to continuing."""
@@ -264,6 +264,15 @@ class TestGraphCompilation:
         )
         node_names = list(graph.get_graph().nodes.keys())
         assert "notify_escalation" in node_names
+
+    def test_notify_rejection_node_is_wired(self) -> None:
+        """AC-1 (5.5.1): notify_rejection node exists in the graph."""
+        graph = build_agent_graph(
+            MagicMock(), _make_session_factory(), MagicMock(),
+            _make_settings_mock(),
+        )
+        node_names = list(graph.get_graph().nodes.keys())
+        assert "notify_rejection" in node_names
 
 
 # ---------------------------------------------------------------------------
@@ -447,10 +456,18 @@ class TestGraphExecution:
         mock_adapter.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_review_rejection_skips_draft(self) -> None:
-        """AC-3: Self-review rejected → END (no draft)."""
+    async def test_review_rejection_sends_notification(self) -> None:
+        """AC-1 (5.5.1): Self-review rejected → notify_rejection → END (no draft, notification sent)."""
+        from datetime import UTC, datetime
+
+        from quote_agent.adapters.notification.models import NotificationResult
+
         request = _make_request()
         state = create_initial_state(request)
+
+        mock_notif_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        mock_adapter = AsyncMock()
+        mock_adapter.send_notification = AsyncMock(return_value=mock_notif_result)
 
         with (
             patch(_CLASSIFY, new_callable=AsyncMock, return_value=_mock_classification()),
@@ -459,6 +476,7 @@ class TestGraphExecution:
             patch(_ROUTE, return_value=_mock_routing("proceed_to_draft")),
             patch(_REVIEW, new_callable=AsyncMock, return_value=_mock_review(approved=False)),
             patch(_COMPLIANCE, new_callable=AsyncMock, return_value=_mock_compliance(compliant=True)),
+            patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
@@ -469,12 +487,25 @@ class TestGraphExecution:
         assert result["self_review"].approved is False
         assert result.get("draft_result") is None
         assert result["final_action"] == "review_rejected"
+        assert result["notification_result"] is not None
+        assert result["current_node"] == "notify_rejection"
+        mock_adapter.send_notification.assert_called_once()
+        payload = mock_adapter.send_notification.call_args[0][0]
+        assert payload.card_type == "escalation"
 
     @pytest.mark.asyncio
-    async def test_compliance_block_skips_draft(self) -> None:
-        """AC-3: Compliance block → END (no draft)."""
+    async def test_compliance_block_sends_notification(self) -> None:
+        """AC-2 (5.5.1): Compliance block → notify_rejection → END (no draft, notification sent)."""
+        from datetime import UTC, datetime
+
+        from quote_agent.adapters.notification.models import NotificationResult
+
         request = _make_request()
         state = create_initial_state(request)
+
+        mock_notif_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        mock_adapter = AsyncMock()
+        mock_adapter.send_notification = AsyncMock(return_value=mock_notif_result)
 
         with (
             patch(_CLASSIFY, new_callable=AsyncMock, return_value=_mock_classification()),
@@ -483,6 +514,7 @@ class TestGraphExecution:
             patch(_ROUTE, return_value=_mock_routing("proceed_to_draft")),
             patch(_REVIEW, new_callable=AsyncMock, return_value=_mock_review(approved=True)),
             patch(_COMPLIANCE, new_callable=AsyncMock, return_value=_mock_compliance(compliant=False, has_block=True)),
+            patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
@@ -492,6 +524,11 @@ class TestGraphExecution:
 
         assert result.get("draft_result") is None
         assert result["final_action"] == "compliance_blocked"
+        assert result["notification_result"] is not None
+        assert result["current_node"] == "notify_rejection"
+        mock_adapter.send_notification.assert_called_once()
+        payload = mock_adapter.send_notification.call_args[0][0]
+        assert payload.card_type == "escalation"
 
 
 # ---------------------------------------------------------------------------
