@@ -62,16 +62,18 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     from quote_agent.services.notification_scheduler import NotificationScheduler
 
     notification_adapter = get_notification_adapter()
-    scheduler = NotificationScheduler(
+    _sched = NotificationScheduler(
         schedule_settings=settings.notification_schedule,
         session_factory=session_factory,
         adapter=notification_adapter,
         erp_settings=settings.erp,
     )
 
-    if scheduler.should_run():
-        scheduler.start()
-        app.state.notification_scheduler = scheduler
+    scheduler: NotificationScheduler | None
+    if _sched.should_run():
+        _sched.start()
+        app.state.notification_scheduler = _sched
+        scheduler = _sched
         logger.info("Notification scheduler started")
     else:
         scheduler = None

@@ -7,7 +7,6 @@ import os
 import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
-from unittest.mock import patch
 
 import pytest
 from sqlalchemy import delete
@@ -154,7 +153,9 @@ class TestSearchCacheE2E:
             await session.execute(delete(Product).where(Product.id.in_(product_ids)))
             await session.commit()
 
-    async def test_cache_disabled_no_interaction_e2e(self, e2e_db_session: AsyncSession) -> None:
+    async def test_cache_disabled_no_interaction_e2e(
+        self, e2e_db_session: AsyncSession, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
         """AC-7: With enabled=False, from_cache is always False."""
         session = e2e_db_session
 
@@ -171,16 +172,13 @@ class TestSearchCacheE2E:
             service = EmbeddingService(adapter, session)
             await service.embed_all()
 
-            # Create engine with cache disabled
-            with patch("quote_agent.search.engine.get_settings") as mock_settings:
-                from quote_agent.config import get_settings
+            # Disable cache via real env var — no mock needed
+            monkeypatch.setenv("SEARCH_CACHE__ENABLED", "false")
+            from quote_agent.config import get_settings
 
-                real_settings = get_settings()
-                mock_s = real_settings.model_copy(
-                    update={"search_cache": real_settings.search_cache.model_copy(update={"enabled": False})}
-                )
-                mock_settings.return_value = mock_s
-                engine = SearchEngine(session, adapter)
+            get_settings.cache_clear()
+
+            engine = SearchEngine(session, adapter)
 
             request = SearchRequest(query="tubes inox 304L")
 

@@ -32,7 +32,7 @@ class SentenceTransformerAdapter:
     def _get_model(self) -> Any:
         """Lazy-load the SentenceTransformer model."""
         if self._model is None:
-            from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
+            from sentence_transformers import SentenceTransformer
 
             logger.info(
                 "Loading embedding model",

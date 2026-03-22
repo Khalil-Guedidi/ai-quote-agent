@@ -20,7 +20,7 @@ Derived from Epics 1-3 implementation and retrospectives.
 - **DB naming**: `snake_case` plural tables, `{singular}_id` FKs, prefix conventions: `ix_/uq_/ck_/fk_/pk_`
 - **Test naming**: `test_{behavior}_when_{condition}()` or `test_{behavior}_e2e()`
 - **Severity comparison**: never use `max()` or lexicographic comparison on severity strings — use explicit conditional chains
-- **Cache clearing**: clear ALL `@lru_cache` singletons between E2E tests (6 functions, including `get_embedding_adapter`)
+- **Cache clearing**: clear ALL `@lru_cache` singletons between E2E tests (7 functions: get_settings, create_async_engine_from_settings, _get_session_factory, get_llm_adapter, get_email_adapter, get_erp_adapter, get_embedding_adapter)
 - **Health checks**: 30s TTL caching with `time.monotonic()`, `asyncio.wait_for(..., timeout=5.0)`
 
 ---
@@ -501,7 +501,7 @@ addopts = "-m 'not e2e'"
 - `asyncio_mode = "auto"`: no need for `@pytest.mark.asyncio` decorator
 - E2E tests excluded by default; run with `pytest -m e2e`
 - E2E tests require real `DATABASE__URL` and `LLM__API_KEY` environment variables; search E2E tests also require a loaded BGE-M3 model
-- **Test count**: 353 (188 after Epic 2, 363 after Epic 3, 353 after Story 4.0c — 24 jargon tests removed)
+- **Test count**: 775 unit (774 passed, 1 pre-existing failure in test_config.py) + 22 E2E (all passing). E2E: 22/22 pass against real services (PostgreSQL+pgvector, LLM, Odoo), verified Story 5.5.2.
 - `@requires_e2e` skip decorator checks service availability
 
 ### E2E Test Requirements

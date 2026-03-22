@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import logging
 from typing import TYPE_CHECKING
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from sqlalchemy import select
 
+from quote_agent.api.health import ServiceHealth
+from quote_agent.exceptions import EmailConnectionError
 from quote_agent.models.base import _get_session_factory
 from quote_agent.models.email_request import EmailRequest
 from quote_agent.models.quote_request import QuoteRequest
@@ -25,7 +26,39 @@ from tests.e2e.fixtures.emails import (
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
+    from quote_agent.adapters.email.models import IncomingEmail
     from quote_agent.services.extraction_models import ExtractionResult
+
+
+# ---------------------------------------------------------------------------
+# Stub adapters — no unittest.mock, satisfies EmailPollerService constructor
+# ---------------------------------------------------------------------------
+
+
+class _NoOpEmailAdapter:
+    """Stub adapter for tests that call _persist_emails directly (adapter never exercised)."""
+
+    async def health_check(self) -> ServiceHealth:
+        return ServiceHealth(status="healthy")
+
+    async def fetch_new_emails(self) -> list[IncomingEmail]:
+        return []
+
+    async def mark_emails_seen(self, message_ids: list[str]) -> None:
+        pass
+
+
+class _FailingEmailAdapter:
+    """Stub adapter that raises on every fetch — for circuit breaker testing."""
+
+    async def health_check(self) -> ServiceHealth:
+        return ServiceHealth(status="unhealthy", error="stub failure")
+
+    async def fetch_new_emails(self) -> list[IncomingEmail]:
+        raise EmailConnectionError("Connection refused: localhost:19999")
+
+    async def mark_emails_seen(self, message_ids: list[str]) -> None:
+        pass
 
 
 # ---------------------------------------------------------------------------
@@ -43,12 +76,10 @@ class TestPipelineHappyPath:
         email = simple_french_quote()
         factory = _get_session_factory()
 
-        # Build a minimal adapter mock — we're testing persist, not IMAP fetch
-        adapter = MagicMock()
-        adapter.fetch_new_emails = AsyncMock(return_value=[])
-        adapter.mark_emails_seen = AsyncMock()
+        # Stub adapter — _persist_emails never calls the adapter
+        adapter = _NoOpEmailAdapter()
 
-        poller = EmailPollerService(adapter=adapter, session_factory=factory)
+        poller = EmailPollerService(adapter=adapter, session_factory=factory)  # type: ignore[arg-type]
         persisted = await poller._persist_emails([email])
 
         assert persisted == 1
@@ -143,12 +174,10 @@ class TestPromptInjectionResilience:
         email = injection_attempt_quote()
         factory = _get_session_factory()
 
-        adapter = MagicMock()
-        adapter.fetch_new_emails = AsyncMock(return_value=[])
-        adapter.mark_emails_seen = AsyncMock()
+        adapter = _NoOpEmailAdapter()
 
         with caplog.at_level(logging.WARNING):
-            poller = EmailPollerService(adapter=adapter, session_factory=factory)
+            poller = EmailPollerService(adapter=adapter, session_factory=factory)  # type: ignore[arg-type]
             persisted = await poller._persist_emails([email])
 
         assert persisted == 1
@@ -186,16 +215,10 @@ class TestCircuitBreaker:
 
     async def test_poller_circuit_breaker_on_imap_failure(self, caplog: pytest.LogCaptureFixture) -> None:
         """AC-3: Circuit breaker activates after consecutive IMAP failures."""
-        from quote_agent.exceptions import EmailConnectionError
+        failing_adapter = _FailingEmailAdapter()
 
-        # Adapter that always fails
-        failing_adapter = MagicMock()
-        failing_adapter.fetch_new_emails = AsyncMock(
-            side_effect=EmailConnectionError("Connection refused: localhost:19999")
-        )
-
-        factory = MagicMock()
-        poller = EmailPollerService(adapter=failing_adapter, session_factory=factory, poll_interval=0)
+        factory = _get_session_factory()
+        poller = EmailPollerService(adapter=failing_adapter, session_factory=factory, poll_interval=0)  # type: ignore[arg-type]
 
         # Simulate consecutive failures by calling run() briefly
         import asyncio
@@ -236,12 +259,10 @@ class TestStructuredLogging:
         email = simple_french_quote()
         factory = _get_session_factory()
 
-        adapter = MagicMock()
-        adapter.fetch_new_emails = AsyncMock(return_value=[])
-        adapter.mark_emails_seen = AsyncMock()
+        adapter = _NoOpEmailAdapter()
 
         with caplog.at_level(logging.INFO):
-            poller = EmailPollerService(adapter=adapter, session_factory=factory)
+            poller = EmailPollerService(adapter=adapter, session_factory=factory)  # type: ignore[arg-type]
             await poller._persist_emails([email])
 
         # Collect all log records
