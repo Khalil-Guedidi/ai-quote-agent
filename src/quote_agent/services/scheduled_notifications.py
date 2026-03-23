@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
     from quote_agent.adapters.notification.protocol import NotificationAdapter
-    from quote_agent.config import ConfidenceScoringSettings, ERPSettings
+    from quote_agent.config import ConfidenceScoringSettings
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,6 @@ logger = logging.getLogger(__name__)
 async def send_batch_summary(
     session: AsyncSession,
     adapter: NotificationAdapter,
-    erp_settings: ERPSettings,
     confidence_settings: ConfidenceScoringSettings | None = None,
 ) -> NotificationResult | None:
     """Send the daily batch summary notification.
@@ -43,7 +42,10 @@ async def send_batch_summary(
             logger.info("No quotes processed today — skipping batch summary notification")
             return None
 
-        erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+        from quote_agent.config import get_settings
+
+        base_url = get_settings().app.base_url
+        erp_url = f"{base_url}/erp/sale-orders"
         message = (
             f"Bonjour ! J'ai traité {summary.total} devis. "
             f"{summary.high_count} prêts, "
@@ -74,7 +76,6 @@ async def send_batch_summary(
 async def send_weekly_report(
     session: AsyncSession,
     adapter: NotificationAdapter,
-    erp_settings: ERPSettings,
 ) -> NotificationResult | None:
     """Send the weekly manager report notification.
 
@@ -88,7 +89,10 @@ async def send_weekly_report(
             logger.info("No quotes processed this week — skipping weekly report notification")
             return None
 
-        erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+        from quote_agent.config import get_settings
+
+        base_url = get_settings().app.base_url
+        erp_url = f"{base_url}/erp/sale-orders"
         message = (
             f"Voici le récap de la semaine. "
             f"{report.total} devis traités, confiance moyenne {report.avg_confidence}%"

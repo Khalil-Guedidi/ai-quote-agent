@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from quote_agent.adapters.notification.models import NotificationResult
     from quote_agent.adapters.notification.protocol import NotificationAdapter
     from quote_agent.agent.state import AgentState
-    from quote_agent.config import ERPSettings
     from quote_agent.services.notification_throttle import NotificationBatcher, NotificationThrottle
 
 logger = logging.getLogger(__name__)
@@ -20,7 +19,6 @@ logger = logging.getLogger(__name__)
 async def notify_quote_ready(
     state: AgentState,
     notification_adapter: NotificationAdapter,
-    erp_settings: ERPSettings,
     throttle: NotificationThrottle | None = None,
     batcher: NotificationBatcher | None = None,
 ) -> dict[str, object]:
@@ -43,7 +41,10 @@ async def notify_quote_ready(
     product_name = first_item.description if first_item else "?"
     quantity = str(first_item.quantity) if first_item and first_item.quantity else "?"
 
-    erp_url = f"{erp_settings.url}/web#id={draft_result.odoo_id}&model=sale.order&view_type=form"
+    from quote_agent.config import get_settings
+
+    base_url = get_settings().app.base_url
+    erp_url = f"{base_url}/erp/sale-order/{draft_result.odoo_id}"
 
     payload = NotificationPayload(
         title="Devis prêt",
@@ -83,7 +84,6 @@ async def notify_quote_ready(
 async def notify_multi_proposal(
     state: AgentState,
     notification_adapter: NotificationAdapter,
-    erp_settings: ERPSettings,
     throttle: NotificationThrottle | None = None,
     batcher: NotificationBatcher | None = None,
 ) -> dict[str, object]:
@@ -101,7 +101,10 @@ async def notify_multi_proposal(
     client_name = raw_request.client_name or "?"
     proposals = routing_decision.proposals
 
-    erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+    from quote_agent.config import get_settings
+
+    base_url = get_settings().app.base_url
+    erp_url = f"{base_url}/erp/sale-orders"
 
     payload = NotificationPayload(
         title="Propositions",
@@ -147,7 +150,6 @@ async def notify_multi_proposal(
 async def notify_escalation(
     state: AgentState,
     notification_adapter: NotificationAdapter,
-    erp_settings: ERPSettings,
     throttle: NotificationThrottle | None = None,
     batcher: NotificationBatcher | None = None,
 ) -> dict[str, object]:
@@ -177,7 +179,10 @@ async def notify_escalation(
         steps = ["Traiter la demande manuellement", "Vérifier si le client a besoin d'un autre service"]
 
     confidence_pct = str(round(routing_decision.confidence * 100))
-    erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+    from quote_agent.config import get_settings
+
+    base_url = get_settings().app.base_url
+    erp_url = f"{base_url}/erp/sale-orders"
 
     payload = NotificationPayload(
         title="Escalade",
@@ -218,7 +223,6 @@ async def notify_escalation(
 async def notify_rejection(
     state: AgentState,
     notification_adapter: NotificationAdapter,
-    erp_settings: ERPSettings,
     throttle: NotificationThrottle | None = None,
     batcher: NotificationBatcher | None = None,
 ) -> dict[str, object]:
@@ -263,7 +267,10 @@ async def notify_rejection(
     ) if raw_request.line_items else "Aucun article identifié"
     understood = f"Client: {client_name} — {items_summary}"
 
-    erp_url = f"{erp_settings.url}/web#model=sale.order&view_type=list"
+    from quote_agent.config import get_settings
+
+    base_url = get_settings().app.base_url
+    erp_url = f"{base_url}/erp/sale-orders"
 
     payload = NotificationPayload(
         title=title,

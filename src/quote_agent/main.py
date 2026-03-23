@@ -66,7 +66,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         schedule_settings=settings.notification_schedule,
         session_factory=session_factory,
         adapter=notification_adapter,
-        erp_settings=settings.erp,
     )
 
     scheduler: NotificationScheduler | None
@@ -110,8 +109,11 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    from quote_agent.api.erp_redirect import router as erp_redirect_router
+
     application.include_router(health_router)
     application.include_router(v1_router)
+    application.include_router(erp_redirect_router)
 
     @application.exception_handler(QuoteAgentError)
     async def handle_quote_agent_error(request: Request, exc: QuoteAgentError) -> JSONResponse:

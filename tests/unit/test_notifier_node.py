@@ -45,12 +45,6 @@ def _make_state(
     return state  # type: ignore[return-value]
 
 
-def _make_erp_settings(url: str = "https://odoo.example.com") -> MagicMock:
-    settings = MagicMock()
-    settings.url = url
-    return settings
-
-
 class TestNotifyQuoteReadySuccess:
     """AC-1, AC-4: Notification sent successfully after draft creation."""
 
@@ -63,7 +57,7 @@ class TestNotifyQuoteReadySuccess:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_quote_ready(state, adapter, _make_erp_settings())
+        await notify_quote_ready(state, adapter)
 
         adapter.send_notification.assert_called_once()
         payload = adapter.send_notification.call_args[0][0]
@@ -72,8 +66,8 @@ class TestNotifyQuoteReadySuccess:
         assert payload.data["product"] == "Tube Inox 304L"
         assert payload.data["quantity"] == "100.0"
         assert payload.data["confidence_pct"] == "92"
-        assert "id=42" in payload.data["erp_url"]
-        assert "sale.order" in payload.data["erp_url"]
+        assert "/erp/sale-order/42" in payload.data["erp_url"]
+        assert "/erp/sale-order" in payload.data["erp_url"] or payload.data["erp_url"].endswith("/erp/sale-orders")
 
     @pytest.mark.asyncio
     async def test_returns_notification_result_in_state(self) -> None:
@@ -83,7 +77,7 @@ class TestNotifyQuoteReadySuccess:
         adapter = AsyncMock()
         adapter.send_notification = AsyncMock(return_value=expected_result)
 
-        result = await notify_quote_ready(state, adapter, _make_erp_settings())
+        result = await notify_quote_ready(state, adapter)
 
         assert result["notification_result"] is expected_result
         assert result["current_node"] == "notify"
@@ -103,7 +97,7 @@ class TestNotifyQuoteReadyFailure:
             )
         )
 
-        result = await notify_quote_ready(state, adapter, _make_erp_settings())
+        result = await notify_quote_ready(state, adapter)
 
         assert "error" not in result
         assert result["notification_result"] is not None
@@ -117,7 +111,7 @@ class TestNotifyQuoteReadyFailure:
         adapter = AsyncMock()
         adapter.send_notification = AsyncMock(side_effect=RuntimeError("Network error"))
 
-        result = await notify_quote_ready(state, adapter, _make_erp_settings())
+        result = await notify_quote_ready(state, adapter)
 
         assert "error" not in result
         assert result["notification_result"] is None
@@ -133,7 +127,7 @@ class TestNotifyQuoteReadyMissingDraft:
         state = _make_state(with_draft=False)
         adapter = AsyncMock()
 
-        result = await notify_quote_ready(state, adapter, _make_erp_settings())
+        result = await notify_quote_ready(state, adapter)
 
         adapter.send_notification.assert_not_called()
         assert result["notification_result"] is None
@@ -188,7 +182,7 @@ class TestNotifyMultiProposalSuccess:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_multi_proposal(state, adapter, _make_erp_settings())
+        await notify_multi_proposal(state, adapter)
 
         adapter.send_notification.assert_called_once()
         payload = adapter.send_notification.call_args[0][0]
@@ -197,8 +191,8 @@ class TestNotifyMultiProposalSuccess:
         assert len(payload.data["proposals"]) == 3
         assert payload.data["proposals"][0]["name"] == "Product 1"
         assert payload.data["proposals"][0]["confidence_pct"] == "78"
-        assert "sale.order" in payload.data["erp_url"]
-        assert "view_type=list" in payload.data["erp_url"]
+        assert "/erp/sale-order" in payload.data["erp_url"] or payload.data["erp_url"].endswith("/erp/sale-orders")
+        assert payload.data["erp_url"].endswith("/erp/sale-orders")
 
     @pytest.mark.asyncio
     async def test_returns_notification_result_in_state(self) -> None:
@@ -208,7 +202,7 @@ class TestNotifyMultiProposalSuccess:
         adapter = AsyncMock()
         adapter.send_notification = AsyncMock(return_value=expected_result)
 
-        result = await notify_multi_proposal(state, adapter, _make_erp_settings())
+        result = await notify_multi_proposal(state, adapter)
 
         assert result["notification_result"] is expected_result
         assert result["current_node"] == "notify_proposals"
@@ -222,7 +216,7 @@ class TestNotifyMultiProposalSuccess:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_multi_proposal(state, adapter, _make_erp_settings())
+        await notify_multi_proposal(state, adapter)
 
         payload = adapter.send_notification.call_args[0][0]
         assert "2 options" in payload.message
@@ -242,7 +236,7 @@ class TestNotifyMultiProposalFailure:
             )
         )
 
-        result = await notify_multi_proposal(state, adapter, _make_erp_settings())
+        result = await notify_multi_proposal(state, adapter)
 
         assert "error" not in result
         assert result["notification_result"] is not None
@@ -256,7 +250,7 @@ class TestNotifyMultiProposalFailure:
         adapter = AsyncMock()
         adapter.send_notification = AsyncMock(side_effect=RuntimeError("Network error"))
 
-        result = await notify_multi_proposal(state, adapter, _make_erp_settings())
+        result = await notify_multi_proposal(state, adapter)
 
         assert "error" not in result
         assert result["notification_result"] is None
@@ -272,7 +266,7 @@ class TestNotifyMultiProposalMissingRouting:
         state = _make_proposal_state(with_routing=False)
         adapter = AsyncMock()
 
-        result = await notify_multi_proposal(state, adapter, _make_erp_settings())
+        result = await notify_multi_proposal(state, adapter)
 
         adapter.send_notification.assert_not_called()
         assert result["notification_result"] is None
@@ -337,7 +331,7 @@ class TestNotifyEscalationSuccess:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_escalation(state, adapter, _make_erp_settings())
+        await notify_escalation(state, adapter)
 
         adapter.send_notification.assert_called_once()
         payload = adapter.send_notification.call_args[0][0]
@@ -347,8 +341,8 @@ class TestNotifyEscalationSuccess:
         assert payload.data["uncertain"] == "Spécifications exactes non fournies"
         assert len(payload.data["suggested_next_steps"]) == 2
         assert payload.data["confidence_pct"] == "28"
-        assert "sale.order" in payload.data["erp_url"]
-        assert "view_type=list" in payload.data["erp_url"]
+        assert "/erp/sale-order" in payload.data["erp_url"] or payload.data["erp_url"].endswith("/erp/sale-orders")
+        assert payload.data["erp_url"].endswith("/erp/sale-orders")
 
     @pytest.mark.asyncio
     async def test_returns_notification_result_in_state(self) -> None:
@@ -358,7 +352,7 @@ class TestNotifyEscalationSuccess:
         adapter = AsyncMock()
         adapter.send_notification = AsyncMock(return_value=expected_result)
 
-        result = await notify_escalation(state, adapter, _make_erp_settings())
+        result = await notify_escalation(state, adapter)
 
         assert result["notification_result"] is expected_result
         assert result["current_node"] == "notify_escalation"
@@ -372,7 +366,7 @@ class TestNotifyEscalationSuccess:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_escalation(state, adapter, _make_erp_settings())
+        await notify_escalation(state, adapter)
 
         payload = adapter.send_notification.call_args[0][0]
         assert "Durand" in payload.message
@@ -391,7 +385,7 @@ class TestNotifyEscalationOutOfScope:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_escalation(state, adapter, _make_erp_settings())
+        await notify_escalation(state, adapter)
 
         payload = adapter.send_notification.call_args[0][0]
         assert "Demande complexe" in payload.data["understood"]
@@ -408,7 +402,7 @@ class TestNotifyEscalationOutOfScope:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_escalation(state, adapter, _make_erp_settings())
+        await notify_escalation(state, adapter)
 
         payload = adapter.send_notification.call_args[0][0]
         assert payload.data["understood"] == "Demande classée hors périmètre"
@@ -428,7 +422,7 @@ class TestNotifyEscalationFailure:
             )
         )
 
-        result = await notify_escalation(state, adapter, _make_erp_settings())
+        result = await notify_escalation(state, adapter)
 
         assert "error" not in result
         assert result["notification_result"] is not None
@@ -442,7 +436,7 @@ class TestNotifyEscalationFailure:
         adapter = AsyncMock()
         adapter.send_notification = AsyncMock(side_effect=RuntimeError("Network error"))
 
-        result = await notify_escalation(state, adapter, _make_erp_settings())
+        result = await notify_escalation(state, adapter)
 
         assert "error" not in result
         assert result["notification_result"] is None
@@ -458,7 +452,7 @@ class TestNotifyEscalationMissingRouting:
         state = _make_escalation_state(with_routing=False)
         adapter = AsyncMock()
 
-        result = await notify_escalation(state, adapter, _make_erp_settings())
+        result = await notify_escalation(state, adapter)
 
         adapter.send_notification.assert_not_called()
         assert result["notification_result"] is None
@@ -516,7 +510,7 @@ class TestNotifyRejectionReviewRejected:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        result = await notify_rejection(state, adapter, _make_erp_settings())
+        result = await notify_rejection(state, adapter)
 
         adapter.send_notification.assert_called_once()
         payload = adapter.send_notification.call_args[0][0]
@@ -527,7 +521,7 @@ class TestNotifyRejectionReviewRejected:
         assert payload.data["client"] == "Durand"
         assert "Product not in catalog" in payload.data["uncertain"]
         assert payload.data["confidence_pct"] == "0"
-        assert "sale.order" in payload.data["erp_url"]
+        assert "/erp/sale-order" in payload.data["erp_url"] or payload.data["erp_url"].endswith("/erp/sale-orders")
         assert result["current_node"] == "notify_rejection"
         assert result["notification_result"] is not None
 
@@ -544,7 +538,7 @@ class TestNotifyRejectionComplianceBlocked:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        result = await notify_rejection(state, adapter, _make_erp_settings())
+        result = await notify_rejection(state, adapter)
 
         adapter.send_notification.assert_called_once()
         payload = adapter.send_notification.call_args[0][0]
@@ -579,7 +573,7 @@ class TestNotifyRejectionDispatchIntegration:
             return_value=mock_dispatch_result,
         ) as mock_dispatch:
             result = await notify_rejection(
-                state, adapter, _make_erp_settings(), throttle=throttle, batcher=batcher
+                state, adapter, throttle=throttle, batcher=batcher
             )
 
         mock_dispatch.assert_called_once()
@@ -595,7 +589,7 @@ class TestNotifyRejectionDispatchIntegration:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        result = await notify_rejection(state, adapter, _make_erp_settings())
+        result = await notify_rejection(state, adapter)
 
         adapter.send_notification.assert_called_once()
         assert result["notification_result"] is not None
@@ -611,7 +605,7 @@ class TestNotifyRejectionFireAndForget:
         adapter = AsyncMock()
         adapter.send_notification = AsyncMock(side_effect=RuntimeError("Network error"))
 
-        result = await notify_rejection(state, adapter, _make_erp_settings())
+        result = await notify_rejection(state, adapter)
 
         assert "error" not in result
         assert result["notification_result"] is None
@@ -630,7 +624,7 @@ class TestNotifyRejectionCompliancePrecedence:
             return_value=NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         )
 
-        await notify_rejection(state, adapter, _make_erp_settings())
+        await notify_rejection(state, adapter)
 
         payload = adapter.send_notification.call_args[0][0]
         assert payload.title == "Escalade — Blocage conformité"

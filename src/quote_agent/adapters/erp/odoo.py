@@ -65,6 +65,7 @@ _ORDER_FIELDS = [
 
 _ORDER_LINE_FIELDS = [
     "id",
+    "order_id",
     "product_id",
     "name",
     "product_uom_qty",

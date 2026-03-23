@@ -15,30 +15,26 @@ if TYPE_CHECKING:
 async def _run_batch_summary() -> tuple[NotificationResult | None, str]:
     """Execute batch summary notification and return result + hostname."""
     from quote_agent.adapters.notification import get_notification_adapter
-    from quote_agent.config import get_settings
     from quote_agent.models.base import _get_session_factory
     from quote_agent.services.scheduled_notifications import send_batch_summary
 
     adapter = get_notification_adapter()
-    settings = get_settings()
     factory = _get_session_factory()
     async with factory() as session:
-        result = await send_batch_summary(session, adapter, settings.erp)
+        result = await send_batch_summary(session, adapter)
     return result, getattr(adapter, "hostname", "unknown")
 
 
 async def _run_weekly_report() -> tuple[NotificationResult | None, str]:
     """Execute weekly report notification and return result + hostname."""
     from quote_agent.adapters.notification import get_notification_adapter
-    from quote_agent.config import get_settings
     from quote_agent.models.base import _get_session_factory
     from quote_agent.services.scheduled_notifications import send_weekly_report
 
     adapter = get_notification_adapter()
-    settings = get_settings()
     factory = _get_session_factory()
     async with factory() as session:
-        result = await send_weekly_report(session, adapter, settings.erp)
+        result = await send_weekly_report(session, adapter)
     return result, getattr(adapter, "hostname", "unknown")
 
 

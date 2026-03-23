@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
     from quote_agent.adapters.notification.protocol import NotificationAdapter
-    from quote_agent.config import ERPSettings, NotificationScheduleSettings
+    from quote_agent.config import NotificationScheduleSettings
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +65,10 @@ class NotificationScheduler:
         schedule_settings: NotificationScheduleSettings,
         session_factory: async_sessionmaker[AsyncSession],
         adapter: NotificationAdapter,
-        erp_settings: ERPSettings,
     ) -> None:
         self._settings = schedule_settings
         self._session_factory = session_factory
         self._adapter = adapter
-        self._erp_settings = erp_settings
         self._daily_task: asyncio.Task[None] | None = None
         self._weekly_task: asyncio.Task[None] | None = None
 
@@ -130,7 +128,7 @@ class NotificationScheduler:
                 from quote_agent.services.scheduled_notifications import send_batch_summary
 
                 async with self._session_factory() as session:
-                    await send_batch_summary(session, self._adapter, self._erp_settings)
+                    await send_batch_summary(session, self._adapter)
                 logger.info("Daily batch summary sent successfully")
             except Exception:
                 logger.warning("Scheduled batch summary failed", exc_info=True)
@@ -149,7 +147,7 @@ class NotificationScheduler:
                 from quote_agent.services.scheduled_notifications import send_weekly_report
 
                 async with self._session_factory() as session:
-                    await send_weekly_report(session, self._adapter, self._erp_settings)
+                    await send_weekly_report(session, self._adapter)
                 logger.info("Weekly report sent successfully")
             except Exception:
                 logger.warning("Scheduled weekly report failed", exc_info=True)

@@ -9,7 +9,7 @@ Validates that the generated catalog meets Story 3.0c acceptance criteria:
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 from generate_test_catalog import (
@@ -309,6 +309,88 @@ class TestDeterministicOutput:
         # At least some records should differ
         diffs = sum(1 for r1, r2 in zip(catalog1, catalog2, strict=True) if r1.reference != r2.reference)
         assert diffs > 0
+
+
+class TestProductCoherence:
+    """Verify internal coherence: ref, name, and description agree on shape/type."""
+
+    _SHAPE_MAP: ClassVar[dict[str, str]] = {
+        "RD": "rond", "CR": "carre", "RECT": "rectangulaire", "OBLONG": "oblong",
+    }
+
+    def test_tube_shape_coherent_across_fields(self, small_catalog: list[ProductRecord]) -> None:
+        """Tube ref shape must match name shape and description shape."""
+        tubes = [r for r in small_catalog if r.category == "Tubes & Tuyaux" and not r.reference.endswith("-VAR")]
+        assert len(tubes) > 50, "Need enough tubes to test"
+
+        for r in tubes:
+            # Extract shape from reference: TB-{SHAPE}-...
+            ref_parts = r.reference.split("-")
+            if len(ref_parts) < 2:
+                continue
+            ref_shape = ref_parts[1]
+            if ref_shape not in self._SHAPE_MAP:
+                continue
+
+            # Check name contains the shape abbreviation
+            name_upper = r.name.upper()
+            assert ref_shape in name_upper, (
+                f"Ref shape {ref_shape} not in name '{r.name}' (ref={r.reference})"
+            )
+
+            # Check description (if not None/truncated) contains the French shape word
+            if r.description and len(r.description) > 30:
+                desc_lower = r.description.lower()
+                shape_fr = self._SHAPE_MAP[ref_shape]
+                # English descriptions use English shape words
+                shape_en = {"RD": "round", "CR": "square", "RECT": "rectangular", "OBLONG": "oblong"}
+                assert shape_fr in desc_lower or shape_en[ref_shape] in desc_lower, (
+                    f"Shape '{ref_shape}' ({shape_fr}/{shape_en[ref_shape]}) not in desc '{r.description}'"
+                )
+
+    def test_profile_type_coherent_across_fields(self, small_catalog: list[ProductRecord]) -> None:
+        """Profile ref prefix must match name type and description type."""
+        profiles = [r for r in small_catalog if r.category == "Profiles" and not r.reference.endswith("-VAR")]
+        assert len(profiles) > 20, "Need enough profiles to test"
+
+        prefix_to_type = {"IPE": "IPE", "HEA": "HEA", "CORN": "CORNIERE", "UPN": "FER U"}
+        for r in profiles:
+            # Extract profile dim prefix from reference: PRF-{PREFIX}{SIZE}-...
+            ref_parts = r.reference.split("-")
+            if len(ref_parts) < 2:
+                continue
+            dim_part = ref_parts[1]  # e.g. "IPE240", "CORN200", "HEA140", "UPN120"
+            matched_prefix = None
+            for prefix in prefix_to_type:
+                if dim_part.startswith(prefix):
+                    matched_prefix = prefix
+                    break
+            if not matched_prefix:
+                continue
+
+            expected_type = prefix_to_type[matched_prefix]
+
+            # Check name starts with the expected profile type
+            name_upper = r.name.upper()
+            assert expected_type in name_upper, (
+                f"Expected '{expected_type}' in name '{r.name}' (ref={r.reference})"
+            )
+
+            # Check description (if present and long enough)
+            if r.description and len(r.description) > 20:
+                desc_upper = r.description.upper()
+                assert expected_type in desc_upper or matched_prefix in desc_upper, (
+                    f"Expected '{expected_type}' in desc '{r.description}' (ref={r.reference})"
+                )
+
+    def test_no_placeholder_descriptions(self, small_catalog: list[ProductRecord]) -> None:
+        """No 'hardware hardware' or similar repeated-word placeholder descriptions."""
+        for r in small_catalog:
+            if r.description is None:
+                continue
+            words = r.description.lower().split()
+            if len(words) >= 2 and words[0] == words[1]:
+                pytest.fail(f"Placeholder description: '{r.description}' (ref={r.reference})")
 
 
 class TestComputeStats:

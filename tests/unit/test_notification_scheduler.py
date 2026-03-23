@@ -76,7 +76,7 @@ class TestNotificationSchedulerLifecycle:
             schedule_settings=settings,
             session_factory=AsyncMock(),
             adapter=AsyncMock(),
-            erp_settings=MagicMock(),
+
         )
 
     async def test_start_creates_tasks(self) -> None:
@@ -123,7 +123,7 @@ class TestSchedulerSkip:
             schedule_settings=schedule_settings,
             session_factory=AsyncMock(),
             adapter=AsyncMock(),
-            erp_settings=MagicMock(),
+
         )
         # When disabled, should_run returns False
         assert scheduler.should_run() is False
@@ -138,7 +138,7 @@ class TestSchedulerSkip:
             schedule_settings=schedule_settings,
             session_factory=AsyncMock(),
             adapter=adapter,
-            erp_settings=MagicMock(),
+
         )
         assert scheduler.should_run() is False
 
@@ -152,6 +152,6 @@ class TestSchedulerSkip:
             schedule_settings=schedule_settings,
             session_factory=AsyncMock(),
             adapter=adapter,
-            erp_settings=MagicMock(),
+
         )
         assert scheduler.should_run() is True

@@ -31,14 +31,6 @@ def mock_adapter() -> MagicMock:
 
 
 @pytest.fixture()
-def mock_erp_settings() -> MagicMock:
-    """Create mock ERP settings."""
-    settings = MagicMock()
-    settings.url = "https://odoo.example.com"
-    return settings
-
-
-@pytest.fixture()
 def mock_session() -> AsyncMock:
     """Create a mock AsyncSession."""
     return AsyncMock()
@@ -51,7 +43,6 @@ def mock_session() -> AsyncMock:
 async def test_send_batch_summary_success(
     mock_get_daily: AsyncMock,
     mock_adapter: MagicMock,
-    mock_erp_settings: MagicMock,
     mock_session: AsyncMock,
 ) -> None:
     """AC-1: send_batch_summary sends notification with correct card type."""
@@ -60,7 +51,7 @@ async def test_send_batch_summary_success(
         date=datetime.now(tz=UTC),
     )
 
-    result = await send_batch_summary(mock_session, mock_adapter, mock_erp_settings)
+    result = await send_batch_summary(mock_session, mock_adapter)
 
     assert result is not None
     assert result.success is True
@@ -69,14 +60,13 @@ async def test_send_batch_summary_success(
     assert payload.card_type == "batch-summary"
     assert "5 devis" in payload.message
     assert "2 prêts" in payload.message
-    assert payload.data["erp_url"] == "https://odoo.example.com/web#model=sale.order&view_type=list"
+    assert payload.data["erp_url"].endswith("/erp/sale-orders")
 
 
 @patch("quote_agent.services.scheduled_notifications.get_daily_summary")
 async def test_send_batch_summary_skips_when_no_quotes(
     mock_get_daily: AsyncMock,
     mock_adapter: MagicMock,
-    mock_erp_settings: MagicMock,
     mock_session: AsyncMock,
 ) -> None:
     """AC-1: send_batch_summary returns None when no quotes processed (silence principle)."""
@@ -85,7 +75,7 @@ async def test_send_batch_summary_skips_when_no_quotes(
         date=datetime.now(tz=UTC),
     )
 
-    result = await send_batch_summary(mock_session, mock_adapter, mock_erp_settings)
+    result = await send_batch_summary(mock_session, mock_adapter)
 
     assert result is None
     mock_adapter.send_notification.assert_not_called()
@@ -95,13 +85,12 @@ async def test_send_batch_summary_skips_when_no_quotes(
 async def test_send_batch_summary_fire_and_forget_on_error(
     mock_get_daily: AsyncMock,
     mock_adapter: MagicMock,
-    mock_erp_settings: MagicMock,
     mock_session: AsyncMock,
 ) -> None:
     """AC-1: send_batch_summary catches exceptions and returns None (fire-and-forget)."""
     mock_get_daily.side_effect = RuntimeError("DB connection failed")
 
-    result = await send_batch_summary(mock_session, mock_adapter, mock_erp_settings)
+    result = await send_batch_summary(mock_session, mock_adapter)
 
     assert result is None
 
@@ -113,7 +102,6 @@ async def test_send_batch_summary_fire_and_forget_on_error(
 async def test_send_weekly_report_success(
     mock_get_weekly: AsyncMock,
     mock_adapter: MagicMock,
-    mock_erp_settings: MagicMock,
     mock_session: AsyncMock,
 ) -> None:
     """AC-2: send_weekly_report sends notification with correct card type and rep data."""
@@ -131,7 +119,7 @@ async def test_send_weekly_report_success(
         period_end=now,
     )
 
-    result = await send_weekly_report(mock_session, mock_adapter, mock_erp_settings)
+    result = await send_weekly_report(mock_session, mock_adapter)
 
     assert result is not None
     assert result.success is True
@@ -147,7 +135,6 @@ async def test_send_weekly_report_success(
 async def test_send_weekly_report_skips_when_no_quotes(
     mock_get_weekly: AsyncMock,
     mock_adapter: MagicMock,
-    mock_erp_settings: MagicMock,
     mock_session: AsyncMock,
 ) -> None:
     """AC-2: send_weekly_report returns None when no quotes processed (silence principle)."""
@@ -158,7 +145,7 @@ async def test_send_weekly_report_skips_when_no_quotes(
         period_start=now, period_end=now,
     )
 
-    result = await send_weekly_report(mock_session, mock_adapter, mock_erp_settings)
+    result = await send_weekly_report(mock_session, mock_adapter)
 
     assert result is None
     mock_adapter.send_notification.assert_not_called()
@@ -168,13 +155,12 @@ async def test_send_weekly_report_skips_when_no_quotes(
 async def test_send_weekly_report_fire_and_forget_on_error(
     mock_get_weekly: AsyncMock,
     mock_adapter: MagicMock,
-    mock_erp_settings: MagicMock,
     mock_session: AsyncMock,
 ) -> None:
     """AC-2: send_weekly_report catches exceptions and returns None (fire-and-forget)."""
     mock_get_weekly.side_effect = RuntimeError("DB connection failed")
 
-    result = await send_weekly_report(mock_session, mock_adapter, mock_erp_settings)
+    result = await send_weekly_report(mock_session, mock_adapter)
 
     assert result is None
 

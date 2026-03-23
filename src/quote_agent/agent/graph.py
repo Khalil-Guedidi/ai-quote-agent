@@ -263,7 +263,7 @@ def build_agent_graph(
     async def notify_node(state: AgentState) -> dict[str, Any]:
         try:
             adapter = get_notification_adapter()
-            return await notify_quote_ready(state, adapter, settings.erp, throttle, batcher)
+            return await notify_quote_ready(state, adapter, throttle, batcher)
         except Exception as exc:
             logger.warning("Node notify failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify"}
@@ -271,7 +271,7 @@ def build_agent_graph(
     async def notify_proposals_node(state: AgentState) -> dict[str, Any]:
         try:
             adapter = get_notification_adapter()
-            return await notify_multi_proposal(state, adapter, settings.erp, throttle, batcher)
+            return await notify_multi_proposal(state, adapter, throttle, batcher)
         except Exception as exc:
             logger.warning("Node notify_proposals failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify_proposals"}
@@ -279,7 +279,7 @@ def build_agent_graph(
     async def notify_escalation_node(state: AgentState) -> dict[str, Any]:
         try:
             adapter = get_notification_adapter()
-            return await notify_escalation(state, adapter, settings.erp, throttle, batcher)
+            return await notify_escalation(state, adapter, throttle, batcher)
         except Exception as exc:
             logger.warning("Node notify_escalation failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify_escalation"}
@@ -287,7 +287,7 @@ def build_agent_graph(
     async def notify_rejection_node(state: AgentState) -> dict[str, Any]:
         try:
             adapter = get_notification_adapter()
-            return await notify_rejection(state, adapter, settings.erp, throttle, batcher)
+            return await notify_rejection(state, adapter, throttle, batcher)
         except Exception as exc:
             logger.warning("Node notify_rejection failed (non-blocking)", extra={"context": {"error": str(exc)}})
             return {"notification_result": None, "current_node": "notify_rejection"}

@@ -219,6 +219,17 @@ def scheduler_status_cmd(
     _scheduler_status_impl(json_output=json_output)
 
 
+@app.command(name="seed-odoo")
+def seed_odoo_cmd(
+    count: int = typer.Option(200, "--count", "-n", help="Number of products to seed"),
+    clean: bool = typer.Option(False, "--clean", help="Remove all seeded data instead of seeding"),
+) -> None:
+    """Populate test Odoo with realistic industrial data (products, clients, orders)."""
+    from quote_agent.cli.seed_odoo import seed_odoo as _seed_odoo_impl
+
+    _seed_odoo_impl(count=count, clean=clean)
+
+
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),

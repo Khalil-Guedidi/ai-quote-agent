@@ -122,7 +122,8 @@ def _dim_profile(rng: random.Random) -> dict[str, Any]:
     length = rng.choice([6000, 12000])
     weight_per_m = rng.uniform(5.0, 80.0)
     weight = round(weight_per_m * length / 1000, 1)
-    return {"size": size, "length": length, "weight_kg": weight, "dimensions": f"IPE{size}-LG{length}"}
+    # dimensions updated in _pick_variant_attrs with correct profile type prefix
+    return {"size": size, "length": length, "weight_kg": weight, "dimensions": f"PRF{size}-LG{length}"}
 
 
 def _dim_fitting(rng: random.Random) -> dict[str, Any]:
@@ -261,7 +262,9 @@ FAMILIES: list[ProductFamily] = [
         desc_template_fr=(
             "Tube {shape_fr} en {material_fr}, diametre {diameter}mm, epaisseur {thickness}mm, longueur {length}mm"
         ),
-        desc_template_en="Round tube {material}, diameter {diameter}mm, thickness {thickness}mm, length {length}mm",
+        desc_template_en=(
+            "{shape_en} tube {material}, diameter {diameter}mm, thickness {thickness}mm, length {length}mm"
+        ),
         materials=MATERIALS_METAL,
         price_range=(5.0, 350.0),
         dimension_generator="tube",
@@ -305,13 +308,13 @@ FAMILIES: list[ProductFamily] = [
         weight=0.08,
         ref_prefix="PRF",
         name_templates=[
-            "IPE {size} S235 LG{length}",
-            "HEA {size} S355 LG{length}",
+            "IPE {size} {material} LG{length}",
+            "HEA {size} {material} LG{length}",
             "CORNIERE {material} {size}x{size} LG{length}",
             "FER U {size} {material} LG{length}",
         ],
-        desc_template_fr="Profile IPE {size}, acier S235, longueur {length}mm",
-        desc_template_en="IPE {size} steel profile, length {length}mm",
+        desc_template_fr="Profil {profile_type} {size}, {material}, longueur {length}mm",
+        desc_template_en="{profile_type} {size} steel profile, length {length}mm",
         materials=["ACIER S235", "ACIER S355"],
         price_range=(30.0, 800.0),
         dimension_generator="profile",
@@ -523,6 +526,9 @@ class ProductRecord:
 # Sub-attributes for product name generation
 TUBE_SHAPES = ["RD", "CR", "RECT", "OBLONG"]
 TUBE_SHAPES_FR = {"RD": "rond", "CR": "carre", "RECT": "rectangulaire", "OBLONG": "oblong"}
+TUBE_SHAPES_EN = {"RD": "Round", "CR": "Square", "RECT": "Rectangular", "OBLONG": "Oblong"}
+PROFILE_TYPES = ["IPE", "HEA", "CORNIERE", "FER U"]
+PROFILE_DIM_PREFIXES = {"IPE": "IPE", "HEA": "HEA", "CORNIERE": "CORN", "FER U": "UPN"}
 FASTENER_HEADS = ["CHC", "HM", "FHC", "BTR", "TF", "TB"]
 FASTENER_HEADS_FR = {
     "CHC": "cylindrique creuse",
@@ -585,32 +591,77 @@ MATERIAL_FR = {
 }
 
 
+def _pick_variant_attrs(rng: random.Random, family: ProductFamily, dims: dict[str, Any]) -> None:
+    """Pick variant attributes ONCE per product and store them in dims.
+
+    This ensures reference, name, and description use the same shape/type/subtype
+    instead of each independently randomizing.
+    """
+    if family.name == "tubes":
+        shape = rng.choice(TUBE_SHAPES)
+        dims["_shape"] = shape
+        dims["_shape_fr"] = TUBE_SHAPES_FR[shape]
+        dims["_shape_en"] = TUBE_SHAPES_EN[shape]
+    elif family.name == "profiles":
+        ptype = rng.choice(PROFILE_TYPES)
+        dims["_profile_type"] = ptype
+        dims["_profile_template_idx"] = PROFILE_TYPES.index(ptype)
+        prefix = PROFILE_DIM_PREFIXES[ptype]
+        dims["dimensions"] = f"{prefix}{dims['size']}-LG{dims['length']}"
+    elif family.name == "fasteners":
+        dims["_head_type"] = rng.choice(FASTENER_HEADS)
+        dims["_cls"] = rng.choice(FASTENER_CLASSES)
+    elif family.name == "fittings":
+        dims["_fitting_type"] = rng.choice(FITTING_TYPES)
+        dims["_threading"] = rng.choice(FITTING_THREADINGS)
+    elif family.name == "bearings":
+        dims["_bearing_type"] = rng.choice(BEARING_TYPES)
+        dims["_brand"] = rng.choice(BEARING_BRANDS)
+    elif family.name == "valves":
+        dims["_valve_type"] = rng.choice(VALVE_TYPES)
+        dims["_actuation"] = rng.choice(VALVE_ACTUATIONS)
+    elif family.name == "filtration":
+        dims["_filter_type"] = rng.choice(FILTER_TYPES)
+    elif family.name == "abrasives":
+        dims["_abrasive_type"] = rng.choice(ABRASIVE_TYPES)
+    elif family.name == "lubricants":
+        dims["_lubricant_type"] = rng.choice(LUBRICANT_TYPES)
+    elif family.name == "ppe":
+        dims["_ppe_type"] = rng.choice(PPE_TYPES)
+        dims["_color"] = rng.choice(PPE_COLORS)
+    elif family.name == "hardware":
+        dims["_hw_type"] = rng.choice(HARDWARE_TYPES)
+    elif family.name == "plates":
+        dims["_finish"] = rng.choice(PLATE_FINISHES)
+    elif family.name == "electrical":
+        dims["_cable_type"] = rng.choice(CABLE_TYPES)
+    elif family.name == "cutting_tools":
+        dims["_cutting_type"] = rng.choice(CUTTING_TYPES)
+
+
 def _generate_reference(rng: random.Random, family: ProductFamily, dims: dict[str, Any], seq: int) -> str:
     """Generate a realistic reference code for a product."""
     prefix = family.ref_prefix
     parts = [prefix]
 
     if family.name == "tubes":
-        shape = rng.choice(TUBE_SHAPES)
+        shape = dims["_shape"]
         material_short = dims.get("_material_short", "INOX")
         parts.extend([shape, material_short, f"{dims['diameter']}x{dims['thickness']}", f"LG{dims['length']}"])
     elif family.name == "fasteners":
-        head = rng.choice(FASTENER_HEADS)
-        parts.extend([head, f"M{dims['m_size']}x{dims['length']}"])
+        parts.extend([dims["_head_type"], f"M{dims['m_size']}x{dims['length']}"])
     elif family.name == "plates":
         parts.extend([f"{dims['width']}x{dims['height']}", f"EP{dims['thickness']}"])
     elif family.name == "profiles":
         parts.append(dims["dimensions"])
     elif family.name == "fittings":
-        ft = rng.choice(FITTING_TYPES)
-        parts.extend([ft, f"DN{dims['dn']}"])
+        parts.extend([dims["_fitting_type"], f"DN{dims['dn']}"])
     elif family.name == "bearings":
         parts.append(dims["dimensions"])
     elif family.name == "seals":
         parts.append(f"{dims['inner_diameter']}x{dims['section']}")
     elif family.name == "valves":
-        vt = rng.choice(VALVE_TYPES)
-        parts.extend([vt, dims["dimensions"]])
+        parts.extend([dims["_valve_type"], dims["dimensions"]])
     elif family.name == "filtration":
         parts.append(dims["dimensions"])
     elif family.name == "electrical":
@@ -630,26 +681,33 @@ def _generate_reference(rng: random.Random, family: ProductFamily, dims: dict[st
 
 def _generate_name(rng: random.Random, family: ProductFamily, dims: dict[str, Any], material: str) -> str:
     """Generate a realistic abbreviated French product name."""
-    template = rng.choice(family.name_templates)
-    shape = rng.choice(TUBE_SHAPES) if family.name == "tubes" else ""
-    head_type = rng.choice(FASTENER_HEADS) if family.name == "fasteners" else ""
-    cls = rng.choice(FASTENER_CLASSES) if family.name == "fasteners" else ""
-    ft = rng.choice(FITTING_TYPES) if family.name == "fittings" else ""
-    threading = rng.choice(FITTING_THREADINGS) if family.name == "fittings" else ""
-    bt = rng.choice(BEARING_TYPES) if family.name == "bearings" else ""
-    brand = rng.choice(BEARING_BRANDS) if family.name == "bearings" else ""
-    vt = rng.choice(VALVE_TYPES) if family.name == "valves" else ""
-    actuation = rng.choice(VALVE_ACTUATIONS) if family.name == "valves" else ""
-    filt = rng.choice(FILTER_TYPES) if family.name == "filtration" else ""
-    cab = rng.choice(CABLE_TYPES) if family.name == "electrical" else ""
-    ct = rng.choice(CUTTING_TYPES) if family.name == "cutting_tools" else ""
-    abr = rng.choice(ABRASIVE_TYPES) if family.name == "abrasives" else ""
-    lub = rng.choice(LUBRICANT_TYPES) if family.name == "lubricants" else ""
-    ppe_type = rng.choice(PPE_TYPES) if family.name == "ppe" else ""
-    color = rng.choice(PPE_COLORS) if family.name == "ppe" else ""
-    hw = rng.choice(HARDWARE_TYPES) if family.name == "hardware" else ""
-    finish = rng.choice(PLATE_FINISHES) if family.name == "plates" else ""
+    # For profiles, select the template matching the chosen profile type
+    if family.name == "profiles":
+        template = family.name_templates[dims["_profile_template_idx"]]
+    else:
+        template = rng.choice(family.name_templates)
+
+    # Read pre-picked variant attrs from dims (set by _pick_variant_attrs)
+    shape = dims.get("_shape", "")
+    head_type = dims.get("_head_type", "")
+    cls = dims.get("_cls", "")
+    ft = dims.get("_fitting_type", "")
+    threading = dims.get("_threading", "")
+    bt = dims.get("_bearing_type", "")
+    brand = dims.get("_brand", "")
+    vt = dims.get("_valve_type", "")
+    actuation = dims.get("_actuation", "")
+    filt = dims.get("_filter_type", "")
+    cab = dims.get("_cable_type", "")
+    ct = dims.get("_cutting_type", "")
+    abr = dims.get("_abrasive_type", "")
+    lub = dims.get("_lubricant_type", "")
+    ppe_type = dims.get("_ppe_type", "")
+    color = dims.get("_color", "")
+    hw = dims.get("_hw_type", "")
+    finish = dims.get("_finish", "")
     designation = f"{dims.get('bore', '')}{'0' + str(dims.get('od', ''))[-2:]}" if family.name == "bearings" else ""
+    profile_type = dims.get("_profile_type", "")
 
     # Build a format dict from all possible values
     fmt: dict[str, Any] = {
@@ -665,6 +723,7 @@ def _generate_name(rng: random.Random, family: ProductFamily, dims: dict[str, An
         "actuation": actuation,
         "color": color,
         "finish": finish,
+        "profile_type": profile_type,
     }
 
     try:
@@ -694,42 +753,66 @@ def _generate_description(
     # Build format context
     material_fr = MATERIAL_FR.get(material, material.lower())
 
+    # Read pre-picked variant attrs from dims (set by _pick_variant_attrs)
+    shape = dims.get("_shape", "RD")
+    head_type = dims.get("_head_type", "HM")
+    finish = dims.get("_finish", "BRUTE")
+    profile_type = dims.get("_profile_type", "")
+
     fmt: dict[str, Any] = {
         **dims,
         "material": material,
         "material_fr": material_fr,
-        "shape_fr": TUBE_SHAPES_FR.get(rng.choice(TUBE_SHAPES), "rond"),
-        "head_type_fr": FASTENER_HEADS_FR.get(rng.choice(FASTENER_HEADS), "hexagonale"),
+        "shape_fr": TUBE_SHAPES_FR.get(shape, "rond"),
+        "shape_en": TUBE_SHAPES_EN.get(shape, "Round"),
+        "head_type_fr": FASTENER_HEADS_FR.get(head_type, "hexagonale"),
         "type_fr": "",
-        "finish_fr": PLATE_FINISHES_FR.get(rng.choice(PLATE_FINISHES), "brute"),
-        "finish": rng.choice(PLATE_FINISHES),
+        "finish_fr": PLATE_FINISHES_FR.get(finish, "brute"),
+        "finish": finish,
+        "profile_type": profile_type,
     }
 
-    # Set type_fr based on family
+    # Set type_fr based on family — using pre-picked attrs
     if family.name == "fittings":
-        ft = rng.choice(FITTING_TYPES)
+        ft = dims.get("_fitting_type", "COUDE")
         fmt["type_fr"] = FITTING_TYPES_FR.get(ft, ft.lower())
         fmt["type"] = ft
     elif family.name == "bearings":
-        bt = rng.choice(BEARING_TYPES)
+        bt = dims.get("_bearing_type", "BILLES")
         fmt["type_fr"] = BEARING_TYPES_FR.get(bt, bt.lower())
         fmt["type"] = bt
     elif family.name == "valves":
-        vt = rng.choice(VALVE_TYPES)
+        vt = dims.get("_valve_type", "PAPILLON")
         fmt["type_fr"] = VALVE_TYPES_FR.get(vt, vt.lower())
         fmt["type"] = vt
     elif family.name == "filtration":
-        filt = rng.choice(FILTER_TYPES)
+        filt = dims.get("_filter_type", "HYDRAULIQUE")
         fmt["type_fr"] = FILTER_TYPES_FR.get(filt, filt.lower())
         fmt["type"] = filt
     elif family.name == "abrasives":
-        abr = rng.choice(ABRASIVE_TYPES)
+        abr = dims.get("_abrasive_type", "TRONCONNAGE")
         fmt["type_fr"] = ABRASIVE_TYPES_FR.get(abr, abr.lower())
         fmt["type"] = abr
     elif family.name == "lubricants":
-        lub = rng.choice(LUBRICANT_TYPES)
+        lub = dims.get("_lubricant_type", "MOTEUR")
         fmt["type_fr"] = LUBRICANT_TYPES_FR.get(lub, lub.lower())
         fmt["type"] = lub
+    elif family.name == "hardware":
+        hw = dims.get("_hw_type", "EQUERRE")
+        fmt["type_fr"] = hw.lower()
+        fmt["type"] = hw
+    elif family.name == "ppe":
+        ppe = dims.get("_ppe_type", "NITRILE")
+        fmt["type_fr"] = ppe.lower()
+        fmt["type"] = ppe
+    elif family.name == "electrical":
+        cab = dims.get("_cable_type", "H07VK")
+        fmt["type_fr"] = cab
+        fmt["type"] = cab
+    elif family.name == "cutting_tools":
+        ct = dims.get("_cutting_type", "HELICOIDAL")
+        fmt["type_fr"] = ct.lower()
+        fmt["type"] = ct
     else:
         fmt["type_fr"] = family.name
         fmt["type"] = family.name
@@ -784,6 +867,9 @@ def generate_catalog(total: int = TOTAL_RECORDS, seed: int = SEED) -> list[Produ
             # Store short material name for reference generation
             mat_short = material.replace(" ", "").replace("-", "")[:8]
             dims["_material_short"] = mat_short
+
+            # Pick variant attrs ONCE — shared across ref/name/desc
+            _pick_variant_attrs(rng, family, dims)
 
             reference = _generate_reference(rng, family, dims, seq)
             name = _generate_name(rng, family, dims, material)
