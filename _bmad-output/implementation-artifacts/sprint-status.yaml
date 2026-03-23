@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-23  # Story 5.5.6 review
+last_updated: 2026-03-23  # Story 5.5.7 done (code review passed)
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -131,7 +131,7 @@ development_status:
   5-5-4-canari-50k-pipeline-a-echelle: done
   5-5-5-audit-exhaustif-paths-graph: done
   5-5-6-dod-conventions-project-context: done
-  5-5-7-strategie-contenu-linkedin-pivot-francais: backlog
+  5-5-7-strategie-contenu-linkedin-pivot-francais: done
   5-5-8-refonte-14-posts-linkedin-francais: backlog
   5-5-9-landing-page-validation-marche: backlog
   epic-5-5-retrospective: optional
@@ -192,3 +192,18 @@ development_status:
   t-13-intelligence-recap-post: done          # after Epic 4
   t-14-human-ai-collaboration-post: done      # after 5.2–5.3
   t-15-full-loop-recap-post: backlog               # after Epic 5
+  t-16-memoire-industrie-rag-knowledge-base-post: backlog  # after Epic 6
+  t-17-contexte-entreprise-catalogue-regles-post: backlog  # after Epic 6
+  t-18-memoire-preferences-clients-post: backlog           # after Epic 6
+  t-19-boucle-feedback-corrections-post: backlog           # after Epic 6
+  t-20-reutilisation-devis-valides-post: backlog           # after Epic 6
+  t-21-memoire-recap-post: backlog                         # after Epic 6
+  t-22-tracabilite-raisonnement-post: backlog              # after Epic 7
+  t-23-tableau-de-bord-monitoring-post: backlog            # after Epic 7
+  t-24-alertes-intelligentes-post: backlog                 # after Epic 7
+  t-25-observabilite-recap-post: backlog                   # after Epic 7
+  t-26-regles-metier-par-entreprise-post: backlog          # after Epic 8
+  t-27-configuration-recap-post: backlog                   # after Epic 8
+  t-28-tests-regression-automatiques-post: backlog         # after Epic 9
+  t-29-mode-cohabitation-post: backlog                     # after Epic 9
+  t-30-bilan-final-projet-post: backlog                    # after Epic 9

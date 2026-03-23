@@ -2,23 +2,24 @@
 
 ## Headline
 
-AI Engineer | Building an intelligent B2B quoting agent in public | Python, LLM, Vector Search
+Ingénieur IA | Je construis un agent de devis B2B industriel en public | Python, LLM, LangGraph
 
 ## About Section
 
-I build AI systems that solve real B2B industrial problems.
+Je construis des systèmes IA qui résolvent de vrais problèmes industriels B2B.
 
-Right now, I'm building an AI-powered quoting agent in public — an end-to-end system that reads supplier quote requests from emails, matches products from a 680+ item catalog using hybrid vector search, and drafts quotes automatically. The prototype hit 96.2% search accuracy with 2.9s latency. Now I'm rebuilding it for production with Python and LangGraph.
+En ce moment, je développe en public un agent IA de devis automatique. Le système lit les demandes de devis par email, identifie les produits dans un catalogue de 50 000+ références avec de la recherche hybride vectorielle, et génère des brouillons de devis dans l'ERP. Le prototype atteint 96.2% de précision de recherche en 2.9s de latence. La version production tourne avec Python, LangGraph et 781 tests automatisés.
 
-I come from the B2B industrial domain — years of working with ERP systems, product catalogs, and the messy reality of how businesses actually buy and sell things. That domain expertise is what makes the AI work: understanding that "vis M8x40 inox" and "stainless steel hex bolt 8mm" are the same product matters more than any model architecture.
+Je viens du monde industriel B2B. Des années à travailler avec des ERP, des catalogues produits et la réalité du terrain : comment les entreprises achètent et vendent vraiment. Cette expertise domaine, c'est ce qui fait marcher l'IA. Comprendre que "vis M8x40 inox" et "boulon hexagonal acier inoxydable 8mm" sont le même produit, ça compte plus que n'importe quelle architecture de modèle.
 
-I share the full journey here: what works, what breaks, and the real metrics behind every decision. Follow along if you're interested in applied AI, B2B tech, or building in public.
+Je partage tout ici : ce qui marche, ce qui casse, et les vraies métriques derrière chaque décision.
 
-Stack: Python | LangGraph | Qdrant | Claude/OpenAI | Odoo | PostgreSQL
+Stack : Python | LangGraph | PostgreSQL + pgvector | FastAPI | Claude/OpenAI | Odoo | Docker
 
-## Profile Notes
+## Notes profil
 
-- Keep headline under 120 characters
-- About section: ~150 words (LinkedIn shows first ~3 lines before "see more")
-- Lead with the most compelling line — it's what people see in search results
-- Update as the project progresses (after major milestones)
+- Headline sous 120 caractères
+- Section About : ~150 mots (LinkedIn affiche les 3 premières lignes avant "voir plus")
+- Commencer par la ligne la plus percutante : c'est ce que les gens voient dans les résultats de recherche
+- Mettre à jour après les milestones majeurs (épics complétés, métriques améliorées)
+- Métriques de crédibilité à maintenir : 96.2% précision, 2.9s latence, 781 tests, 50K produits

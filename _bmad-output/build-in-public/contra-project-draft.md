@@ -1,104 +1,110 @@
-# Contra Project Page Draft
+# Page Projet Contra
 
-## Project Title
+---
 
-AI-Powered B2B Quoting Agent — Building in Public
+## Version française (principale)
 
-## Project Description
+### Titre du projet
+
+Agent IA de devis B2B industriel : Build in Public
+
+### Description du projet
+
+Un système IA complet qui automatise la génération de devis industriels B2B : de la réception d'email à la recherche de produits, jusqu'à la création de brouillons de devis dans un ERP.
+
+C'est un projet solo Build in Public, documenté du prototype à la production. Chaque décision d'architecture, chaque résultat de benchmark et chaque leçon apprise est partagée publiquement.
+
+### Vue d'ensemble du prototype
+
+#### Architecture
+
+- **Orchestration :** n8n (prototype), Python/LangGraph (production)
+- **ERP :** Odoo 18 Community : catalogue produits, données clients, gestion des devis
+- **Base vectorielle :** PostgreSQL + pgvector : recherche sémantique sur embeddings produits
+- **Embeddings :** OpenAI text-embedding-3-small
+- **LLM :** Claude (extraction structurée + matching produits + raisonnement devis)
+- **Pipeline :** Email, extraction données structurées, recherche hybride, matching produits, brouillon devis
+
+#### Ce qui rend le projet intéressant
+
+- **Complexité domaine :** Les catalogues B2B industriels ont des noms incohérents, du jargon français, des abréviations et des variations d'unités. La recherche par mots-clés seule échoue. La recherche sémantique seule hallucine. La recherche hybride avec reranking adapté au domaine fonctionne.
+- **Contraintes réelles :** Intégration ERP, parsing d'emails, demandes de devis multi-lignes. Ce n'est pas une démo, c'est conçu pour la production.
+
+#### Résultats
+
+| Métrique | Résultat |
+|----------|----------|
+| Précision recherche hybride (Hit@5) | 96.2% |
+| Latence bout en bout | 2.9s en moyenne |
+| Couverture scénarios | 3/3 (simple, multi-lignes, ambigu) |
+| Tests automatisés | 781 (unité) + 28 (E2E) |
+| Produits testés | 50 000 |
+
+### Architecture production
+
+Le système de production utilise un **adapter pattern** avec 5 points d'intégration, chacun testable et interchangeable indépendamment :
+
+| Adaptateur | Rôle | Technologie |
+|------------|------|-------------|
+| Base de données | Catalogue produits, devis, audit trail | PostgreSQL + pgvector, SQLAlchemy async, migrations Alembic |
+| Fournisseur LLM | Extraction structurée, raisonnement, matching | API compatible OpenAI avec routage de modèle |
+| ERP | Catalogue produits, données clients, création devis | Odoo XML-RPC avec masquage identifiants |
+| Email | Réception demandes de devis | IMAP avec parsing structuré |
+| Notification | Alertes équipe commerciale | Microsoft Teams Adaptive Cards avec health check webhook |
+
+### Fonctionnalités clés
+
+- **Routage par confiance :** Le système évalue sa propre confiance et route les demandes à faible confiance vers des humains. Trois niveaux : haute (devis auto), moyenne (propositions multiples), basse (escalade humaine).
+- **Conformité export :** Détection automatique d'articles sous contrôle export et d'entités sanctionnées.
+- **Pipeline LangGraph :** Agent orchestré avec 14 chemins de routage, raisonnement adaptatif et auto-évaluation avant soumission.
+
+### Stack technique
+
+Python 3.12 | LangGraph | PostgreSQL + pgvector | FastAPI | OpenAI | Claude | Odoo 18 | Docker
+
+### Assets visuels
+
+- Screenshots des notifications Teams (3 niveaux : vert/orange/rouge)
+- Capture CLI : commande `process` montrant le pipeline email-vers-devis
+- Interface Odoo : brouillons de devis générés par l'IA
+- Diagramme architecture : pipeline LangGraph avec 14 chemins et nœuds
+- Métriques visuelles : 96.2% précision, 2.9s latence, 781 tests, 50K produits
+
+---
+
+## English version (secondary)
+
+### Project Title
+
+AI-Powered B2B Quoting Agent: Building in Public
+
+### Project Description
 
 An end-to-end AI system that automates B2B industrial quote generation: from email reception to product matching to draft quote creation in an ERP.
 
 This is a solo build-in-public project, documented from prototype to production. Every architectural decision, benchmark result, and lesson learned is shared publicly.
 
-## Prototype Overview
-
-### Architecture
-
-- **Orchestration:** n8n (prototype) → Python/LangGraph (production)
-- **ERP:** Odoo 18 Community — product catalog, customer data, quote management
-- **Vector Database:** Qdrant — semantic search on product embeddings
-- **Embeddings:** OpenAI text-embedding-3-small
-- **LLM:** Claude (structured extraction + product matching + quote reasoning)
-- **Pipeline:** Email → Extract structured data → Hybrid search → Match products → Draft quote
-
-### What Makes It Interesting
-
-- **Domain complexity:** B2B industrial catalogs have inconsistent naming, French jargon, abbreviations, and unit variations. Pure keyword search fails. Pure semantic search hallucinates. Hybrid search with domain-aware reranking works.
-- **Real-world constraints:** ERP integration, email parsing, multi-line quote requests — this isn't a demo app, it's designed for production use.
-
-### Roadmap Highlights
-
-- **Confidence-based routing (planned):** Not every quote can be automated. The production system will score its own confidence and route low-confidence requests to humans — building trust by knowing its limits.
-- **Export compliance checks (planned):** Automated detection of export-controlled items and sanctioned entities.
-- **Memory & learning (planned):** Client preference history, feedback loops, and industry knowledge base for continuous improvement.
-
-## Technology Stack
-
-Python 3.12 | LangGraph | PostgreSQL + pgvector | FastAPI | OpenAI | Claude | Odoo 18 | Docker
-
-## Prototype Case Study
-
-### The Challenge
-
-B2B industrial distributors process dozens of quote requests daily. Each email contains product references in inconsistent formats — abbreviations, French jargon, mixed units — that must be matched against a catalog of hundreds of products. Manual quoting is slow and error-prone.
-
-### The Prototype
-
-Built an end-to-end AI pipeline: Email → LLM-based structured extraction → Hybrid search (semantic + keyword) → Product matching → Draft quote in ERP.
-
-Orchestrated with n8n, using Qdrant for vector search, OpenAI embeddings, and Claude for reasoning. Tested against a 680-product synthetic catalog with realistic B2B industrial naming variations.
-
-### Results
+### Prototype Results
 
 | Metric | Result |
 |--------|--------|
 | Hybrid search accuracy (Hit@5) | 96.2% |
 | End-to-end latency | 2.9s average |
 | Scenario coverage | 3/3 (simple, multi-line, ambiguous) |
+| Automated tests | 781 (unit) + 28 (E2E) |
+| Products tested | 50,000 |
 
-### GO Decision
+### What Makes It Interesting
 
-Results validated the approach. The production build will rewrite from n8n to Python/LangGraph, adding confidence-based routing, proper error handling, and human-in-the-loop review for edge cases.
+- **Domain complexity:** B2B industrial catalogs have inconsistent naming, French jargon, abbreviations, and unit variations. Pure keyword search fails. Pure semantic search hallucinates. Hybrid search with domain-aware reranking works.
+- **Real-world constraints:** ERP integration, email parsing, multi-line quote requests. Designed for production use.
+- **Confidence-based routing:** The system scores its own confidence and routes low-confidence requests to humans. Building trust by knowing its limits.
 
-### Architecture Overview
+### Technology Stack
 
-The prototype demonstrated that hybrid search (combining semantic embeddings with keyword matching) significantly outperforms either approach alone for B2B industrial catalogs, where product naming conventions vary widely between companies and languages.
+Python 3.12 | LangGraph | PostgreSQL + pgvector | FastAPI | OpenAI | Claude | Odoo 18 | Docker
 
-## Production Foundation (Epic 1 Complete)
-
-### Production Architecture
-
-The production system uses an **adapter pattern** with 5 integration points, each independently testable and swappable:
-
-| Adapter | Purpose | Technology |
-|---------|---------|------------|
-| Database | Product catalog, quotes, audit trail | PostgreSQL + pgvector, SQLAlchemy async, Alembic migrations |
-| LLM Provider | Structured extraction, reasoning, matching | OpenAI-compatible API abstraction with model routing |
-| ERP | Product catalog, customer data, quote creation | Odoo XML-RPC with credential redaction |
-| Email | Quote request reception | IMAP with structured parsing |
-| Notification | Sales team alerts | Microsoft Teams Adaptive Cards with webhook health check |
-
-### Stack Decisions
-
-- **Language:** Python 3.12 with strict typing (mypy --strict on all source files)
-- **AI Framework:** LangGraph (agent orchestration, state management)
-- **Database:** PostgreSQL + pgvector (relational data + vector search in one DB)
-- **API:** FastAPI with per-service health checks
-- **Deployment:** Docker Compose (multi-stage build, app + PostgreSQL containers)
-- **CI/CD:** GitHub Actions (Ruff linting + mypy type-check + pytest + Docker build)
-
-### Quality Metrics
-
-| Metric | Value |
-|--------|-------|
-| Automated tests | 68 |
-| Test coverage | 95% |
-| Type-checked source files (mypy --strict) | 41 |
-| Integration adapters | 5 |
-| Stories completed | 8 |
-| Manual deployment steps | 0 (docker compose up) |
-
-### High-Level Architecture
+### Architecture
 
 ```
 Email (IMAP) → FastAPI → LangGraph Agent → Quote Draft
@@ -110,7 +116,9 @@ Email (IMAP) → FastAPI → LangGraph Agent → Quote Draft
             XML-RPC         (Teams)
 ```
 
-Each adapter follows the same pattern: abstract interface, concrete implementation, health check endpoint, independent configuration. This allows swapping any integration (e.g., switching from Odoo to SAP, or from Teams to Slack) without touching the rest of the system.
+Each adapter follows the same pattern: abstract interface, concrete implementation, health check endpoint, independent configuration. This allows swapping any integration without touching the rest of the system.
+
+---
 
 ## Project Links
 
@@ -119,6 +127,8 @@ Each adapter follows the same pattern: abstract interface, concrete implementati
 
 ## Page Notes
 
-- Epic 1 (Foundation) is complete. Architecture and quality metrics sections added.
-- Update metrics as production build progresses through Epics 2-9
-- Link to LinkedIn posts as they're published
+- Epics 1-5.5 complete. Full production pipeline operational.
+- French version is primary. Target audience is Franco-European industrial market.
+- Update metrics as project progresses through Epics 6-9.
+- Link to LinkedIn posts as they are published.
+- Add visual assets (screenshots, diagrams) when available.
