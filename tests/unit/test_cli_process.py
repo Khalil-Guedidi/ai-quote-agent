@@ -135,6 +135,34 @@ class TestProcessCommand:
         assert result.exit_code == 0
         assert "classify: LLM timeout" in result.output
 
+    def test_process_sends_error_notification_when_error_in_state(self) -> None:
+        """AC-4 (5.5.5): Post-pipeline error check sends error notification."""
+        mock_state = _mock_result()
+        mock_state["error"] = "classify: LLM timeout"
+        mock_state["draft_result"] = None
+
+        with (
+            patch("quote_agent.cli.process._run_process", new_callable=AsyncMock, return_value=mock_state),
+            patch("quote_agent.cli.process._send_error_notification", new_callable=AsyncMock) as mock_notify,
+        ):
+            result = runner.invoke(app, ["process", "test request"])
+
+        assert result.exit_code == 0
+        mock_notify.assert_called_once_with("classify: LLM timeout")
+
+    def test_process_no_error_notification_when_no_error(self) -> None:
+        """AC-4 (5.5.5): No error notification when pipeline succeeds."""
+        mock_state = _mock_result()
+
+        with (
+            patch("quote_agent.cli.process._run_process", new_callable=AsyncMock, return_value=mock_state),
+            patch("quote_agent.cli.process._send_error_notification", new_callable=AsyncMock) as mock_notify,
+        ):
+            result = runner.invoke(app, ["process", "tubes inox 304L", "--client", "ACME"])
+
+        assert result.exit_code == 0
+        mock_notify.assert_not_called()
+
     def test_process_no_draft_when_proposals(self) -> None:
         """AC-7: Process shows final_action but no draft for non-draft paths."""
         mock_state = _mock_result()

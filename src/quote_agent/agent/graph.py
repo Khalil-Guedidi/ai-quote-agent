@@ -27,7 +27,11 @@ logger = logging.getLogger(__name__)
 
 
 def _route_after_router(state: AgentState) -> str:
-    """Decide next node after the router based on routing action."""
+    """Decide next node after the router based on routing action.
+
+    Fallback routes to notify_escalation (not silent END) so unexpected
+    routing failures are never silently dropped.
+    """
     decision = state.get("routing_decision")
     if decision is not None:
         if decision.action == "proceed_to_draft":
@@ -36,11 +40,17 @@ def _route_after_router(state: AgentState) -> str:
             return "notify_proposals"
         if decision.action in ("escalate", "notify_out_of_scope"):
             return "notify_escalation"
-    return "end"
+    # Fallback: no routing decision (error state or unexpected) → escalation
+    logger.warning("Route fallback: routing_decision is None — routing to notify_escalation")
+    return "notify_escalation"
 
 
 def _route_after_compliance(state: AgentState) -> str:
     """Decide whether to proceed to draft or notify rejection based on review + compliance."""
+    # Error state (e.g. compliance node exception) → reject, don't silently continue to draft
+    if state.get("error"):
+        return "notify_rejection"
+
     review_result = state.get("self_review")
     if review_result is not None and not review_result.approved:
         return "notify_rejection"
@@ -137,7 +147,7 @@ def build_agent_graph(
 
     async def route_node(state: AgentState) -> dict[str, Any]:
         if _has_error(state):
-            return {"current_node": "route"}
+            return {"current_node": "route", "final_action": "routing_fallback"}
         try:
             decision = route_by_confidence(
                 state["confidence"],  # type: ignore[arg-type]
@@ -314,7 +324,7 @@ def build_agent_graph(
     graph.add_edge("reason", "score")
     graph.add_edge("score", "route")
 
-    # Conditional: route → review (high) | notify_proposals (medium) | notify_escalation (low/out_of_scope) | END
+    # Conditional: route → review (high) | notify_proposals (medium) | notify_escalation (low/out_of_scope/fallback)
     graph.add_conditional_edges(
         "route",
         _route_after_router,
@@ -322,7 +332,6 @@ def build_agent_graph(
             "review": "review",
             "notify_proposals": "notify_proposals",
             "notify_escalation": "notify_escalation",
-            "end": END,
         },
     )
 

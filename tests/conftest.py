@@ -32,6 +32,7 @@ def _minimal_env() -> dict[str, str]:
         "EMAIL__IMAP_SERVER": "imap.test.local",
         "EMAIL__USERNAME": "test@test.local",
         "EMAIL__PASSWORD": "test-password",
+        "NOTIFICATION__CHANNEL": "log",
     }
 
 

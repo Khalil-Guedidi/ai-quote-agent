@@ -444,20 +444,28 @@ class TestNotifyEscalationFailure:
 
 
 class TestNotifyEscalationMissingRouting:
-    """Edge case: no routing_decision in state."""
+    """Edge case: no routing_decision in state (route fallback)."""
 
     @pytest.mark.asyncio
-    async def test_skips_notification_when_no_routing_decision(self) -> None:
-        """AC-4: Missing routing_decision → graceful skip, no error."""
+    async def test_sends_fallback_escalation_when_no_routing_decision(self) -> None:
+        """AC-5 (5.5.5): Missing routing_decision → send fallback escalation (not skip)."""
+        from datetime import UTC, datetime
+
+        from quote_agent.adapters.notification.models import NotificationResult
+
         state = _make_escalation_state(with_routing=False)
+        mock_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
         adapter = AsyncMock()
+        adapter.send_notification = AsyncMock(return_value=mock_result)
 
         result = await notify_escalation(state, adapter)
 
-        adapter.send_notification.assert_not_called()
-        assert result["notification_result"] is None
+        adapter.send_notification.assert_called_once()
+        payload = adapter.send_notification.call_args[0][0]
+        assert payload.card_type == "escalation"
+        assert "Échec de routage" in payload.data["uncertain"]
         assert result["current_node"] == "notify_escalation"
-        assert "error" not in result
+        assert result["notification_result"] is mock_result
 
 
 # --- notify_rejection() Tests ---

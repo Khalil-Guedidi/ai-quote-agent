@@ -158,27 +158,34 @@ async def notify_escalation(
     This node is fire-and-forget: notification failures are logged but never
     propagate as pipeline errors.
     """
-    routing_decision = state.get("routing_decision")
-    if routing_decision is None:
-        logger.warning("notify_escalation: no routing_decision in state, skipping notification")
-        return {"notification_result": None, "current_node": "notify_escalation"}
-
     raw_request = state["raw_request"]
     client_name = raw_request.client_name or "?"
 
-    escalation_ctx = routing_decision.escalation_context
-    if escalation_ctx is not None:
-        understood = escalation_ctx.understood
-        uncertain = escalation_ctx.uncertain
-        steps = escalation_ctx.suggested_next_steps
+    routing_decision = state.get("routing_decision")
+    if routing_decision is None:
+        # Route fallback or error state — send escalation with available context
+        logger.warning("notify_escalation: no routing_decision — sending fallback escalation")
+        error_msg = state.get("error") or "Échec de routage inattendu"
+        understood = f"Client: {client_name} — demande reçue mais non traitée"
+        uncertain = f"Échec de routage inattendu : {error_msg}"
+        steps = [
+            "Vérifier la demande originale",
+            "Traiter manuellement si pertinent",
+            "Vérifier les logs pour diagnostiquer l'erreur",
+        ]
+        confidence_pct = "0"
+    elif routing_decision.escalation_context is not None:
+        understood = routing_decision.escalation_context.understood
+        uncertain = routing_decision.escalation_context.uncertain
+        steps = routing_decision.escalation_context.suggested_next_steps
+        confidence_pct = str(round(routing_decision.confidence * 100))
     else:
         # Fallback for out_of_scope — build context from classification
         classification = state.get("classification")
         understood = "; ".join(classification.reasons) if classification else "Demande classée hors périmètre"
         uncertain = "Cette demande ne correspond pas au périmètre de l'agent (pas un produit catalogue)"
         steps = ["Traiter la demande manuellement", "Vérifier si le client a besoin d'un autre service"]
-
-    confidence_pct = str(round(routing_decision.confidence * 100))
+        confidence_pct = str(round(routing_decision.confidence * 100))
     from quote_agent.config import get_settings
 
     base_url = get_settings().app.base_url

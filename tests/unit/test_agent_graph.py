@@ -170,10 +170,10 @@ class TestRouteAfterRouter:
         state: AgentState = AgentState(routing_decision=_mock_routing("notify_out_of_scope"))  # type: ignore[typeddict-item]
         assert _route_after_router(state) == "notify_escalation"
 
-    def test_none_routing_decision_routes_to_end(self) -> None:
-        """AC-4: Missing routing decision (error state) → end."""
+    def test_none_routing_decision_routes_to_notify_escalation(self) -> None:
+        """AC-5 (5.5.5): Missing routing decision (fallback) → notify_escalation (not silent end)."""
         state: AgentState = AgentState(routing_decision=None)  # type: ignore[typeddict-item]
-        assert _route_after_router(state) == "end"
+        assert _route_after_router(state) == "notify_escalation"
 
 
 class TestRouteAfterCompliance:
@@ -210,6 +210,15 @@ class TestRouteAfterCompliance:
             compliance=_mock_compliance(compliant=True),
         )
         assert _route_after_compliance(state) == "draft"
+
+    def test_error_state_routes_to_notify_rejection(self) -> None:
+        """AC-6 (5.5.5): Error state in compliance → notify_rejection (not draft)."""
+        state: AgentState = AgentState(  # type: ignore[typeddict-item]
+            error="compliance: LLM timeout",
+            self_review=_mock_review(approved=True),
+            compliance=None,
+        )
+        assert _route_after_compliance(state) == "notify_rejection"
 
 
 # ---------------------------------------------------------------------------
@@ -540,12 +549,23 @@ class TestGraphErrorHandling:
     """AC-4: Error handling in graph nodes."""
 
     @pytest.mark.asyncio
-    async def test_classify_failure_sets_error(self) -> None:
-        """AC-4: Classification failure → error in state, graph completes."""
+    async def test_classify_failure_routes_to_escalation(self) -> None:
+        """AC-4 (5.5.5): Classification failure → error → route fallback → notify_escalation (not silent END)."""
+        from datetime import UTC, datetime
+
+        from quote_agent.adapters.notification.models import NotificationResult
+
         request = _make_request()
         state = create_initial_state(request)
 
-        with patch(_CLASSIFY, new_callable=AsyncMock, side_effect=RuntimeError("LLM timeout")):
+        mock_notif_result = NotificationResult(success=True, status_code=200, timestamp=datetime.now(tz=UTC))
+        mock_adapter = AsyncMock()
+        mock_adapter.send_notification = AsyncMock(return_value=mock_notif_result)
+
+        with (
+            patch(_CLASSIFY, new_callable=AsyncMock, side_effect=RuntimeError("LLM timeout")),
+            patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
+        ):
             graph = build_agent_graph(
                 MagicMock(), _make_session_factory(), MagicMock(),
                 _make_settings_mock(),
@@ -555,6 +575,11 @@ class TestGraphErrorHandling:
         assert result.get("error") is not None
         assert "classify" in result["error"]
         assert "LLM timeout" in result["error"]
+        # After fix: error path routes to escalation, not silent END
+        assert result["current_node"] == "notify_escalation"
+        assert result["final_action"] == "routing_fallback"
+        # Notification was sent with fallback context
+        mock_adapter.send_notification.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_reason_failure_sets_error(self) -> None:

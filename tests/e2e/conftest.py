@@ -12,6 +12,7 @@ from quote_agent.adapters.email import get_email_adapter
 from quote_agent.adapters.embedding import get_embedding_adapter
 from quote_agent.adapters.erp import get_erp_adapter
 from quote_agent.adapters.llm import get_llm_adapter
+from quote_agent.adapters.notification import get_notification_adapter
 from quote_agent.config import get_settings
 from quote_agent.models.base import _get_session_factory, create_async_engine_from_settings
 from quote_agent.models.email_request import EmailRequest
@@ -63,6 +64,20 @@ requires_e2e_erp = pytest.mark.skipif(
 
 
 @pytest.fixture(autouse=True)
+def _force_log_notifications() -> Iterator[None]:
+    """Force notification channel to 'log' so E2E tests never hit Teams."""
+    old = os.environ.get("NOTIFICATION__CHANNEL")
+    os.environ["NOTIFICATION__CHANNEL"] = "log"
+    get_notification_adapter.cache_clear()
+    yield
+    if old is None:
+        os.environ.pop("NOTIFICATION__CHANNEL", None)
+    else:
+        os.environ["NOTIFICATION__CHANNEL"] = old
+    get_notification_adapter.cache_clear()
+
+
+@pytest.fixture(autouse=True)
 def _clear_all_caches() -> Iterator[None]:
     """Clear all singleton caches before/after each E2E test."""
     get_settings.cache_clear()
@@ -72,6 +87,7 @@ def _clear_all_caches() -> Iterator[None]:
     get_email_adapter.cache_clear()
     get_erp_adapter.cache_clear()
     get_embedding_adapter.cache_clear()
+    get_notification_adapter.cache_clear()
     yield
     get_settings.cache_clear()
     create_async_engine_from_settings.cache_clear()
@@ -80,6 +96,7 @@ def _clear_all_caches() -> Iterator[None]:
     get_email_adapter.cache_clear()
     get_erp_adapter.cache_clear()
     get_embedding_adapter.cache_clear()
+    get_notification_adapter.cache_clear()
 
 
 # ---------------------------------------------------------------------------

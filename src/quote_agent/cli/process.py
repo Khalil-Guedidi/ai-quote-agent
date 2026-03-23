@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 from typing import Any
 
 import typer
 
 from quote_agent.services.extraction_models import ExtractedQuoteRequest, QuoteLineItem
+
+logger = logging.getLogger(__name__)
 
 
 def _format_state(state: dict[str, Any]) -> None:
@@ -109,6 +112,45 @@ def _state_to_json(state: dict[str, Any]) -> str:
     return json.dumps(output, indent=2, default=str)
 
 
+async def _send_error_notification(error: str) -> None:
+    """Send a fire-and-forget error notification after pipeline failure (Option B).
+
+    This catches infrastructure failures (LLM timeout, DB down, etc.) that
+    propagated through the graph as state["error"].
+    """
+    from quote_agent.adapters.notification import get_notification_adapter
+    from quote_agent.adapters.notification.models import NotificationPayload
+
+    payload = NotificationPayload(
+        title="Erreur pipeline",
+        message=f"Le pipeline a rencontré une erreur : {error}",
+        card_type="escalation",
+        data={
+            "client": "?",
+            "understood": "Erreur infrastructure détectée après exécution du pipeline",
+            "uncertain": error,
+            "suggested_next_steps": [
+                "Vérifier les logs pour diagnostiquer l'erreur",
+                "Vérifier la disponibilité des services (LLM, BDD, ERP)",
+                "Relancer le traitement si transitoire",
+            ],
+            "confidence_pct": "0",
+            "erp_url": "",
+        },
+    )
+
+    try:
+        adapter = get_notification_adapter()
+        result = await adapter.send_notification(payload)
+        if not result.success:
+            logger.warning(
+                "Error notification send returned failure",
+                extra={"context": {"error": result.error, "status_code": result.status_code}},
+            )
+    except Exception:
+        logger.warning("Error notification send raised an exception", exc_info=True)
+
+
 async def _run_process(
     description: str,
     *,
@@ -162,6 +204,11 @@ def process(
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
         raise typer.Exit(code=1) from None
+
+    # Post-pipeline error notification (Option B — Story 5.5.5)
+    error = result.get("error")
+    if error:
+        asyncio.run(_send_error_notification(error))
 
     if json_output:
         typer.echo(_state_to_json(result))
