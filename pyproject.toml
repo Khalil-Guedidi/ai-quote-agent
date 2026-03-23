@@ -64,5 +64,6 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
     "e2e: end-to-end tests requiring real services (IMAP, PostgreSQL, LLM)",
+    "scale: large-scale tests (50K products, slow)",
 ]
-addopts = "-m 'not e2e'"
+addopts = "-m 'not e2e and not scale'"

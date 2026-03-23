@@ -454,6 +454,7 @@ All search-related settings follow the existing pydantic-settings pattern and ar
 ### Test Markers
 
 - `@pytest.mark.e2e` — requires real services (PostgreSQL, BGE-M3 model, optionally Odoo)
+- `@pytest.mark.scale` — large-scale tests (50K products), excluded by default, run with `pytest -m "e2e and scale"`
 - `@pytest.mark.benchmark` — performance benchmarks, excluded from CI by default
 
 ---
@@ -493,9 +494,10 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
     "e2e: end-to-end tests requiring real services (IMAP, PostgreSQL, LLM)",
+    "scale: large-scale tests (50K products, slow)",
     "benchmark: performance benchmarks",
 ]
-addopts = "-m 'not e2e'"
+addopts = "-m 'not e2e and not scale'"
 ```
 
 - `asyncio_mode = "auto"`: no need for `@pytest.mark.asyncio` decorator
