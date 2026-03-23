@@ -1,45 +1,64 @@
-# LinkedIn Post Draft — Build in Public Series
+# Template de post LinkedIn : Série Build in Public
 
-## Post Metadata
+## Métadonnées du post
 
-- **Story:** T.9 — LLM Re-ranking Post
-- **Phase:** Search (Epic 3)
-- **Date drafted:** 2026-03-20
-
----
-
-## LinkedIn Post
-
-Vector search found the right product. It also found 200 you can't actually sell.
-
-Last post, I shared how I built the search foundation: 50,000 products indexed with vector embeddings so the system understands meaning, not just keywords. It worked. But "working" in a demo and "working" in production are two very different things.
-
-Three problems showed up fast. First, vector search alone misses exact product codes. A customer types "TUB-304L-025" and semantic search tries to interpret the meaning instead of just finding the exact match. Second, the results include discontinued and out-of-stock products. Finding the right product doesn't help if you can't sell it. Third, industry shorthand like "inox DN100" means nothing to the search engine without knowing that "inox" means stainless steel and "DN" means nominal diameter.
-
-So I added three layers on top. A hybrid search that combines meaning and keywords, then picks the best results from both. A filter that removes unsellable products before they even reach the results. And a jargon dictionary that automatically expands abbreviations into full terms.
-
-The result: 363 tests passing, search under 3 seconds on 50,000 products, and repeated searches return in under 1 second from cache.
-
-When you search for a product at work, how often does the system actually understand what you mean?
-
-#BuildInPublic #AI #Search #B2B #Python
+- **Story :** T.9 : Reranking LLM : comment l'IA trie les résultats de recherche
+- **Phase :** Recherche (Epic 3)
+- **Date de rédaction :** 2026-03-23
+- **Priorité :** Basse
 
 ---
 
-## Formatting Checklist
+## Asset visuel
 
-- [x] Total length: ~150-250 words (approx. 212 words)
-- [x] Written in English
-- [x] No past client names or confidential information
-- [x] All data comes from this repo's code, synthetic data, and metrics
-- [x] Professional experience framed as domain expertise, not client work
-- [x] Includes at least one concrete number or metric (363 tests, 3 seconds, 50,000 products, 200, 1 second)
-- [x] Ends with a question or conversation starter
-- [x] No corporate buzzwords — keep it authentic and conversational
-- [x] Hashtags (3-5 max): #BuildInPublic #AI #Search #B2B #Python
+- **Type :** Carousel technique
+- **Description :** Carousel 4 slides : query, résultats bruts, reranking, résultat final avec scores
+- **Dimensions :** 1080x1080px par slide
+- **Outil suggéré :** Canva
+- **Notes :** Slide 1 : la requête client ("inox DN100"). Slide 2 : résultats bruts de la recherche (dont des produits invendables). Slide 3 : le filtre de proposabilité en action. Slide 4 : résultat final trié avec scores. Compréhensible sans lire le texte.
 
 ---
 
-## Series Continuity Note
+## Post LinkedIn
 
-This is post #9 in the Build in Public series, continuing the Search phase (Epic 3). T.8 covered the search foundation (vector embeddings, pgvector, multilingual model). T.9 answers "and then what?" by showing the three layers that made search production-ready. Next: T.10 will wrap up the full search story after Epic 3 is complete.
+La recherche vectorielle a trouvé le bon produit. Elle a aussi trouvé 200 produits qu'on ne peut pas vendre.
+
+50 000 produits indexés avec des embeddings vectoriels, le système comprend le sens, pas juste les mots. Ça marchait en démo. En production, trois problèmes sont apparus vite.
+
+La recherche vectorielle seule rate les codes produit exacts. Un client tape "TUB-304L-025" et la recherche sémantique essaie d'interpréter le sens au lieu de trouver la correspondance exacte. Les résultats incluent des produits abandonnés et en rupture. Et le jargon industriel comme "inox DN100" ne dit rien au moteur sans contexte.
+
+J'ai ajouté trois couches. Une recherche hybride qui combine le sens et les mots-clés. Un filtre qui retire les produits invendables avant qu'ils n'apparaissent dans les résultats. Et un dictionnaire de jargon qui développe automatiquement les abréviations.
+
+363 tests qui passent, recherche en moins de 3 secondes sur 50 000 produits, et les recherches répétées reviennent en moins d'une seconde grâce au cache.
+
+Quand vous cherchez un produit au travail, est-ce que le système comprend vraiment ce que vous voulez dire ?
+
+---
+
+## Hashtags
+
+#IA #TransformationDigitale #BuildInPublic #AI #IndustrieB2B
+
+---
+
+## Checklist de formatage
+
+- [x] Longueur totale : 120-200 mots
+- [x] Rédigé en français (termes techniques anglais en ligne seulement)
+- [x] Asset visuel prêt (carousel, screenshot, schéma ou démo)
+- [x] Le visuel est compréhensible sans lire le texte
+- [x] Pas de noms de clients ni d'info confidentielle
+- [x] Toutes les données viennent du code et des métriques de ce repo
+- [x] Expérience professionnelle cadrée comme expertise domaine, pas travail client
+- [x] Au moins un chiffre ou une métrique concrète
+- [x] Finit par une question pour audience non technique
+- [x] Ton humain, familier, expert-qui-simplifie
+- [x] Pas de tirets longs, pas de "C'est X, pas Y"
+- [x] Pas de buzzwords corporate
+- [x] Hashtags (4-5 max) : mix français + anglais, inclut #BuildInPublic
+
+---
+
+## Note de continuité
+
+Post #9, suite de la phase Recherche. T.8 couvrait la fondation de recherche (embeddings, pgvector, modèle multilingue). Ce post montre les trois couches qui rendent la recherche utilisable en production. La semaine prochaine : le récap de la phase Recherche complète.

@@ -1,47 +1,64 @@
-# LinkedIn Post Draft — Build in Public Series
+# Template de post LinkedIn : Série Build in Public
 
-## Post Metadata
+## Métadonnées du post
 
-- **Story:** T.4 — Foundation Recap Post
-- **Phase:** Foundation (Epic 1)
-- **Date drafted:** 2026-03-18
-
----
-
-## LinkedIn Post
-
-My prototype nailed 96.2% accuracy. It also had zero tests, zero deployment process, and zero chance of surviving a real production environment.
-
-That's the gap nobody talks about. A working demo and a production system are two completely different things. The prototype proved the idea works. But "works on my laptop" doesn't mean "ready for a client's infrastructure."
-
-So I spent the last few weeks rebuilding everything from scratch. Not the AI part. The everything-else part. A proper configuration system. A database with migrations. Health checks for every external service. Adapters that let me swap any integration without touching the rest of the code. Docker deployment so a client can run one command instead of following a 20-step setup guide. And a CI pipeline that runs every check automatically before anything ships.
-
-8 stories. 5 integration adapters. 68 automated tests where there used to be zero. The prototype had none of that. Production demanded all of it.
-
-None of this is exciting to show off. There's no flashy demo, no impressive accuracy number. Just the boring, invisible foundation that makes everything else reliable.
-
-Now that it's built, the real work starts: processing actual emails and generating real quotes.
-
-How much of your project is the invisible work that nobody ever sees?
-
-#BuildInPublic #AI #Python #B2B #SoloFounder
+- **Story :** T.4 : Fondation terminée : 8 stories, 68 tests, zéro étape manuelle
+- **Phase :** Fondation (Epic 1)
+- **Date de rédaction :** 2026-03-23
+- **Priorité :** Moyenne
 
 ---
 
-## Formatting Checklist
+## Asset visuel
 
-- [x] Total length: ~150-250 words (approx. 213 words)
-- [x] Written in English
-- [x] No past client names or confidential information
-- [x] All data comes from this repo's code, synthetic data, and metrics
-- [x] Professional experience framed as domain expertise, not client work
-- [x] Includes at least one concrete number or metric (96.2%, 68 tests, 8 stories, 5 adapters, zero tests)
-- [x] Ends with a question or conversation starter
-- [x] No corporate buzzwords — keep it authentic and conversational
-- [x] Hashtags (3-5 max): #BuildInPublic #AI #Python #B2B #SoloFounder
+- **Type :** Screenshot métriques
+- **Description :** Screenshot tableau métriques (tests, couverture, docker compose up)
+- **Dimensions :** 1200x627px
+- **Outil suggéré :** Capture d'écran annotée
+- **Notes :** Annoter avec flèches les chiffres clés : 68 tests, 5 adaptateurs, docker compose up en une commande. Montrer le terminal avec les tests qui passent en vert. Compréhensible sans lire le texte.
 
 ---
 
-## Series Continuity Note
+## Post LinkedIn
 
-This is post #4 in the Build in Public series. It follows T.3 (the dirty data problem in industrial catalogs). With the foundation phase now complete, the series transitions from "building the infrastructure" to "tackling the real challenge": processing live emails and generating production quotes (Epic 2).
+Mon prototype faisait 96.2% de précision. Il avait aussi zéro test, zéro processus de déploiement, et zéro chance de survivre en production.
+
+Le fossé dont personne ne parle. Une démo qui marche et un système de production, ce sont deux choses complètement différentes. Le prototype prouvait que l'idée fonctionnait. Mais "ça marche sur mon laptop" ne veut pas dire "prêt pour l'infrastructure d'un client".
+
+J'ai passé plusieurs semaines à tout reconstruire. Pas la partie IA. Tout le reste. Un système de configuration propre. Une base de données avec des migrations. Des health checks pour chaque service externe. Des adaptateurs qui permettent de changer n'importe quelle intégration sans toucher au reste du code. Un déploiement Docker pour qu'un client lance une seule commande au lieu de suivre un guide de 20 étapes.
+
+8 stories. 5 adaptateurs. 68 tests automatisés là où il y en avait zéro.
+
+Rien de spectaculaire à montrer. Pas de démo impressionnante. Juste la fondation invisible qui rend tout le reste fiable.
+
+Quelle proportion de vos projets représente le travail invisible que personne ne voit jamais ?
+
+---
+
+## Hashtags
+
+#IA #PME #BuildInPublic #AI #IndustrieB2B
+
+---
+
+## Checklist de formatage
+
+- [x] Longueur totale : 120-200 mots
+- [x] Rédigé en français (termes techniques anglais en ligne seulement)
+- [x] Asset visuel prêt (carousel, screenshot, schéma ou démo)
+- [x] Le visuel est compréhensible sans lire le texte
+- [x] Pas de noms de clients ni d'info confidentielle
+- [x] Toutes les données viennent du code et des métriques de ce repo
+- [x] Expérience professionnelle cadrée comme expertise domaine, pas travail client
+- [x] Au moins un chiffre ou une métrique concrète
+- [x] Finit par une question pour audience non technique
+- [x] Ton humain, familier, expert-qui-simplifie
+- [x] Pas de tirets longs, pas de "C'est X, pas Y"
+- [x] Pas de buzzwords corporate
+- [x] Hashtags (4-5 max) : mix français + anglais, inclut #BuildInPublic
+
+---
+
+## Note de continuité
+
+Post #4 de la série, dernier post de la phase Fondation (Epic 1). T.3 montrait le défi des données sales. Ce post ferme la phase : l'infrastructure invisible est en place. La semaine prochaine, la série entre dans la phase Pipeline Email (Epic 2) : le jargon industriel français.

@@ -1,60 +1,64 @@
-# LinkedIn Post Draft — Build in Public Series
+# Template de post LinkedIn : Série Build in Public
 
-## Post Metadata
+## Métadonnées du post
 
-- **Story:** T.7 — It's Alive Post
-- **Phase:** Email Pipeline (Epic 2)
-- **Date drafted:** 2026-03-19
-
----
-
-## LinkedIn Post
-
-Last week my system processed its first real email. Not a test fixture. Not a hardcoded string. An actual B2B quote request, received, parsed, and structured automatically.
-
-I'm building an AI that handles industrial quote requests. The prototype I built months ago could match products with 96.2% accuracy. Impressive demo. But it couldn't receive an email on its own. It couldn't handle missing data, bad formatting, or someone trying to trick the model. A proof of concept. Nothing you could point at real emails.
-
-So I rebuilt it. Two epics, 14 stories, and a few weeks later, the system now receives emails over IMAP, strips signatures and noise, extracts structured data with an LLM, and splits multi-product requests into individual line items. Four stages, each with its own error handling, each tested independently.
-
-The prototype had zero tests. The production pipeline has 188. The prototype was one monolithic flow. Production is four discrete stages with security layers, log redaction, and graceful degradation at every step.
-
-Here's the honest part: the prototype could match products. The production system can't do that yet. That's the next phase. Different problem, different metrics. But the pipeline is alive. Emails go in, structured data comes out.
-
-At what point did your side project start feeling like a real product?
-
-#BuildInPublic #AI #Milestone #B2B #Python
+- **Story :** T.7 : Premier vrai email traité de bout en bout
+- **Phase :** Pipeline Email (Epic 2)
+- **Date de rédaction :** 2026-03-23
+- **Priorité :** Moyenne
 
 ---
 
-## Formatting Checklist
+## Asset visuel
 
-- [x] Total length: ~150-250 words (approx. 210 words)
-- [x] Written in English
-- [x] No past client names or confidential information
-- [x] All data comes from this repo's code, synthetic data, and metrics
-- [x] Professional experience framed as domain expertise, not client work
-- [x] Includes at least one concrete number or metric (96.2%, 188 tests, 14 stories, 4 stages, zero tests)
-- [x] Ends with a question or conversation starter
-- [x] No corporate buzzwords — keep it authentic and conversational
-- [x] Hashtags (3-5 max): #BuildInPublic #AI #Milestone #B2B #Python
+- **Type :** Démo GIF/screenshot
+- **Description :** GIF ou screenshot séquence : email reçu, extraction, matching, devis brouillon dans Odoo
+- **Dimensions :** 1200x627px ou GIF
+- **Outil suggéré :** Capture d'écran annotée ou enregistrement terminal
+- **Notes :** Montrer la séquence complète en 4 étapes avec des flèches : email IMAP reçu, contenu nettoyé, données extraites, résultat structuré. Annoter chaque étape. Compréhensible sans lire le texte.
 
 ---
 
-## Series Continuity Note
+## Post LinkedIn
 
-This is post #7 in the Build in Public series. It follows T.6 (error & edge cases) and closes the Email Pipeline phase (Epic 2). Where T.6 showed how the system handles failures, T.7 marks the milestone: the pipeline actually works end-to-end. Next up: Epic 3, product catalog search.
+La semaine dernière, mon système a traité son premier vrai email. Pas un fichier de test. Pas une chaîne codée en dur. Une vraie demande de devis B2B, reçue, analysée et structurée automatiquement.
+
+Le prototype que j'avais construit faisait 96.2% de précision sur le matching produit. Une belle démo. Mais il ne savait pas recevoir un email tout seul. Il ne gérait pas les données manquantes, le mauvais formatage, ou quelqu'un qui essaie de tromper le modèle.
+
+J'ai tout reconstruit. 2 epics, 14 stories, et quelques semaines plus tard, le système reçoit les emails par IMAP, nettoie les signatures et le bruit, extrait les données structurées avec un LLM, et sépare les demandes multi-produits en lignes individuelles. 4 étapes, chacune avec sa propre gestion d'erreurs.
+
+Le prototype avait zéro test. Le pipeline de production en a 188. Le prototype était un flux monolithique. La production, ce sont 4 étapes distinctes avec des couches de sécurité et de la dégradation gracieuse à chaque niveau.
+
+Le pipeline est vivant. Les emails entrent, les données structurées sortent.
+
+À quel moment votre projet perso a commencé à ressembler à un vrai produit ?
 
 ---
 
-## Contra Project Update
+## Hashtags
 
-**Epic 2 Complete: Email Processing Pipeline**
+#IA #TransformationDigitale #BuildInPublic #AI #IndustrieB2B
 
-The AI quote agent now has a fully functional email processing pipeline. From prototype to production:
+---
 
-- **Pipeline:** 4-stage processing (receive, clean, extract, split) replacing the monolithic n8n prototype flow
-- **Quality:** 188 automated tests (up from 0 at prototype), 0 regressions across all 6 Epic 2 stories
-- **Security:** 2-layer prompt injection defense, structured logging with confidential data redaction
-- **Scale:** 14 stories delivered across 2 epics, 52 Python source files, 5 service modules
+## Checklist de formatage
 
-**What's next:** Epic 3 brings product catalog search. The system can receive and parse emails. Next it learns to match requests to actual products.
+- [x] Longueur totale : 120-200 mots
+- [x] Rédigé en français (termes techniques anglais en ligne seulement)
+- [x] Asset visuel prêt (carousel, screenshot, schéma ou démo)
+- [x] Le visuel est compréhensible sans lire le texte
+- [x] Pas de noms de clients ni d'info confidentielle
+- [x] Toutes les données viennent du code et des métriques de ce repo
+- [x] Expérience professionnelle cadrée comme expertise domaine, pas travail client
+- [x] Au moins un chiffre ou une métrique concrète
+- [x] Finit par une question pour audience non technique
+- [x] Ton humain, familier, expert-qui-simplifie
+- [x] Pas de tirets longs, pas de "C'est X, pas Y"
+- [x] Pas de buzzwords corporate
+- [x] Hashtags (4-5 max) : mix français + anglais, inclut #BuildInPublic
+
+---
+
+## Note de continuité
+
+Post #7, dernier de la phase Pipeline Email (Epic 2). T.6 montrait la gestion des erreurs et cas limites. Ce post marque le jalon : le pipeline fonctionne de bout en bout. La semaine prochaine, la série entre dans la phase Recherche (Epic 3) : trouver le bon produit parmi 50 000 références.

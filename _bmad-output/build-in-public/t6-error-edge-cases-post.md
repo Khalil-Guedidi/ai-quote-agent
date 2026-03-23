@@ -1,45 +1,64 @@
-# LinkedIn Post Draft — Build in Public Series
+# Template de post LinkedIn : Série Build in Public
 
-## Post Metadata
+## Métadonnées du post
 
-- **Story:** T.6 — Error & Edge Cases Post
-- **Phase:** Email Pipeline (Epic 2)
-- **Date drafted:** 2026-03-19
-
----
-
-## LinkedIn Post
-
-Every AI demo shows the happy path. The model gets a clean input, produces a perfect output, and everyone claps. But production is not a demo.
-
-I'm building an AI that turns B2B quote request emails into structured data. Sometimes the email is empty. Sometimes the model takes 15 seconds to respond. Sometimes the extraction returns a product with no quantity, no reference, just a vague description. What happens then?
-
-You plan for it. Every failure gets a strategy.
-
-If the model takes too long, a 10-second timeout kills the call and raises a clean error. If the extraction fails on one email, that email gets flagged and the pipeline moves to the next one. If the model can't find a quantity, the field stays empty. No guessing. No hallucinated data. If the splitting step fails entirely, the system falls back to treating everything as one single request. The pipeline keeps moving.
-
-And for each of these decisions, there's a test. 166 of them so far. Because the happy path is maybe 10% of the code. The other 90%? Making sure the system survives the real world.
-
-When you ship an AI feature, what's your plan for when the model just... doesn't work?
-
-#BuildInPublic #AI #Engineering #Reliability #B2B
+- **Story :** T.6 : Cas limites : quand un email contient 12 produits et 3 langues
+- **Phase :** Pipeline Email (Epic 2)
+- **Date de rédaction :** 2026-03-23
+- **Priorité :** Moyenne
 
 ---
 
-## Formatting Checklist
+## Asset visuel
 
-- [x] Total length: ~150-250 words (approx. 207 words)
-- [x] Written in English
-- [x] No past client names or confidential information
-- [x] All data comes from this repo's code, synthetic data, and metrics
-- [x] Professional experience framed as domain expertise, not client work
-- [x] Includes at least one concrete number or metric (10-second timeout, 166 tests, 10%/90% ratio)
-- [x] Ends with a question or conversation starter
-- [x] No corporate buzzwords — keep it authentic and conversational
-- [x] Hashtags (3-5 max): #BuildInPublic #AI #Engineering #Reliability #B2B
+- **Type :** Screenshot parsing
+- **Description :** Screenshot sortie d'extraction structurée : email brut vs données extraites par le LLM
+- **Dimensions :** 1200x627px
+- **Outil suggéré :** Capture d'écran annotée
+- **Notes :** Côté gauche : email brut avec du bruit (signatures, fils de réponse). Côté droit : données structurées extraites (produits, quantités, références). Flèches entre les deux pour montrer la transformation. Compréhensible sans lire le texte.
 
 ---
 
-## Series Continuity Note
+## Post LinkedIn
 
-This is post #6 in the Build in Public series. It follows T.5 (French industrial jargon) and continues the Email Pipeline phase. Where T.5 showed the challenge of understanding domain-specific language, T.6 shifts to what happens when the processing pipeline hits a wall.
+Chaque démo IA montre le cas idéal. Le modèle reçoit une entrée propre, produit une sortie parfaite, tout le monde applaudit. Mais la production, ce n'est pas une démo.
+
+Je construis un agent IA qui transforme des emails de demande de devis B2B en données structurées. Parfois l'email est vide. Parfois le modèle met 15 secondes à répondre. Parfois l'extraction renvoie un produit sans quantité, sans référence, juste une description vague. Qu'est-ce qui se passe dans ces cas-là ?
+
+On anticipe. Chaque échec a sa stratégie.
+
+Si le modèle met trop longtemps, un timeout de 10 secondes coupe l'appel proprement. Si l'extraction échoue sur un email, cet email est signalé et le pipeline passe au suivant. Si le modèle ne trouve pas de quantité, le champ reste vide. Pas d'invention. Pas de données hallucinées. Le pipeline continue.
+
+166 tests à ce stade. Parce que le cas idéal, c'est peut-être 10% du code. Les 90% restants ? S'assurer que le système survit au monde réel.
+
+Quand vous déployez une fonctionnalité IA, quel est votre plan pour quand le modèle ne marche tout simplement pas ?
+
+---
+
+## Hashtags
+
+#IA #Automatisation #BuildInPublic #AI #IndustrieB2B
+
+---
+
+## Checklist de formatage
+
+- [x] Longueur totale : 120-200 mots
+- [x] Rédigé en français (termes techniques anglais en ligne seulement)
+- [x] Asset visuel prêt (carousel, screenshot, schéma ou démo)
+- [x] Le visuel est compréhensible sans lire le texte
+- [x] Pas de noms de clients ni d'info confidentielle
+- [x] Toutes les données viennent du code et des métriques de ce repo
+- [x] Expérience professionnelle cadrée comme expertise domaine, pas travail client
+- [x] Au moins un chiffre ou une métrique concrète
+- [x] Finit par une question pour audience non technique
+- [x] Ton humain, familier, expert-qui-simplifie
+- [x] Pas de tirets longs, pas de "C'est X, pas Y"
+- [x] Pas de buzzwords corporate
+- [x] Hashtags (4-5 max) : mix français + anglais, inclut #BuildInPublic
+
+---
+
+## Note de continuité
+
+Post #6, suite de la phase Pipeline Email. T.5 montrait le défi du jargon industriel français. Ce post montre ce qui se passe quand le pipeline rencontre un mur : les cas limites et la gestion d'erreurs. La semaine prochaine : le premier vrai email traité de bout en bout.

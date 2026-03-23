@@ -1,54 +1,64 @@
-# LinkedIn Post Draft — Build in Public Series
+# Template de post LinkedIn : Série Build in Public
 
-## Post Metadata
+## Métadonnées du post
 
-- **Story:** T.1 — Prototype Launch Post
-- **Phase:** Launch
-- **Date drafted:** 2026-03-17
-
----
-
-## LinkedIn Post
-
-I'm building an AI agent that reads messy B2B emails and generates quotes in 3 seconds.
-
-I've spent years building AI pipelines in production. They work great — but they don't think. They don't adapt. And they can't say "I'm not sure, let me flag this for a human."
-
-That's what I want to build now. A real AI agent for B2B industrial quoting.
-
-You know the drill if you've worked in distribution: a customer emails "vis M8x40 inox" and someone on the sales team has to figure out that means "stainless steel hex bolt 8mm," find it in the ERP, and draft a quote. Dozens of times a day.
-
-My agent does the whole thing. Email comes in, it understands what the customer wants, searches the product catalog, and creates a draft quote in the ERP. Under 3 seconds.
-
-I prototyped it in n8n to validate the idea fast. First results on a 680-product test catalog:
-- 96.2% accuracy finding the right products
-- 2.9s per quote on average
-- Handles simple, multi-line, and ambiguous requests
-
-The prototype works. Now I'm rebuilding it for real: Python, LangGraph, Qdrant, Claude. A proper agent stack with confidence scoring, memory, and human-in-the-loop routing.
-
-This is post #1. I'm building this in public, start to finish.
-
-If you work in B2B distribution or industrial sales — how much time does your team spend on quoting today?
-
-#BuildInPublic #AI #B2B #SaaS #IndustrialTech
+- **Story :** T.1 : Lancement du prototype : voilà ce que l'IA fait pour vos devis
+- **Phase :** Lancement
+- **Date de rédaction :** 2026-03-23
+- **Priorité :** Haute
 
 ---
 
-## Formatting Checklist
+## Asset visuel
 
-- [x] Total length: ~150-250 words (approx. 228 words)
-- [x] Written in English
-- [x] No past client names or confidential information
-- [x] All data comes from this repo's code, synthetic data, and metrics
-- [x] Professional experience framed as domain expertise, not client work
-- [x] Includes at least one concrete number or metric
-- [x] Ends with a question or conversation starter
-- [x] No corporate buzzwords — keep it authentic and conversational
-- [x] Hashtags (3-5 max): #BuildInPublic #AI #B2B #SaaS #IndustrialTech
+- **Type :** Screenshot + schéma
+- **Description :** Screenshot résultats prototype (96.2% précision, 2.9s latence) + schéma pipeline simplifié email-vers-devis
+- **Dimensions :** 1200x627px (screenshot) + 1080x1080px (schéma)
+- **Outil suggéré :** Capture d'écran annotée + Excalidraw
+- **Notes :** Annoter le screenshot avec les métriques clés (flèches sur 96.2% et 2.9s). Le schéma doit montrer le flux en 4 étapes : email reçu, extraction, matching produit, devis brouillon. Compréhensible sans lire le texte.
 
 ---
 
-## Series Continuity Note
+## Post LinkedIn
 
-This is the FIRST post in the Build in Public series. It establishes the project, the prototype results, and the narrative arc: following the journey from a working prototype to a production-ready AI quoting agent. Future posts will dive into specific technical decisions, challenges, and learnings along the way.
+96.2% de précision. 2.9 secondes par devis. Sur un catalogue de 680 produits industriels, sans nettoyage de données.
+
+Après des années dans le devis industriel B2B, je connais la réalité du terrain. Un client envoie "vis M8x40 inox" par email. Quelqu'un dans l'équipe commerciale doit comprendre que ça veut dire "vis à tête hexagonale M8, acier inoxydable", retrouver la bonne référence dans l'ERP, et rédiger un devis. Des dizaines de fois par jour.
+
+J'ai construit un agent IA qui fait tout ça automatiquement. L'email arrive, l'agent comprend la demande, cherche dans le catalogue produit, et crée un brouillon de devis dans l'ERP. En moins de 3 secondes.
+
+Le prototype tourne. Maintenant, je reconstruis tout pour la production : Python, LangGraph, Claude. Avec du scoring de confiance, de la mémoire, et un humain dans la boucle quand l'IA hésite.
+
+Premier post d'une série Build in Public, du début à la fin.
+
+Combien de temps vos équipes passent sur les devis chaque jour ?
+
+---
+
+## Hashtags
+
+#IA #IndustrieB2B #BuildInPublic #AI #Automatisation
+
+---
+
+## Checklist de formatage
+
+- [x] Longueur totale : 120-200 mots
+- [x] Rédigé en français (termes techniques anglais en ligne seulement)
+- [x] Asset visuel prêt (carousel, screenshot, schéma ou démo)
+- [x] Le visuel est compréhensible sans lire le texte
+- [x] Pas de noms de clients ni d'info confidentielle
+- [x] Toutes les données viennent du code et des métriques de ce repo
+- [x] Expérience professionnelle cadrée comme expertise domaine, pas travail client
+- [x] Au moins un chiffre ou une métrique concrète
+- [x] Finit par une question pour audience non technique
+- [x] Ton humain, familier, expert-qui-simplifie
+- [x] Pas de tirets longs, pas de "C'est X, pas Y"
+- [x] Pas de buzzwords corporate
+- [x] Hashtags (4-5 max) : mix français + anglais, inclut #BuildInPublic
+
+---
+
+## Note de continuité
+
+Premier post de la série Build in Public. Il pose le décor : les résultats du prototype, le problème métier (devis industriels manuels), et l'arc narratif à venir. La semaine prochaine : les choix de stack pour passer du prototype à la production.

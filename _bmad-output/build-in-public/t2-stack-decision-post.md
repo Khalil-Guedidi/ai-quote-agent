@@ -1,47 +1,64 @@
-# LinkedIn Post Draft — Build in Public Series
+# Template de post LinkedIn : Série Build in Public
 
-## Post Metadata
+## Métadonnées du post
 
-- **Story:** T.2 — Stack Decision Post
-- **Phase:** Foundation (Epic 1)
-- **Date drafted:** 2026-03-18
-
----
-
-## LinkedIn Post
-
-My n8n prototype hit 96% accuracy. So naturally, I threw it all away and started over in Python.
-
-Here's why.
-
-n8n was perfect for prototyping. Visual workflows, fast iteration, I had a working AI quoting agent in a few days. But when I started thinking about putting this in production, things got complicated. No tests, no way to handle errors properly, no control over how the agent makes decisions.
-
-So I rebuilt everything from scratch. Python with LangGraph, which basically lets me define exactly how my agent thinks, retries, and routes decisions step by step. A single PostgreSQL database that handles both the product catalog and the vector search (instead of juggling two separate databases). And a proper testing setup from day one.
-
-Two stories in, I already have 21 automated tests and a clean project structure. The prototype had zero of that.
-
-And honestly, that's not a criticism of n8n. It's the tool that helped me validate the idea in days. But prototyping and building for production are two very different games. One rewards speed, the other rewards reliability.
-
-At what point do you decide to stop iterating on something that works "well enough" and start fresh with the right foundations?
-
-#BuildInPublic #AI #Python #LangGraph #B2B
+- **Story :** T.2 : Choix de stack : pourquoi Python et LangGraph pour un agent de devis
+- **Phase :** Fondation (Epic 1)
+- **Date de rédaction :** 2026-03-23
+- **Priorité :** Moyenne
 
 ---
 
-## Formatting Checklist
+## Asset visuel
 
-- [x] Total length: ~150-250 words (approx. 207 words)
-- [x] Written in English
-- [x] No past client names or confidential information
-- [x] All data comes from this repo's code, synthetic data, and metrics
-- [x] Professional experience framed as domain expertise, not client work
-- [x] Includes at least one concrete number or metric
-- [x] Ends with a question or conversation starter
-- [x] No corporate buzzwords — keep it authentic and conversational
-- [x] Hashtags (3-5 max): #BuildInPublic #AI #Python #LangGraph #B2B
+- **Type :** Schéma architecture
+- **Description :** Diagramme architecture production : 5 adaptateurs (DB, LLM, ERP, Email, Notifs) + stack technique
+- **Dimensions :** 1200x627px
+- **Outil suggéré :** Excalidraw ou Mermaid
+- **Notes :** Montrer les 5 adaptateurs comme des blocs modulaires connectés au coeur de l'agent. Chaque bloc porte son nom et sa techno (PostgreSQL, Claude, Odoo, IMAP, Teams). Compréhensible sans lire le texte.
 
 ---
 
-## Series Continuity Note
+## Post LinkedIn
 
-This is post #2 in the Build in Public series. It follows T.1 (prototype launch results) and explains why the production rewrite uses a completely different stack. T.1 ended with "Now I'm rebuilding it for real" — this post delivers on that promise by explaining the reasoning behind the stack pivot.
+Mon prototype n8n faisait 96% de précision. Alors je l'ai jeté et j'ai tout recommencé en Python.
+
+n8n était parfait pour valider l'idée en quelques jours. Workflows visuels, itération rapide, un agent de devis fonctionnel très vite. Mais quand j'ai commencé à penser production, les limites sont apparues. Pas de tests, pas de gestion d'erreurs propre, pas de contrôle sur le raisonnement de l'agent.
+
+J'ai tout reconstruit. Python avec LangGraph pour définir exactement comment l'agent réfléchit, étape par étape. Une seule base PostgreSQL pour les données et la recherche vectorielle, au lieu de jongler avec deux bases. Et des tests automatisés dès le premier jour.
+
+Deux stories plus tard : 21 tests automatisés et une structure de projet propre. Le prototype avait zéro test.
+
+Le prototypage et la production, ce sont deux métiers différents. L'un récompense la vitesse, l'autre la fiabilité.
+
+À quel moment vous décidez d'arrêter d'itérer sur un truc qui marche "à peu près" et de repartir sur de bonnes bases ?
+
+---
+
+## Hashtags
+
+#IA #TransformationDigitale #BuildInPublic #AI #PME
+
+---
+
+## Checklist de formatage
+
+- [x] Longueur totale : 120-200 mots
+- [x] Rédigé en français (termes techniques anglais en ligne seulement)
+- [x] Asset visuel prêt (carousel, screenshot, schéma ou démo)
+- [x] Le visuel est compréhensible sans lire le texte
+- [x] Pas de noms de clients ni d'info confidentielle
+- [x] Toutes les données viennent du code et des métriques de ce repo
+- [x] Expérience professionnelle cadrée comme expertise domaine, pas travail client
+- [x] Au moins un chiffre ou une métrique concrète
+- [x] Finit par une question pour audience non technique
+- [x] Ton humain, familier, expert-qui-simplifie
+- [x] Pas de tirets longs, pas de "C'est X, pas Y"
+- [x] Pas de buzzwords corporate
+- [x] Hashtags (4-5 max) : mix français + anglais, inclut #BuildInPublic
+
+---
+
+## Note de continuité
+
+Post #2 de la série. T.1 annonçait les résultats du prototype et la reconstruction pour la production. Ce post explique pourquoi le changement de stack : de n8n à Python/LangGraph. La semaine prochaine : le vrai problème des données sales en B2B industriel.
