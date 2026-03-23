@@ -1,7 +1,9 @@
 # Project Context — ai-quote-agent
 
+<!-- last_updated: 2026-03-23 -->
+
 Internal developer reference for established patterns, known pitfalls, conventions, and quality gates.
-Derived from Epics 1-3 implementation and retrospectives.
+Derived from Epics 1-5.5 implementation and retrospectives.
 
 ---
 
@@ -20,8 +22,13 @@ Derived from Epics 1-3 implementation and retrospectives.
 - **DB naming**: `snake_case` plural tables, `{singular}_id` FKs, prefix conventions: `ix_/uq_/ck_/fk_/pk_`
 - **Test naming**: `test_{behavior}_when_{condition}()` or `test_{behavior}_e2e()`
 - **Severity comparison**: never use `max()` or lexicographic comparison on severity strings — use explicit conditional chains
-- **Cache clearing**: clear ALL `@lru_cache` singletons between E2E tests (7 functions: get_settings, create_async_engine_from_settings, _get_session_factory, get_llm_adapter, get_email_adapter, get_erp_adapter, get_embedding_adapter)
+- **Cache clearing**: clear ALL `@lru_cache` singletons between E2E tests (8 functions: get_settings, create_async_engine_from_settings, _get_session_factory, get_llm_adapter, get_email_adapter, get_erp_adapter, get_embedding_adapter, get_notification_adapter)
 - **Health checks**: 30s TTL caching with `time.monotonic()`, `asyncio.wait_for(..., timeout=5.0)`
+- **Fire-and-forget**: notification nodes never block pipeline, never set `state["error"]` — log failures silently
+- **Graph node**: set `current_node` at entry + all return paths, error handling returns state — never raises
+- **Scheduler**: pure asyncio, `@lru_cache` singleton, conditional startup in FastAPI lifespan
+- **DoD gates**: mypy strict, ruff, pytest unit, CI green, E2E (when applicable) — all mandatory before merge
+- **Graph node checklist**: 5 items when creating/copying nodes (see Conventions)
 
 ---
 
@@ -60,7 +67,7 @@ def get_llm_adapter() -> OpenAICompatAdapter:
     return OpenAICompatAdapter(get_settings().llm)
 ```
 
-**5 implemented adapters**: LLM (`openai_compat.py`), ERP (`odoo.py`), Email (`imap.py`), Notification (`teams.py`), Embedding (`sentence_transformers.py`).
+**6 implemented adapters**: LLM (`openai_compat.py`), ERP (`odoo.py`), Email (`imap.py`), Notification (`teams.py` + `log.py`), Embedding (`sentence_transformers.py`). Notification adapter uses a factory that routes by `settings.notification.channel` (teams/log).
 
 **Health check pattern** — all adapters:
 - Instance-level caching: `_last_health`, `_last_health_time`
@@ -196,6 +203,73 @@ Follows the standard 4-file adapter pattern (`protocol.py`, `models.py`, `senten
 - BGE-M3 outputs **1024-dimensional** vectors (not 1536 like OpenAI)
 - Device configurable via `EMBEDDING__DEVICE` (cpu/cuda)
 
+### Fire-and-Forget Notification Pattern
+
+Notification nodes never block the pipeline and never set `state["error"]`:
+
+```python
+async def notify_node(state: AgentState) -> AgentState:
+    try:
+        adapter = get_notification_adapter()
+        await adapter.send(message)
+    except Exception:
+        logger.warning("Notification failed", extra={"context": {...}})
+    return {**state, "current_node": "notify_node"}
+```
+
+- Notification failure is logged but never propagated
+- Pipeline continues regardless of notification outcome
+- Check notification logs explicitly during testing — errors are caught silently
+
+### Graph Node Pattern
+
+Every graph node follows this signature and structure:
+
+```python
+async def node_name(state: AgentState) -> AgentState:
+    state["current_node"] = "node_name"  # MUST match actual node name
+    try:
+        # Business logic here
+        return {**state, "current_node": "node_name", "result_field": value}
+    except Exception as e:
+        logger.error("Node failed", extra={"context": {"error": str(e)}})
+        return {**state, "current_node": "node_name", "error": str(e)}
+```
+
+- `current_node` set at entry AND in all return paths
+- State accessed via dict keys, not attributes
+- Error handling returns state with `error` key — never raises (except fire-and-forget nodes which omit `error`)
+- `final_action` must be unique and descriptive for traceability
+
+### Scheduler Pattern
+
+Pure asyncio scheduling — no APScheduler or Celery dependency:
+
+```python
+@lru_cache(maxsize=1)
+def get_scheduler() -> NotificationScheduler:
+    return NotificationScheduler(get_settings().notification)
+```
+
+- Singleton via `@lru_cache(maxsize=1)`
+- Conditional startup in FastAPI lifespan (only if scheduling is enabled)
+- Uses `asyncio.create_task()` for background scheduling
+- No external scheduler dependency — stdlib asyncio only
+
+### Post-Pipeline Error Check
+
+After `graph.ainvoke()`, `process.py` checks for error states and sends error notifications:
+
+```python
+result = await graph.ainvoke(AgentState(...))
+if result.get("error"):
+    await _send_error_notification(result)
+```
+
+- Catches errors that nodes set in state but don't surface as exceptions
+- Implemented in `src/quote_agent/cli/process.py`
+- Uses fire-and-forget pattern — error notification failure doesn't raise
+
 ### Configuration Pattern
 
 ```python
@@ -295,12 +369,9 @@ _get_session_factory.cache_clear()
 get_llm_adapter.cache_clear()
 get_email_adapter.cache_clear()
 get_embedding_adapter.cache_clear()
-# Not currently cleared in E2E tests (not exercised):
-# get_erp_adapter.cache_clear()
-# get_notification_adapter.cache_clear()
+get_erp_adapter.cache_clear()
+get_notification_adapter.cache_clear()
 ```
-
-Add `get_erp_adapter` and `get_notification_adapter` to cache clearing when E2E tests exercise those adapters.
 
 ### Dead Code from LLM Iterations
 
@@ -354,6 +425,24 @@ Without the search method (hybrid/semantic/keyword) in the cache key, different 
 When invalidating cache inside a transaction (e.g., after catalog re-sync), the `DELETE` must be committed. If the session is rolled back later, the invalidation is lost and stale cache entries persist.
 
 **Fix**: Ensure cache invalidation is committed (or use a separate transaction) before proceeding with operations that might roll back.
+
+### Copy-Paste Node Constants
+
+When duplicating a graph node, `current_node` and routing constants silently carry the old node's values. Tests don't catch this — the node runs but reports as the wrong node.
+
+**Fix**: Always search-and-replace all constants when copying a node. Follow the Graph Node Checklist in Conventions.
+
+### Fire-and-Forget Error Masking
+
+Notification errors in fire-and-forget nodes are caught and logged but never surface as state errors or test failures.
+
+**Fix**: Check notification logs explicitly during testing. Don't assume "no error" means "notification sent."
+
+### Medium-Confidence Requires Realistic Data
+
+Medium-confidence tier can't be triggered with 3-5 products. Requires a variant-rich catalogue with genuine ambiguity (e.g., multiple similar products with different specs).
+
+**Fix**: Use `seed_odoo_realistic` or equivalent fixture with 50+ products for medium-confidence E2E tests.
 
 ---
 
@@ -422,6 +511,18 @@ tests/
 ```
 
 **Dependency rule**: layers depend downward only. `models/` never imports `services/`. `security/` has no outbound dependencies.
+
+### Graph Node Checklist
+
+When creating or copying a graph node, verify all 5 items:
+
+1. **Update `current_node`** in all `state` writes within the new node — copy-paste carries the old node's value silently
+2. **Update routing function** edge maps in `graph.py` — the node must be reachable
+3. **Add to `docs/graph-path-inventory.md`** — every path from START to END must be documented
+4. **Add E2E test** if the node creates a new path to END — untested paths are invisible failures
+5. **Verify `final_action`** value is unique and descriptive — duplicates break traceability
+
+_Rationale: Story 5.2 had `current_node` set to "notify" instead of "notify_proposals" in 3 locations. Caught by code review, invisible to all tests._
 
 ### Structured Logging
 
@@ -503,15 +604,34 @@ addopts = "-m 'not e2e and not scale'"
 - `asyncio_mode = "auto"`: no need for `@pytest.mark.asyncio` decorator
 - E2E tests excluded by default; run with `pytest -m e2e`
 - E2E tests require real `DATABASE__URL` and `LLM__API_KEY` environment variables; search E2E tests also require a loaded BGE-M3 model
-- **Test count**: 775 unit (774 passed, 1 pre-existing failure in test_config.py) + 22 E2E (all passing). E2E: 22/22 pass against real services (PostgreSQL+pgvector, LLM, Odoo), verified Story 5.5.2.
+- **Test count**: 781 unit + 28 E2E (22 pipeline + 6 graph paths). All passing against real services (PostgreSQL+pgvector, LLM, Odoo), verified Story 5.5.5.
 - `@requires_e2e` skip decorator checks service availability
 
 ### E2E Test Requirements
 
+- **E2E tests are gate-keepers**: if they break, work stops until fixed — no "pre-existing failure" deferral
 - All E2E tests use real services (IMAP, PostgreSQL, LLM) — no mocked E2E acceptable
+- Every new graph path to END must have a notification + E2E test
+- `NOTIFICATION__CHANNEL=log` mandatory in test environments — never send real Teams notifications
 - Cache clearing autouse fixture runs before and after each test
 - Test data identified by `e2e-test` prefix in `message_id` for deterministic cleanup
 - Cleanup respects FK constraints: delete QuoteRequests before EmailRequests
+
+---
+
+## Definition of Done (DoD)
+
+Every story must satisfy these mandatory gates before merge:
+
+1. `uv run mypy --strict src/` — 0 issues
+2. `uv run ruff check src/ tests/` — 0 issues
+3. `uv run pytest tests/unit/ -v --tb=short` — 0 failures, 0 regressions
+4. CI pipeline green (GitHub Actions) before merge
+5. E2E tests passing — applies to any story that modifies `agent/`, `adapters/`, `search/`, or graph nodes
+
+**Scope note**: The E2E gate applies to stories touching `agent/`, `adapters/`, `search/`, or graph nodes. Documentation-only stories still require gates 1-4.
+
+**Anti-pattern**: CI green is a gate, not a nice-to-have. "CI green in DoD" was a floating agreement confirmed lost in 4 consecutive retrospectives (Epics 2-5). Only items tracked as stories survive — this section is the fix.
 
 ---
 
