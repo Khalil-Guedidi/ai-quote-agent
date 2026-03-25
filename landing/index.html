@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent IA de Devis B2B Industriel | Automatisez vos devis</title>
+  <meta name="description" content="Un agent IA qui lit vos emails de demande de devis, identifie les produits dans votre catalogue et génère des brouillons dans votre ERP. 96.2% de précision sur 50 000 références.">
+  <meta property="og:title" content="Agent IA de Devis B2B Industriel">
+  <meta property="og:description" content="De l'email au brouillon de devis dans l'ERP en moins de 3 secondes. Recherche hybride sur catalogues industriels.">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fr_FR">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- NOTE: Tailwind CDN is for development/prototyping. For production, consider using Tailwind CLI
+       to generate a minimal CSS file: npx tailwindcss -o styles.css --minify -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a5f',
+            },
+            confidence: {
+              high: '#16a34a',
+              medium: '#d97706',
+              low: '#dc2626',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    html { scroll-behavior: smooth; }
+    .gradient-hero {
+      background: linear-gradient(135deg, #1e3a5f 0%, #1e40af 50%, #3b82f6 100%);
+    }
+    .card-shadow {
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+    }
+    .metric-pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .85; }
+    }
+    .notification-card {
+      border-left: 4px solid;
+      transition: transform 0.2s ease;
+    }
+    .notification-card:hover {
+      transform: translateY(-2px);
+    }
+    .pipeline-step {
+      position: relative;
+    }
+    .pipeline-step:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -1.5rem;
+      width: 1.5rem;
+      height: 2px;
+      background: #3b82f6;
+    }
+    @media (max-width: 768px) {
+      .pipeline-step:not(:last-child)::after {
+        top: auto;
+        bottom: -1.5rem;
+        right: 50%;
+        width: 2px;
+        height: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body class="font-sans text-gray-800 bg-white">
+
+  <!-- ========== HERO ========== -->
+  <section class="gradient-hero text-white">
+    <nav class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-8 h-8" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="32" height="32" rx="8" fill="white" fill-opacity="0.15"/>
+          <path d="M8 16L14 10L20 16L14 22Z" fill="white" fill-opacity="0.9"/>
+          <path d="M14 16L20 10L26 16L20 22Z" fill="white" fill-opacity="0.6"/>
+        </svg>
+        <span class="font-bold text-lg">ai-quote-agent</span>
+      </div>
+      <a href="#waitlist" class="hidden sm:inline-block bg-white text-brand-800 font-semibold px-5 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm">
+        Rejoindre la liste d'attente
+      </a>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-4 py-16 md:py-24">
+      <div class="max-w-3xl">
+        <p class="text-blue-200 font-medium text-sm uppercase tracking-wide mb-4">Agent IA pour le B2B industriel</p>
+        <h1 class="text-3xl md:text-5xl font-extrabold leading-tight mb-6">
+          Votre catalogue est un bazar.<br>
+          <span class="text-blue-200">L'IA le comprend quand même.</span>
+        </h1>
+        <p class="text-lg md:text-xl text-blue-100 mb-8 max-w-2xl leading-relaxed">
+          Un agent qui lit vos emails de demande de devis, trouve les bons produits dans 50 000+ références et génère un brouillon dans votre ERP. En moins de 3 secondes.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <a href="#waitlist" class="bg-white text-brand-800 font-bold px-8 py-3 rounded-lg hover:bg-blue-50 transition-colors text-center">
+            Tester en avant-première
+          </a>
+          <a href="#how-it-works" class="border-2 border-white/30 text-white font-semibold px-8 py-3 rounded-lg hover:bg-white/10 transition-colors text-center">
+            Voir comment ça marche
+          </a>
+        </div>
+      </div>
+
+      <!-- Hero metrics bar -->
+      <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
+          <div class="text-2xl md:text-3xl font-extrabold metric-pulse">96.2%</div>
+          <div class="text-blue-200 text-sm mt-1">Précision recherche</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
+          <div class="text-2xl md:text-3xl font-extrabold">2.9s</div>
+          <div class="text-blue-200 text-sm mt-1">Latence moyenne</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
+          <div class="text-2xl md:text-3xl font-extrabold">50K</div>
+          <div class="text-blue-200 text-sm mt-1">Produits testés</div>
+        </div>
+        <div class="bg-white/10 backdrop-blur rounded-lg p-4 text-center">
+          <div class="text-2xl md:text-3xl font-extrabold">781+</div>
+          <div class="text-blue-200 text-sm mt-1">Tests automatisés</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== PROBLEM ========== -->
+  <section class="py-16 md:py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold mb-4">Le devis B2B industriel, c'est pénible</h2>
+        <p class="text-gray-600 text-lg">Chaque matin, Sophie ouvre sa boîte mail. 14 demandes de devis. Et ça recommence.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-8">
+        <div class="bg-white rounded-xl p-6 card-shadow">
+          <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3 class="font-bold text-lg mb-2">Les emails sont un chaos</h3>
+          <p class="text-gray-600">Des demandes en texte libre, des références approximatives, du jargon métier, des abréviations. "Vis CHC M8x40 inox" et "boulon hexagonal acier inoxydable 8mm", c'est le même produit.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow">
+          <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4"/>
+            </svg>
+          </div>
+          <h3 class="font-bold text-lg mb-2">Les catalogues sont un bazar</h3>
+          <p class="text-gray-600">Des milliers de références avec des noms incohérents, des unités qui changent, des doublons. La recherche par mot-clé échoue. La recherche sémantique seule hallucine.</p>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow">
+          <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+            <svg class="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <h3 class="font-bold text-lg mb-2">Le temps file</h3>
+          <p class="text-gray-600">Sophie passe 2 heures par jour à chercher les bons produits et à remplir des brouillons de devis manuellement. 14 demandes le matin, et les urgences qui s'empilent.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOW IT WORKS (Pipeline) ========== -->
+  <section id="how-it-works" class="py-16 md:py-24">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center mb-16">
+        <h2 class="text-2xl md:text-3xl font-bold mb-4">De l'email au brouillon de devis, automatiquement</h2>
+        <p class="text-gray-600 text-lg">L'agent traite la demande en 5 étapes. Sophie n'intervient que si nécessaire.</p>
+      </div>
+
+      <!-- Pipeline diagram -->
+      <div class="flex flex-col md:flex-row items-center justify-center gap-6 md:gap-12 mb-16">
+        <div class="pipeline-step bg-white rounded-xl p-5 card-shadow text-center w-full md:w-44">
+          <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <div class="font-bold text-sm">Réception email</div>
+          <div class="text-xs text-gray-500 mt-1">IMAP, nettoyage, extraction</div>
+        </div>
+
+        <div class="pipeline-step bg-white rounded-xl p-5 card-shadow text-center w-full md:w-44">
+          <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+          </div>
+          <div class="font-bold text-sm">Extraction IA</div>
+          <div class="text-xs text-gray-500 mt-1">Produits, quantités, specs</div>
+        </div>
+
+        <div class="pipeline-step bg-white rounded-xl p-5 card-shadow text-center w-full md:w-44">
+          <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+          <div class="font-bold text-sm">Recherche hybride</div>
+          <div class="text-xs text-gray-500 mt-1">Sémantique + mot-clé</div>
+        </div>
+
+        <div class="pipeline-step bg-white rounded-xl p-5 card-shadow text-center w-full md:w-44">
+          <div class="w-10 h-10 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-5 h-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+          </div>
+          <div class="font-bold text-sm">Scoring confiance</div>
+          <div class="text-xs text-gray-500 mt-1">Haute, moyenne, basse</div>
+        </div>
+
+        <div class="pipeline-step bg-white rounded-xl p-5 card-shadow text-center w-full md:w-44">
+          <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div class="font-bold text-sm">Brouillon ERP</div>
+          <div class="text-xs text-gray-500 mt-1">Devis prêt à valider</div>
+        </div>
+      </div>
+
+      <!-- Key differentiator -->
+      <div class="max-w-3xl mx-auto bg-blue-50 border border-blue-200 rounded-xl p-6 md:p-8 text-center">
+        <p class="text-lg font-semibold text-brand-800 mb-2">Pas du 100% automatique. L'agent connaît ses limites.</p>
+        <p class="text-gray-600">Quand l'agent n'est pas sûr, il le dit. Trois niveaux de confiance pour que Sophie garde le contrôle : validation directe, choix entre propositions, ou escalade humaine.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CONFIDENCE TIERS (Notification Cards) ========== -->
+  <section class="py-16 md:py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold mb-4">L'agent sait quand demander de l'aide</h2>
+        <p class="text-gray-600 text-lg">Trois niveaux de confiance, trois types de notification. Le bon niveau d'intervention humaine à chaque fois.</p>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-6">
+        <!-- High confidence card -->
+        <div class="notification-card bg-white rounded-xl p-6 card-shadow border-l-confidence-high">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-3 h-3 rounded-full bg-confidence-high"></div>
+            <span class="font-bold text-confidence-high text-sm uppercase tracking-wide">Confiance haute</span>
+          </div>
+          <h3 class="font-bold text-lg mb-2">Devis prêt à envoyer</h3>
+          <p class="text-gray-600 text-sm mb-4">L'agent a trouvé tous les produits avec certitude. Le brouillon est dans l'ERP. Sophie n'a qu'à valider et envoyer.</p>
+          <div class="bg-green-50 rounded-lg p-3 text-sm">
+            <div class="font-semibold text-green-800 mb-1">Notification Teams</div>
+            <div class="text-green-700">"Devis DR-2024-0847 prêt. Client: Metalco. 3 lignes, confiance 94%. Valider dans Odoo."</div>
+          </div>
+        </div>
+
+        <!-- Medium confidence card -->
+        <div class="notification-card bg-white rounded-xl p-6 card-shadow border-l-confidence-medium">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-3 h-3 rounded-full bg-confidence-medium"></div>
+            <span class="font-bold text-confidence-medium text-sm uppercase tracking-wide">Confiance moyenne</span>
+          </div>
+          <h3 class="font-bold text-lg mb-2">Plusieurs propositions</h3>
+          <p class="text-gray-600 text-sm mb-4">L'agent a identifié le besoin mais hésite entre plusieurs produits. Il propose 2-3 options. Sophie choisit la bonne.</p>
+          <div class="bg-amber-50 rounded-lg p-3 text-sm">
+            <div class="font-semibold text-amber-800 mb-1">Notification Teams</div>
+            <div class="text-amber-700">"Demande ambiguë. 2 propositions générées pour 'raccord inox DN25'. Choisir la variante dans Odoo."</div>
+          </div>
+        </div>
+
+        <!-- Low confidence card -->
+        <div class="notification-card bg-white rounded-xl p-6 card-shadow border-l-confidence-low">
+          <div class="flex items-center gap-2 mb-4">
+            <div class="w-3 h-3 rounded-full bg-confidence-low"></div>
+            <span class="font-bold text-confidence-low text-sm uppercase tracking-wide">Confiance basse</span>
+          </div>
+          <h3 class="font-bold text-lg mb-2">Escalade humaine</h3>
+          <p class="text-gray-600 text-sm mb-4">L'agent ne comprend pas la demande ou détecte un risque (conformité export, entité sanctionnée). Il escalade à Sophie sans générer de brouillon.</p>
+          <div class="bg-red-50 rounded-lg p-3 text-sm">
+            <div class="font-semibold text-red-800 mb-1">Notification Teams</div>
+            <div class="text-red-700">"Escalade requise. Demande de 'matériel contrôle export' détectée. Vérification manuelle obligatoire."</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== METRICS / PROOF ========== -->
+  <section class="py-16 md:py-24">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold mb-4">Des résultats mesurés, pas des promesses</h2>
+        <p class="text-gray-600 text-lg">Chaque chiffre vient du code, des benchmarks et des tests. Données synthétiques réalistes, pas un POC sur 10 produits.</p>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl p-6 card-shadow text-center">
+          <div class="text-3xl md:text-4xl font-extrabold text-brand-700 mb-2">96.2%</div>
+          <div class="font-semibold text-gray-800">Précision de recherche</div>
+          <div class="text-sm text-gray-500 mt-1">Hit@5 sur catalogue industriel</div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow text-center">
+          <div class="text-3xl md:text-4xl font-extrabold text-brand-700 mb-2">2.9s</div>
+          <div class="font-semibold text-gray-800">Latence bout en bout</div>
+          <div class="text-sm text-gray-500 mt-1">Email vers brouillon ERP</div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow text-center">
+          <div class="text-3xl md:text-4xl font-extrabold text-brand-700 mb-2">50 000</div>
+          <div class="font-semibold text-gray-800">Produits testés</div>
+          <div class="text-sm text-gray-500 mt-1">Catalogue synthétique réaliste</div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow text-center">
+          <div class="text-3xl md:text-4xl font-extrabold text-brand-700 mb-2">781</div>
+          <div class="font-semibold text-gray-800">Tests unitaires</div>
+          <div class="text-sm text-gray-500 mt-1">+ 28 tests end-to-end</div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow text-center">
+          <div class="text-3xl md:text-4xl font-extrabold text-brand-700 mb-2">14</div>
+          <div class="font-semibold text-gray-800">Chemins de routage</div>
+          <div class="text-sm text-gray-500 mt-1">Pipeline LangGraph audité</div>
+        </div>
+
+        <div class="bg-white rounded-xl p-6 card-shadow text-center">
+          <div class="text-3xl md:text-4xl font-extrabold text-brand-700 mb-2">3</div>
+          <div class="font-semibold text-gray-800">Niveaux de confiance</div>
+          <div class="text-sm text-gray-500 mt-1">Routage adaptatif humain/IA</div>
+        </div>
+      </div>
+
+      <p class="text-center text-sm text-gray-400 mt-8">Résultats de benchmark sur prototype. Données synthétiques industrielles réalistes, pas des données de production.</p>
+    </div>
+  </section>
+
+  <!-- ========== TECH STACK ========== -->
+  <section class="py-16 md:py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center mb-12">
+        <h2 class="text-2xl md:text-3xl font-bold mb-4">Construit pour l'industrie, pas pour une démo</h2>
+        <p class="text-gray-600 text-lg">Un adapter pattern qui rend chaque brique interchangeable. Changez d'ERP, de LLM ou de canal de notification sans toucher au reste.</p>
+      </div>
+
+      <!-- Architecture simplified -->
+      <div class="max-w-4xl mx-auto bg-white rounded-xl p-6 md:p-8 card-shadow">
+        <div class="font-mono text-sm md:text-base text-gray-700 leading-relaxed text-center">
+          <pre class="inline-block text-left">
+Email (IMAP)  ──>  FastAPI  ──>  LangGraph Agent  ──>  Brouillon Devis
+                      |               |
+                  PostgreSQL      LLM Provider
+                  + pgvector     (OpenAI/Claude)
+                      |               |
+                  ERP (Odoo)     Notifications
+                  XML-RPC         (Teams)</pre>
+        </div>
+        <div class="mt-6 flex flex-wrap justify-center gap-3">
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Python 3.12</span>
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">LangGraph</span>
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">PostgreSQL + pgvector</span>
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">FastAPI</span>
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Claude / OpenAI</span>
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Odoo 18</span>
+          <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full">Docker</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== WAITLIST ========== -->
+  <section id="waitlist" class="py-16 md:py-24">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-2xl mx-auto">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl md:text-3xl font-bold mb-4">Vous traitez des demandes de devis B2B tous les jours ?</h2>
+          <p class="text-gray-600 text-lg">Inscrivez-vous pour être parmi les premiers à tester l'agent. Places limitées pour la phase pilote.</p>
+        </div>
+
+        <!-- Netlify Forms -->
+        <form name="waitlist" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="bg-white rounded-xl p-6 md:p-8 card-shadow border border-gray-200">
+          <input type="hidden" name="form-name" value="waitlist">
+          <p class="hidden">
+            <label>Ne remplissez pas ce champ si vous êtes humain : <input name="bot-field"></label>
+          </p>
+
+          <div class="space-y-4">
+            <div>
+              <label for="email" class="block text-sm font-semibold text-gray-700 mb-1">Adresse email *</label>
+              <input type="email" id="email" name="email" required placeholder="sophie@entreprise.fr"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors">
+            </div>
+
+            <div>
+              <label for="company" class="block text-sm font-semibold text-gray-700 mb-1">Nom de l'entreprise *</label>
+              <input type="text" id="company" name="company" required placeholder="Metalco Industries"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors">
+            </div>
+
+            <div>
+              <label for="role" class="block text-sm font-semibold text-gray-700 mb-1">Votre rôle (optionnel)</label>
+              <input type="text" id="role" name="role" placeholder="Responsable commercial, Directeur achats..."
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors">
+            </div>
+
+            <div>
+              <label for="catalog-size" class="block text-sm font-semibold text-gray-700 mb-1">Taille de votre catalogue (optionnel)</label>
+              <select id="catalog-size" name="catalog-size"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none transition-colors bg-white">
+                <option value="">Sélectionnez...</option>
+                <option value="less-1000">Moins de 1 000 références</option>
+                <option value="1000-10000">1 000 à 10 000 références</option>
+                <option value="10000-50000">10 000 à 50 000 références</option>
+                <option value="more-50000">Plus de 50 000 références</option>
+              </select>
+            </div>
+
+            <button type="submit"
+              class="w-full bg-brand-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-brand-700 transition-colors">
+              Rejoindre la liste d'attente
+            </button>
+          </div>
+
+          <p class="text-xs text-gray-500 mt-4 text-center">
+            Vos données restent en Europe. Pas de spam. Désinscription à tout moment.
+            <br>En soumettant ce formulaire, vous acceptez d'être contacté au sujet de ce projet.
+          </p>
+        </form>
+
+        <!-- Success message (shown after submission via Netlify redirect) -->
+        <div id="form-success" class="hidden bg-green-50 border border-green-200 rounded-xl p-6 text-center mt-4">
+          <svg class="w-12 h-12 text-green-500 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <h3 class="font-bold text-green-800 text-lg">Merci pour votre inscription !</h3>
+          <p class="text-green-700 mt-2">Vous serez parmi les premiers informés quand la phase pilote démarrera.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== BUILD IN PUBLIC ========== -->
+  <section class="py-16 md:py-24 bg-gray-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center">
+        <h2 class="text-2xl md:text-3xl font-bold mb-4">Construit en public, de A à Z</h2>
+        <p class="text-gray-600 text-lg mb-8">Ce projet est développé de manière transparente. Chaque décision d'architecture, chaque benchmark, chaque erreur est documentée et partagée.</p>
+
+        <div class="grid sm:grid-cols-2 gap-6 mb-8">
+          <div class="bg-white rounded-xl p-6 card-shadow">
+            <div class="text-3xl mb-3">&#128221;</div>
+            <h3 class="font-bold mb-2">Série LinkedIn</h3>
+            <p class="text-gray-600 text-sm">14+ posts documentant la construction du prototype à la production. Architecture, benchmarks, leçons apprises.</p>
+          </div>
+          <div class="bg-white rounded-xl p-6 card-shadow">
+            <div class="text-3xl mb-3">&#128187;</div>
+            <h3 class="font-bold mb-2">Code source</h3>
+            <p class="text-gray-600 text-sm">781 tests unitaires, 28 tests E2E, CI/CD complet. Le code sera rendu public quand le produit sera prêt pour la phase pilote.</p>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <a href="https://www.linkedin.com/in/khalil-ai-engineer/" target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 bg-[#0A66C2] text-white font-semibold px-6 py-3 rounded-lg hover:bg-[#004182] transition-colors">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+            Suivre sur LinkedIn
+          </a>
+          <!-- TODO: Replace with actual Contra project URL when available -->
+          <a href="https://contra.com/" target="_blank" rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 border-2 border-gray-300 text-gray-700 font-semibold px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors">
+            Voir le projet sur Contra
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="bg-brand-900 text-white py-12">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="grid md:grid-cols-3 gap-8">
+        <div>
+          <div class="flex items-center gap-2 mb-4">
+            <svg class="w-6 h-6" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="32" height="32" rx="8" fill="white" fill-opacity="0.15"/>
+              <path d="M8 16L14 10L20 16L14 22Z" fill="white" fill-opacity="0.9"/>
+              <path d="M14 16L20 10L26 16L20 22Z" fill="white" fill-opacity="0.6"/>
+            </svg>
+            <span class="font-bold">ai-quote-agent</span>
+          </div>
+          <p class="text-blue-200 text-sm">Agent IA de génération de devis B2B industriels. Projet Build in Public par Khalil.</p>
+        </div>
+
+        <div>
+          <h3 class="font-semibold mb-3">Liens</h3>
+          <ul class="space-y-2 text-sm text-blue-200">
+            <li><a href="#how-it-works" class="hover:text-white transition-colors">Comment ça marche</a></li>
+            <li><a href="#waitlist" class="hover:text-white transition-colors">Liste d'attente</a></li>
+            <li><a href="https://www.linkedin.com/in/khalil-ai-engineer/" target="_blank" rel="noopener noreferrer" class="hover:text-white transition-colors">LinkedIn</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-semibold mb-3">Contact</h3>
+          <p class="text-blue-200 text-sm mb-4">Pour toute question sur le projet ou une collaboration potentielle.</p>
+          <a href="https://www.linkedin.com/in/khalil-ai-engineer/" target="_blank" rel="noopener noreferrer" class="text-blue-200 hover:text-white transition-colors text-sm">
+            Contacter via LinkedIn
+          </a>
+        </div>
+      </div>
+
+      <div class="border-t border-white/10 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+        <p class="text-blue-200 text-xs">&copy; 2026 Khalil. Projet Build in Public. Tous droits réservés.</p>
+        <p class="text-blue-200 text-xs">Données du formulaire hébergées en Europe. Aucun cookie de tracking.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Form submission handling -->
+  <script>
+    // Show success message if redirected after form submission
+    if (window.location.hash === '#success') {
+      const form = document.querySelector('form[name="waitlist"]');
+      const success = document.getElementById('form-success');
+      if (form && success) {
+        form.style.display = 'none';
+        success.classList.remove('hidden');
+      }
+    }
+
+    // Client-side form enhancement
+    const form = document.querySelector('form[name="waitlist"]');
+    if (form) {
+      form.addEventListener('submit', function(e) {
+        const email = form.querySelector('#email');
+        const company = form.querySelector('#company');
+
+        if (!email.value || !email.value.includes('@')) {
+          e.preventDefault();
+          email.classList.add('border-red-500');
+          return;
+        }
+        if (!company.value.trim()) {
+          e.preventDefault();
+          company.classList.add('border-red-500');
+          return;
+        }
+
+        // Set action to redirect to success hash after submission
+        form.action = '/#success';
+      });
+
+      // Remove error styling on input
+      form.querySelectorAll('input').forEach(function(input) {
+        input.addEventListener('input', function() {
+          this.classList.remove('border-red-500');
+        });
+      });
+    }
+  </script>
+
+  <!-- Cloudflare Web Analytics -->
+  <!-- TODO: Replace token with your actual Cloudflare Web Analytics token before deployment -->
+  <!-- Get your free token at: https://dash.cloudflare.com/?to=/:account/web-analytics -->
+  <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "REPLACE_WITH_YOUR_CF_ANALYTICS_TOKEN"}'></script>
+
+</body>
+</html>
