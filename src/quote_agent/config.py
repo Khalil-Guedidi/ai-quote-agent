@@ -176,6 +176,14 @@ class NotificationScheduleSettings(BaseModel):
     weekly_report_minute: int = 0
 
 
+class WorkerSettings(BaseModel):
+    """Quote request worker configuration."""
+
+    poll_interval: int = 10
+    batch_size: int = 5
+    enabled: bool = False
+
+
 class AppSettings(BaseModel):
     """Application-level configuration."""
 
@@ -214,6 +222,7 @@ class Settings(BaseSettings):
     proposability: ProposabilitySettings = ProposabilitySettings()
     notification_batch: NotificationBatchSettings = NotificationBatchSettings()
     notification_schedule: NotificationScheduleSettings = NotificationScheduleSettings()
+    worker: WorkerSettings = WorkerSettings()
     app: AppSettings = AppSettings()
 
 

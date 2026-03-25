@@ -45,6 +45,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     from quote_agent.adapters.email import get_email_adapter
     from quote_agent.services.email_poller import EmailPollerService
+    from quote_agent.services.quote_request_worker import QuoteRequestWorker
 
     adapter = get_email_adapter()
     session_factory = _get_session_factory()
@@ -56,6 +57,23 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     )
     app.state.email_poller = poller
     poller_task = asyncio.create_task(poller.run())
+
+    # Start quote request worker (polls pending QuoteRequests -> graph pipeline)
+    worker: QuoteRequestWorker | None
+    worker_task: asyncio.Task[None] | None
+    if settings.worker.enabled:
+        worker = QuoteRequestWorker(
+            session_factory=session_factory,
+            poll_interval=settings.worker.poll_interval,
+            batch_size=settings.worker.batch_size,
+        )
+        app.state.quote_request_worker = worker
+        worker_task = asyncio.create_task(worker.run())
+        logger.info("Quote request worker started")
+    else:
+        worker = None
+        worker_task = None
+        logger.info("Quote request worker disabled (WORKER__ENABLED=false)")
 
     # Start notification scheduler (daily batch summary + weekly report)
     from quote_agent.adapters.notification import get_notification_adapter
@@ -83,6 +101,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     yield
 
     logger.info("Application shutting down")
+
+    if worker is not None and worker_task is not None:
+        await worker.stop()
+        worker_task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await worker_task
+        logger.info("Quote request worker shut down (processed=%d requests)", worker.total_processed)
 
     if scheduler is not None:
         scheduler.stop()

@@ -37,7 +37,7 @@ class TestSettingsLoadFromEnv:
         assert s.app.debug is False
         assert s.llm.timeout == 60
         assert s.email.imap_port == 993
-        assert s.notification.channel == "teams"
+        assert s.notification.channel == "log"  # env_vars fixture + autouse safety net force log
 
 
 class TestSettingsValidation:

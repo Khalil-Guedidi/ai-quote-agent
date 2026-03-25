@@ -52,6 +52,18 @@ def env_vars() -> Iterator[dict[str, str]]:
             os.environ[key] = old[key]
 
 
+@pytest.fixture(autouse=True)
+def _force_log_notifications_globally() -> Iterator[None]:
+    """Force NOTIFICATION__CHANNEL=log for ALL tests — never send real Teams notifications."""
+    old = os.environ.get("NOTIFICATION__CHANNEL")
+    os.environ["NOTIFICATION__CHANNEL"] = "log"
+    yield
+    if old is None:
+        os.environ.pop("NOTIFICATION__CHANNEL", None)
+    else:
+        os.environ["NOTIFICATION__CHANNEL"] = old
+
+
 @pytest.fixture()
 def _clear_settings_cache() -> Iterator[None]:
     """Clear the get_settings LRU cache before and after each test."""
