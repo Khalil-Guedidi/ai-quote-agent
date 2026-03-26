@@ -7,6 +7,7 @@ services:
     env_file: .env
     environment:
       DATABASE__URL: postgresql+asyncpg://quote_agent:quote_agent_secret@postgres:5432/quote_agent
+      ERP__URL: http://odoo:8069
     depends_on:
       postgres:
         condition: service_healthy

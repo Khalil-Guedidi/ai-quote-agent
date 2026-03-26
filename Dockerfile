@@ -24,8 +24,8 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# Create non-root user
-RUN groupadd --system appuser && useradd --system --gid appuser appuser
+# Create non-root user with writable home (HuggingFace model cache)
+RUN groupadd --system appuser && useradd --system --gid appuser --create-home appuser
 
 # Copy only the virtual environment from builder
 COPY --from=builder --chown=appuser:appuser /app/.venv /app/.venv

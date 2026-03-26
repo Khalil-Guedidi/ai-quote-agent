@@ -178,7 +178,13 @@ class IMAPAdapter:
         date_str = msg.get("Date")
         if date_str:
             with contextlib.suppress(Exception):
-                received_at = email.utils.parsedate_to_datetime(date_str)
+                dt = email.utils.parsedate_to_datetime(date_str)
+                # DB column is TIMESTAMP WITHOUT TIME ZONE — store as naive UTC
+                if dt.tzinfo is not None:
+                    from datetime import UTC
+
+                    dt = dt.astimezone(UTC).replace(tzinfo=None)
+                received_at = dt
 
         body = self._extract_body(msg)
 

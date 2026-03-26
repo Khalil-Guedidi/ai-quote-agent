@@ -568,12 +568,11 @@ class TeamsAdapter:
 
         try:
             async with httpx.AsyncClient() as client:
-                await client.post(
+                await client.head(
                     self._webhook_url,
-                    json={},
                     timeout=_HEALTH_CHECK_TIMEOUT,
                 )
-            # Any response (2xx, 4xx) means the server is reachable
+            # Any response (2xx, 4xx, 405) means the server is reachable
             health = ServiceHealth(status="healthy")
         except (httpx.ConnectError, httpx.TimeoutException, httpx.InvalidURL, OSError) as exc:
             logger.warning("Notification health check failed (%s): %s", self._hostname, exc)

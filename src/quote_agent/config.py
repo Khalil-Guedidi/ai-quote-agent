@@ -99,15 +99,15 @@ class SearchCacheSettings(BaseModel):
 class ClassificationSettings(BaseModel):
     """Complexity classification configuration."""
 
-    timeout_seconds: int = 10
+    timeout_seconds: int = 30
     fallback_complexity: Literal["simple", "ambiguous", "complex", "out_of_scope"] = "complex"
 
 
 class ConfidenceScoringSettings(BaseModel):
     """Confidence scoring and tier routing configuration."""
 
-    timeout_seconds: int = 10
-    high_threshold: float = 0.85
+    timeout_seconds: int = 30
+    high_threshold: float = 0.70
     low_threshold: float = 0.50
     max_proposals: int = 5
     min_proposals: int = 2
@@ -117,7 +117,7 @@ class ConfidenceScoringSettings(BaseModel):
 class ReasoningSettings(BaseModel):
     """Adaptive reasoning strategy configuration."""
 
-    timeout_seconds: int = 15
+    timeout_seconds: int = 45
     simple_search_limit: int = 5
     ambiguous_search_limit: int = 10
     complex_search_limit: int = 15
@@ -126,7 +126,7 @@ class ReasoningSettings(BaseModel):
 class SelfReviewSettings(BaseModel):
     """Self-review validation configuration."""
 
-    timeout_seconds: int = 10
+    timeout_seconds: int = 30
     max_quantity: float = 1_000_000
     min_quantity: float = 0
 
@@ -134,7 +134,7 @@ class SelfReviewSettings(BaseModel):
 class ComplianceSettings(BaseModel):
     """Compliance check configuration."""
 
-    timeout_seconds: int = 15
+    timeout_seconds: int = 45
     export_control_keywords: list[str] = Field(default_factory=lambda: [
         "dual-use", "military", "nuclear", "uranium", "centrifuge",
         "cryptographic", "night-vision", "thermal-imaging", "drone",
