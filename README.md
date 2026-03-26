@@ -6,6 +6,8 @@ An autonomous AI agent that processes inbound B2B quote request emails, searches
 
 > **Plug and run.** The agent works with your raw, uncleaned catalog data. No months of data preprocessing. No CPQ implementation project.
 
+[![Watch the demo](https://img.shields.io/badge/▶_Watch_Demo-2_min-blue?style=for-the-badge)](https://www.tella.tv/video/ai-quote-agent-demo-2zsb)
+
 ## How It Works
 
 ```mermaid
