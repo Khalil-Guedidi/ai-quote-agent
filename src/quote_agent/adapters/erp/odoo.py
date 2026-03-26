@@ -374,7 +374,7 @@ class OdooAdapter:
         db = self._settings.database
         api_key = self._settings.api_key.get_secret_value()
 
-        # Support both numeric ID and string ref
+        # Support numeric ID, exact ref, and fuzzy name search (fallback)
         try:
             numeric_id = int(client_id)
             domain: list[Any] = [("id", "=", numeric_id)]
@@ -394,6 +394,26 @@ class OdooAdapter:
             ),
             timeout=_GET_CLIENT_TIMEOUT,
         )
+
+        # Fallback: fuzzy search by name (ilike) if exact ref didn't match
+        if not records and not client_id.isdigit():
+            name_domain: list[Any] = [
+                ("name", "ilike", client_id),
+                ("customer_rank", ">", 0),
+            ]
+            records = await asyncio.wait_for(
+                asyncio.to_thread(
+                    proxy.execute_kw,  # type: ignore[arg-type]
+                    db,
+                    uid,
+                    api_key,
+                    "res.partner",
+                    "search_read",
+                    [name_domain],
+                    {"fields": _CLIENT_FIELDS, "limit": 1},
+                ),
+                timeout=_GET_CLIENT_TIMEOUT,
+            )
 
         duration_ms = int((time.monotonic() - start) * 1000)
         ctx = {
