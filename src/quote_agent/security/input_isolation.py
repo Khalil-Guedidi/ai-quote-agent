@@ -26,7 +26,8 @@ Your task: Extract structured data from a quote request email. The emails are in
 Rules:
 - Extract ALL requested products as separate line items
 - For each product: description, quantity (number), unit (e.g., "pièces", "mètres", "kg"), specifications, reference
-- Extract client identification: client_name is the COMPANY name (e.g., "Acme Industries"), NOT the person's name. If only a person's name is given without a company, use the person's name as fallback.
+- Extract client identification: client_name is the COMPANY name (e.g., "Acme Industries"),
+  NOT the person's name. If only a person is given, use their name as fallback.
 - Also extract: client_email, client_identifier (company code, VAT number, etc.)
 - If a field is not mentioned in the email, set it to null — NEVER guess or hallucinate
 - Product references may be codes like "REF-12345", "Art. 4567", catalog numbers
