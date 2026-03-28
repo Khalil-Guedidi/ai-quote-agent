@@ -1353,6 +1353,49 @@ So that new channels (Slack, email, webhook) can be added without modifying the 
 
 L'agent maintient une mémoire à 3 couches (industrie/entreprise/client), apprend des corrections de Sophie, et s'améliore à chaque devis validé.
 
+**Note:** 2 foundation stories (6.0a, 6.0b) added during Epic 5.5 retrospective (2026-03-28). 6.0a blocks stories 6.1+.
+
+### Story 6.0a: Refactor asyncio.run (Dette Technique)
+
+As a **developer (human or AI)**,
+I want all `asyncio.run()` calls in the codebase refactored to proper async patterns,
+So that the codebase is clean, testable, and free of nested event loop risks before building the memory layer.
+
+**Acceptance Criteria:**
+
+**Given** 15+ occurrences of `asyncio.run()` across 11 files
+**When** the refactor is applied
+**Then** all sync-to-async bridge calls use a consistent pattern (e.g., proper async entry points)
+**And** no `asyncio.run()` remains inside library/module code (only allowed at top-level CLI entry points)
+**And** all existing tests pass with zero regressions
+
+**Given** the refactored code
+**When** unit and E2E tests run
+**Then** no nested event loop errors occur
+**And** the test suite (800 unit + 28 E2E) passes fully
+
+**Blocks:** All stories 6.1+. Technical debt tracked across 3 consecutive retros.
+
+### Story 6.0b: Fix "Voir dans l'ERP" sur Cartes Escalade/Rejet
+
+As a **sales rep (Sophie)**,
+I want the "Voir dans l'ERP" link to be contextually appropriate on escalation and rejection notification cards,
+So that I'm not presented with a useless link when no draft quote exists in Odoo.
+
+**Acceptance Criteria:**
+
+**Given** a notification card for an escalation (low confidence) or rejection (compliance blocked)
+**When** no draft quote has been created in the ERP
+**Then** the "Voir dans l'ERP" link is either hidden or replaced with a contextually appropriate action (e.g., "Voir la demande" linking to the original request)
+
+**Given** a notification card for a high/medium confidence quote
+**When** a draft quote exists in the ERP
+**Then** the "Voir dans l'ERP" link continues to work as before (no regression)
+
+**Given** the fix is applied
+**When** E2E tests covering notification cards run
+**Then** all pass and the link behavior is validated for each confidence tier
+
 ### Story 6.1: Mémoire Industrie (RAG Knowledge Base)
 
 As a **sales rep (Sophie)**,
