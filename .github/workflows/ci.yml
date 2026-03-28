@@ -39,6 +39,9 @@ jobs:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
 
+      - name: Enable pgvector extension
+        run: PGPASSWORD=test psql -h localhost -U test -d quote_agent_test -c "CREATE EXTENSION IF NOT EXISTS vector"
+
       - name: Install dependencies (without ML deps)
         run: uv sync --locked --no-group ml
 
