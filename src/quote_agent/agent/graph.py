@@ -21,6 +21,20 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _build_memory_query(state: AgentState) -> str:
+    """Build a search query for industry memory from the raw request."""
+    request = state.get("raw_request")
+    if request is None:
+        return ""
+    if request.line_items:
+        item = request.line_items[0]
+        query = item.description
+        if item.specifications:
+            query += " " + item.specifications
+        return query
+    return request.raw_text or ""
+
+
 # ---------------------------------------------------------------------------
 # Conditional routing functions
 # ---------------------------------------------------------------------------
@@ -112,6 +126,26 @@ def build_agent_graph(
             logger.error("Node classify failed", extra={"context": {"error": str(exc)}})
             return {"error": f"classify: {exc}", "current_node": "classify"}
 
+    async def memory_lookup_node(state: AgentState) -> dict[str, Any]:
+        """Retrieve industry context — fire-and-forget: never blocks pipeline."""
+        if not settings.industry_memory.enabled:
+            return {"industry_context": None, "current_node": "memory_lookup"}
+        try:
+            from quote_agent.adapters.embedding import get_embedding_adapter
+            from quote_agent.memory.industry import IndustryMemory
+
+            query = _build_memory_query(state)
+            async with session_factory() as session:
+                memory = IndustryMemory(session, get_embedding_adapter())
+                chunks = await memory.retrieve(query, top_k=settings.industry_memory.top_k)
+            return {"industry_context": chunks or None, "current_node": "memory_lookup"}
+        except Exception as exc:
+            logger.warning(
+                "Node memory_lookup failed (non-blocking)",
+                extra={"context": {"error": str(exc)}},
+            )
+            return {"industry_context": None, "current_node": "memory_lookup"}
+
     async def reason_node(state: AgentState) -> dict[str, Any]:
         if _has_error(state):
             return {"current_node": "reason"}
@@ -123,6 +157,7 @@ def build_agent_graph(
                     state["raw_request"],
                     llm_adapter,
                     engine,
+                    industry_context=state.get("industry_context"),
                 )
             return {"reasoning": result, "current_node": "reason"}
         except Exception as exc:
@@ -212,7 +247,7 @@ def build_agent_graph(
 
             # Build UniversalQuote from agent state
             first_item = request.line_items[0] if request.line_items else None
-            quantity = (first_item.quantity if first_item and first_item.quantity else 1.0)
+            quantity = first_item.quantity if first_item and first_item.quantity else 1.0
             line_description = first_item.description if first_item else top_product.name
 
             # Resolve the Odoo product ID from the local DB before building the quote
@@ -221,9 +256,7 @@ def build_agent_graph(
 
                 from quote_agent.models.product import Product
 
-                row = await session.execute(
-                    select(Product.odoo_id).where(Product.id == top_product.product_id)
-                )
+                row = await session.execute(select(Product.odoo_id).where(Product.id == top_product.product_id))
                 odoo_id = row.scalar_one_or_none()
 
             if odoo_id is None:
@@ -307,6 +340,7 @@ def build_agent_graph(
     graph: StateGraph[AgentState] = StateGraph(AgentState)
 
     graph.add_node("classify", classify_node)
+    graph.add_node("memory_lookup", memory_lookup_node)
     graph.add_node("reason", reason_node)
     graph.add_node("score", score_node)
     graph.add_node("route", route_node)
@@ -318,9 +352,10 @@ def build_agent_graph(
     graph.add_node("notify_escalation", notify_escalation_node)
     graph.add_node("notify_rejection", notify_rejection_node)
 
-    # Linear edges: START → classify → reason → score → route
+    # Linear edges: START → classify → memory_lookup → reason → score → route
     graph.add_edge(START, "classify")
-    graph.add_edge("classify", "reason")
+    graph.add_edge("classify", "memory_lookup")
+    graph.add_edge("memory_lookup", "reason")
     graph.add_edge("reason", "score")
     graph.add_edge("score", "route")
 

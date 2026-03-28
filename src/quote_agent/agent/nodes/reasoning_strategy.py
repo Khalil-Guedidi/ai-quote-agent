@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, Field
 
 from quote_agent.exceptions import AdapterError, LLMTimeoutError
+from quote_agent.memory.models import KnowledgeChunk  # noqa: TC001
 from quote_agent.search.models import SearchResult  # noqa: TC001
 from quote_agent.services.extraction_models import ExtractedQuoteRequest
 
@@ -180,12 +181,14 @@ async def _direct_match_strategy(
     search_result = await search_engine.search_hybrid(search_request)
     duration_ms = int((time.monotonic() - start) * 1000)
 
-    steps.append(ReasoningStep(
-        step_name="search",
-        description=f"Direct hybrid search with limit={settings_limit}",
-        duration_ms=duration_ms,
-        outcome=f"{len(search_result.results)} results found",
-    ))
+    steps.append(
+        ReasoningStep(
+            step_name="search",
+            description=f"Direct hybrid search with limit={settings_limit}",
+            duration_ms=duration_ms,
+            outcome=f"{len(search_result.results)} results found",
+        )
+    )
 
     return search_result, steps
 
@@ -196,6 +199,7 @@ async def _exploration_strategy(
     llm_adapter: OpenAICompatAdapter,
     settings_limit: int,
     timeout: int,
+    industry_context: list[KnowledgeChunk] | None = None,
 ) -> tuple[SearchResult, list[ReasoningStep]]:
     """Ambiguous strategy: broader search + LLM comparative analysis."""
     from langchain_core.messages import HumanMessage, SystemMessage
@@ -211,22 +215,29 @@ async def _exploration_strategy(
     search_result = await search_engine.search_hybrid(search_request)
     duration_ms = int((time.monotonic() - start) * 1000)
 
-    steps.append(ReasoningStep(
-        step_name="broad_search",
-        description=f"Broad hybrid search with limit={settings_limit}",
-        duration_ms=duration_ms,
-        outcome=f"{len(search_result.results)} results found",
-    ))
+    steps.append(
+        ReasoningStep(
+            step_name="broad_search",
+            description=f"Broad hybrid search with limit={settings_limit}",
+            duration_ms=duration_ms,
+            outcome=f"{len(search_result.results)} results found",
+        )
+    )
 
     # Step 2: LLM comparative analysis
     request_text = _build_request_text(request)
     products_text = _build_products_text(search_result)
+
+    industry_section = ""
+    if industry_context:
+        industry_section = f"\n\nCONTEXTE INDUSTRIE :\n{_format_industry_context(industry_context)}"
 
     user_content = (
         f"{UNTRUSTED_QUOTE_START}\n"
         f"{request_text}\n"
         f"{UNTRUSTED_QUOTE_END}\n\n"
         f"PRODUITS CANDIDATS :\n{products_text}"
+        f"{industry_section}"
     )
     messages = [
         SystemMessage(content=EXPLORATION_SYSTEM_PROMPT),
@@ -243,12 +254,14 @@ async def _exploration_strategy(
     )
     duration_ms = int((time.monotonic() - start) * 1000)
 
-    steps.append(ReasoningStep(
-        step_name="comparative_analysis",
-        description="LLM comparative analysis of candidates",
-        duration_ms=duration_ms,
-        outcome=f"Best matches: {analysis.best_match_indices}, reasoning: {analysis.reasoning}",
-    ))
+    steps.append(
+        ReasoningStep(
+            step_name="comparative_analysis",
+            description="LLM comparative analysis of candidates",
+            duration_ms=duration_ms,
+            outcome=f"Best matches: {analysis.best_match_indices}, reasoning: {analysis.reasoning}",
+        )
+    )
 
     return search_result, steps
 
@@ -259,6 +272,7 @@ async def _deep_analysis_strategy(
     llm_adapter: OpenAICompatAdapter,
     settings_limit: int,
     timeout: int,
+    industry_context: list[KnowledgeChunk] | None = None,
 ) -> tuple[SearchResult, list[ReasoningStep], ExtractedQuoteRequest | None]:
     """Complex strategy: LLM enrichment + search with enriched query + deep evaluation."""
     from langchain_core.messages import HumanMessage, SystemMessage
@@ -270,11 +284,7 @@ async def _deep_analysis_strategy(
     request_text = _build_request_text(request)
 
     # Step 1: LLM context enrichment
-    enrichment_content = (
-        f"{UNTRUSTED_QUOTE_START}\n"
-        f"{request_text}\n"
-        f"{UNTRUSTED_QUOTE_END}"
-    )
+    enrichment_content = f"{UNTRUSTED_QUOTE_START}\n{request_text}\n{UNTRUSTED_QUOTE_END}"
     enrichment_messages = [
         SystemMessage(content=ENRICHMENT_SYSTEM_PROMPT),
         HumanMessage(content=enrichment_content),
@@ -290,13 +300,15 @@ async def _deep_analysis_strategy(
     )
     duration_ms = int((time.monotonic() - start) * 1000)
 
-    steps.append(ReasoningStep(
-        step_name="context_enrichment",
-        description="LLM context enrichment — reformulate and extract specifications",
-        duration_ms=duration_ms,
-        outcome=f"Enriched query: {enrichment.optimized_search_query}, "
-                f"specs: {enrichment.extracted_specifications}, flags: {enrichment.flags}",
-    ))
+    steps.append(
+        ReasoningStep(
+            step_name="context_enrichment",
+            description="LLM context enrichment — reformulate and extract specifications",
+            duration_ms=duration_ms,
+            outcome=f"Enriched query: {enrichment.optimized_search_query}, "
+            f"specs: {enrichment.extracted_specifications}, flags: {enrichment.flags}",
+        )
+    )
 
     # Build enriched request
     enriched_request = ExtractedQuoteRequest(
@@ -304,9 +316,7 @@ async def _deep_analysis_strategy(
             QuoteLineItem(
                 description=enrichment.enriched_description,
                 specifications=(
-                    "; ".join(enrichment.extracted_specifications)
-                    if enrichment.extracted_specifications
-                    else None
+                    "; ".join(enrichment.extracted_specifications) if enrichment.extracted_specifications else None
                 ),
             ),
         ],
@@ -324,15 +334,21 @@ async def _deep_analysis_strategy(
     search_result = await search_engine.search_hybrid(search_request)
     duration_ms = int((time.monotonic() - start) * 1000)
 
-    steps.append(ReasoningStep(
-        step_name="enriched_search",
-        description=f"Hybrid search with enriched query, limit={settings_limit}",
-        duration_ms=duration_ms,
-        outcome=f"{len(search_result.results)} results found",
-    ))
+    steps.append(
+        ReasoningStep(
+            step_name="enriched_search",
+            description=f"Hybrid search with enriched query, limit={settings_limit}",
+            duration_ms=duration_ms,
+            outcome=f"{len(search_result.results)} results found",
+        )
+    )
 
     # Step 3: Deep evaluation
     products_text = _build_products_text(search_result)
+    industry_section = ""
+    if industry_context:
+        industry_section = f"\n\nCONTEXTE INDUSTRIE :\n{_format_industry_context(industry_context)}"
+
     eval_content = (
         f"{UNTRUSTED_QUOTE_START}\n"
         f"DEMANDE ORIGINALE :\n{request_text}\n\n"
@@ -340,6 +356,7 @@ async def _deep_analysis_strategy(
         f"Specifications extraites : {enrichment.extracted_specifications}\n"
         f"{UNTRUSTED_QUOTE_END}\n\n"
         f"PRODUITS CANDIDATS :\n{products_text}"
+        f"{industry_section}"
     )
     eval_messages = [
         SystemMessage(content=DEEP_EVAL_SYSTEM_PROMPT),
@@ -355,15 +372,26 @@ async def _deep_analysis_strategy(
     )
     duration_ms = int((time.monotonic() - start) * 1000)
 
-    steps.append(ReasoningStep(
-        step_name="deep_evaluation",
-        description="LLM deep evaluation of matches against complex requirements",
-        duration_ms=duration_ms,
-        outcome=f"Assessment: {evaluation.overall_assessment}, "
-                f"gaps: {evaluation.specification_gaps}",
-    ))
+    steps.append(
+        ReasoningStep(
+            step_name="deep_evaluation",
+            description="LLM deep evaluation of matches against complex requirements",
+            duration_ms=duration_ms,
+            outcome=f"Assessment: {evaluation.overall_assessment}, gaps: {evaluation.specification_gaps}",
+        )
+    )
 
     return search_result, steps, enriched_request
+
+
+def _format_industry_context(chunks: list[KnowledgeChunk]) -> str:
+    """Format industry context chunks for inclusion in LLM prompts."""
+    lines: list[str] = []
+    for i, chunk in enumerate(chunks, start=1):
+        lines.append(f"[{i}] {chunk.title} (source: {chunk.source}, score: {chunk.score:.3f})")
+        lines.append(chunk.content)
+        lines.append("")
+    return "\n".join(lines).strip()
 
 
 async def apply_reasoning_strategy(
@@ -371,6 +399,7 @@ async def apply_reasoning_strategy(
     request: ExtractedQuoteRequest,
     llm_adapter: OpenAICompatAdapter,
     search_engine: SearchEngine,
+    industry_context: list[KnowledgeChunk] | None = None,
 ) -> ReasoningResult:
     """Apply an adaptive reasoning strategy based on request complexity.
 
@@ -396,14 +425,20 @@ async def apply_reasoning_strategy(
         duration_ms = int((time.monotonic() - overall_start) * 1000)
         return ReasoningResult(
             strategy="out_of_scope_skip",
-            steps=[ReasoningStep(
-                step_name="skip",
-                description="Out-of-scope request — skipping reasoning",
-                duration_ms=duration_ms,
-                outcome="No search or LLM call performed",
-            )],
+            steps=[
+                ReasoningStep(
+                    step_name="skip",
+                    description="Out-of-scope request — skipping reasoning",
+                    duration_ms=duration_ms,
+                    outcome="No search or LLM call performed",
+                )
+            ],
             search_result=SearchResultModel(
-                results=[], total_found=0, query="", method="skipped", duration_seconds=0.0,
+                results=[],
+                total_found=0,
+                query="",
+                method="skipped",
+                duration_seconds=0.0,
             ),
             reasoning_duration_ms=duration_ms,
         )
@@ -411,23 +446,33 @@ async def apply_reasoning_strategy(
     try:
         if classification.complexity == "simple":
             search_result, steps = await _direct_match_strategy(
-                request, search_engine, reasoning_settings.simple_search_limit,
+                request,
+                search_engine,
+                reasoning_settings.simple_search_limit,
             )
             strategy: StrategyName = "direct_match"
             enriched_request = None
 
         elif classification.complexity == "ambiguous":
             search_result, steps = await _exploration_strategy(
-                request, search_engine, llm_adapter,
-                reasoning_settings.ambiguous_search_limit, timeout,
+                request,
+                search_engine,
+                llm_adapter,
+                reasoning_settings.ambiguous_search_limit,
+                timeout,
+                industry_context=industry_context,
             )
             strategy = "exploration"
             enriched_request = None
 
         else:  # complex
             search_result, steps, enriched_request = await _deep_analysis_strategy(
-                request, search_engine, llm_adapter,
-                reasoning_settings.complex_search_limit, timeout,
+                request,
+                search_engine,
+                llm_adapter,
+                reasoning_settings.complex_search_limit,
+                timeout,
+                industry_context=industry_context,
             )
             strategy = "deep_analysis"
 
@@ -445,7 +490,9 @@ async def apply_reasoning_strategy(
         fallback_start = time.monotonic()
         fallback_limit = reasoning_settings.simple_search_limit
         search_result, fallback_steps = await _direct_match_strategy(
-            request, search_engine, fallback_limit,
+            request,
+            search_engine,
+            fallback_limit,
         )
         fallback_duration_ms = int((time.monotonic() - fallback_start) * 1000)
         steps = [

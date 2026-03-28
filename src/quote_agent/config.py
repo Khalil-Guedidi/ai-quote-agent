@@ -135,16 +135,51 @@ class ComplianceSettings(BaseModel):
     """Compliance check configuration."""
 
     timeout_seconds: int = 45
-    export_control_keywords: list[str] = Field(default_factory=lambda: [
-        "dual-use", "military", "nuclear", "uranium", "centrifuge",
-        "cryptographic", "night-vision", "thermal-imaging", "drone",
-        "missile", "chemical-precursor", "biological", "explosif",
-        "arme", "munition", "radar", "satellite",
-    ])
-    sanctioned_entity_keywords: list[str] = Field(default_factory=lambda: [
-        "DPRK", "North Korea", "Iran", "Syria", "Cuba", "Crimea",
-        "Donetsk", "Luhansk", "Wagner", "Hezbollah", "Hamas",
-    ])
+    export_control_keywords: list[str] = Field(
+        default_factory=lambda: [
+            "dual-use",
+            "military",
+            "nuclear",
+            "uranium",
+            "centrifuge",
+            "cryptographic",
+            "night-vision",
+            "thermal-imaging",
+            "drone",
+            "missile",
+            "chemical-precursor",
+            "biological",
+            "explosif",
+            "arme",
+            "munition",
+            "radar",
+            "satellite",
+        ]
+    )
+    sanctioned_entity_keywords: list[str] = Field(
+        default_factory=lambda: [
+            "DPRK",
+            "North Korea",
+            "Iran",
+            "Syria",
+            "Cuba",
+            "Crimea",
+            "Donetsk",
+            "Luhansk",
+            "Wagner",
+            "Hezbollah",
+            "Hamas",
+        ]
+    )
+
+
+class IndustryMemorySettings(BaseModel):
+    """Industry knowledge base (RAG memory) configuration."""
+
+    enabled: bool = True
+    top_k: int = 5
+    chunk_max_tokens: int = 512
+    chunk_overlap_tokens: int = 50
 
 
 class SearchSettings(BaseModel):
@@ -217,6 +252,7 @@ class Settings(BaseSettings):
     reasoning: ReasoningSettings = ReasoningSettings()
     self_review: SelfReviewSettings = SelfReviewSettings()
     compliance: ComplianceSettings = ComplianceSettings()
+    industry_memory: IndustryMemorySettings = IndustryMemorySettings()
     search: SearchSettings = SearchSettings()
     search_cache: SearchCacheSettings = SearchCacheSettings()
     proposability: ProposabilitySettings = ProposabilitySettings()

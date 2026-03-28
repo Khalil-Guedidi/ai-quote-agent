@@ -5,13 +5,14 @@ Exhaustive audit of all LangGraph agent paths from START to END.
 Source: `src/quote_agent/agent/graph.py` (`build_agent_graph`, `_route_after_router`, `_route_after_compliance`)
 
 Generated: 2026-03-23 (Story 5.5.5)
+Updated: 2026-03-28 (Story 6.1 — added memory_lookup node between classify and reason)
 
 ---
 
 ## Graph Topology (ASCII)
 
 ```
-START → classify → reason → score → route
+START → classify → memory_lookup → reason → score → route
                                        │
                     ┌──────────────────┼──────────────────┐
                     │                  │                   │
@@ -44,17 +45,17 @@ graph.ainvoke() and send an error notification.
 
 | # | Path Name | Node Sequence | Trigger Condition | Notification Type | E2E Test | Status |
 |---|-----------|---------------|-------------------|-------------------|----------|--------|
-| 1 | High-confidence draft | START → classify → reason → score → route → review → compliance → draft → notify → END | `routing_decision.action == "proceed_to_draft"` AND review approved AND compliance OK | YES — quote-ready (green card) | `test_high_confidence_draft_path_e2e` | covered |
-| 2 | Medium-confidence proposals | START → classify → reason → score → route → notify_proposals → END | `routing_decision.action == "generate_proposals"` | YES — multi-proposal (amber card) | `test_medium_confidence_proposals_path_e2e` | covered |
-| 3 | Low-confidence escalation | START → classify → reason → score → route → notify_escalation → END | `routing_decision.action == "escalate"` | YES — escalation (red card) | `test_low_confidence_escalation_path_e2e` | covered |
-| 4 | Out-of-scope escalation | START → classify → reason → score → route → notify_escalation → END | `routing_decision.action == "notify_out_of_scope"` | YES — escalation (red card) | (covered by path 3 — same graph path) | covered |
-| 5 | Review-rejected | START → classify → reason → score → route → review → compliance → notify_rejection → END | `self_review.approved == False` | YES — rejection (red card) | `test_review_rejected_path_e2e` | covered |
-| 6 | Compliance-blocked | START → classify → reason → score → route → review → compliance → notify_rejection → END | `compliance.flags` has severity `"block"` | YES — rejection (red card) | `test_compliance_blocked_path_e2e` | covered |
-| 7 | Route fallback (safety net) | START → classify → reason → score → route → notify_escalation → END | `routing_decision is None` (unexpected state) | YES — escalation with "unexpected routing failure" context | `test_route_fallback_escalation_path_e2e` | covered (fix applied) |
-| 8 | Classify error | START → classify(ERR) → reason(skip) → score(skip) → route(skip) → notify_escalation → END | Exception in classify node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
-| 9 | Reason error | START → classify → reason(ERR) → score(skip) → route(skip) → notify_escalation → END | Exception in reason node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
-| 10 | Score error | START → classify → reason → score(ERR) → route(skip) → notify_escalation → END | Exception in score node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
-| 11 | Route error | START → classify → reason → score → route(ERR) → notify_escalation → END | Exception in route node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
+| 1 | High-confidence draft | START → classify → memory_lookup → reason → score → route → review → compliance → draft → notify → END | `routing_decision.action == "proceed_to_draft"` AND review approved AND compliance OK | YES — quote-ready (green card) | `test_high_confidence_draft_path_e2e` | covered |
+| 2 | Medium-confidence proposals | START → classify → memory_lookup → reason → score → route → notify_proposals → END | `routing_decision.action == "generate_proposals"` | YES — multi-proposal (amber card) | `test_medium_confidence_proposals_path_e2e` | covered |
+| 3 | Low-confidence escalation | START → classify → memory_lookup → reason → score → route → notify_escalation → END | `routing_decision.action == "escalate"` | YES — escalation (red card) | `test_low_confidence_escalation_path_e2e` | covered |
+| 4 | Out-of-scope escalation | START → classify → memory_lookup → reason → score → route → notify_escalation → END | `routing_decision.action == "notify_out_of_scope"` | YES — escalation (red card) | (covered by path 3 — same graph path) | covered |
+| 5 | Review-rejected | START → classify → memory_lookup → reason → score → route → review → compliance → notify_rejection → END | `self_review.approved == False` | YES — rejection (red card) | `test_review_rejected_path_e2e` | covered |
+| 6 | Compliance-blocked | START → classify → memory_lookup → reason → score → route → review → compliance → notify_rejection → END | `compliance.flags` has severity `"block"` | YES — rejection (red card) | `test_compliance_blocked_path_e2e` | covered |
+| 7 | Route fallback (safety net) | START → classify → memory_lookup → reason → score → route → notify_escalation → END | `routing_decision is None` (unexpected state) | YES — escalation with "unexpected routing failure" context | `test_route_fallback_escalation_path_e2e` | covered (fix applied) |
+| 8 | Classify error | START → classify(ERR) → memory_lookup → reason(skip) → score(skip) → route(skip) → notify_escalation → END | Exception in classify node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
+| 9 | Reason error | START → classify → memory_lookup → reason(ERR) → score(skip) → route(skip) → notify_escalation → END | Exception in reason node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
+| 10 | Score error | START → classify → memory_lookup → reason → score(ERR) → route(skip) → notify_escalation → END | Exception in score node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
+| 11 | Route error | START → classify → memory_lookup → reason → score → route(ERR) → notify_escalation → END | Exception in route node | YES — escalation (via route fallback) + post-pipeline error notification | unit test only (infra failure) | covered |
 | 12 | Review error | START → ... → review(ERR) → compliance(skip) → notify_rejection → END | Exception in review node | YES — rejection notification (via _route_after_compliance error check) + post-pipeline error notification | unit test only (infra failure) | covered |
 | 13 | Compliance error | START → ... → review → compliance(ERR) → notify_rejection → END | Exception in compliance node, `state["error"]` set | YES — rejection notification (via _route_after_compliance error check) + post-pipeline error notification | unit test only (infra failure) | covered (fix applied) |
 | 14 | Draft error | START → ... → draft(ERR) → notify(skip, no draft_result) → END | Exception in draft node or missing odoo_id | YES — post-pipeline error notification (state["error"] set) | unit test only (infra failure) | covered |

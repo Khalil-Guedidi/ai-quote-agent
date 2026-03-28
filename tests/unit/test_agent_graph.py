@@ -115,12 +115,13 @@ def _mock_draft_result() -> MagicMock:
 
 def _make_settings_mock(**overrides: object) -> MagicMock:
     """Create a mock Settings with required sub-models for graph construction."""
-    from quote_agent.config import NotificationBatchSettings
+    from quote_agent.config import IndustryMemorySettings, NotificationBatchSettings
 
     batch = NotificationBatchSettings()
     mock = MagicMock(
         confidence_scoring=MagicMock(),
         notification_batch=batch,
+        industry_memory=IndustryMemorySettings(enabled=False),
     )
     for key, val in overrides.items():
         setattr(mock, key, val)
@@ -232,7 +233,9 @@ class TestGraphCompilation:
     def test_graph_compiles_without_error(self) -> None:
         """AC-1: build_agent_graph returns a compiled graph."""
         graph = build_agent_graph(
-            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(),
+            _make_session_factory(),
+            MagicMock(),
             _make_settings_mock(),
         )
         assert graph is not None
@@ -240,7 +243,9 @@ class TestGraphCompilation:
     def test_graph_is_invokable(self) -> None:
         """AC-6: Compiled graph has ainvoke method."""
         graph = build_agent_graph(
-            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(),
+            _make_session_factory(),
+            MagicMock(),
             _make_settings_mock(),
         )
         assert hasattr(graph, "ainvoke")
@@ -248,7 +253,9 @@ class TestGraphCompilation:
     def test_notify_node_is_wired_after_draft(self) -> None:
         """AC-1 (5.1): notify node exists and sits between draft and END."""
         graph = build_agent_graph(
-            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(),
+            _make_session_factory(),
+            MagicMock(),
             _make_settings_mock(),
         )
         node_names = list(graph.get_graph().nodes.keys())
@@ -259,7 +266,9 @@ class TestGraphCompilation:
     def test_notify_proposals_node_is_wired(self) -> None:
         """AC-3 (5.2): notify_proposals node exists in the graph."""
         graph = build_agent_graph(
-            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(),
+            _make_session_factory(),
+            MagicMock(),
             _make_settings_mock(),
         )
         node_names = list(graph.get_graph().nodes.keys())
@@ -268,7 +277,9 @@ class TestGraphCompilation:
     def test_notify_escalation_node_is_wired(self) -> None:
         """AC-3 (5.3): notify_escalation node exists in the graph."""
         graph = build_agent_graph(
-            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(),
+            _make_session_factory(),
+            MagicMock(),
             _make_settings_mock(),
         )
         node_names = list(graph.get_graph().nodes.keys())
@@ -277,7 +288,9 @@ class TestGraphCompilation:
     def test_notify_rejection_node_is_wired(self) -> None:
         """AC-1 (5.5.1): notify_rejection node exists in the graph."""
         graph = build_agent_graph(
-            MagicMock(), _make_session_factory(), MagicMock(),
+            MagicMock(),
+            _make_session_factory(),
+            MagicMock(),
             _make_settings_mock(),
         )
         node_names = list(graph.get_graph().nodes.keys())
@@ -327,7 +340,9 @@ class TestGraphExecution:
             patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), erp,
+                MagicMock(),
+                _make_session_factory(),
+                erp,
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -373,7 +388,9 @@ class TestGraphExecution:
             patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), MagicMock(),
+                MagicMock(),
+                _make_session_factory(),
+                MagicMock(),
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -414,7 +431,9 @@ class TestGraphExecution:
             patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), MagicMock(),
+                MagicMock(),
+                _make_session_factory(),
+                MagicMock(),
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -453,7 +472,9 @@ class TestGraphExecution:
             patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), MagicMock(),
+                MagicMock(),
+                _make_session_factory(),
+                MagicMock(),
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -488,7 +509,9 @@ class TestGraphExecution:
             patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), MagicMock(),
+                MagicMock(),
+                _make_session_factory(),
+                MagicMock(),
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -526,7 +549,9 @@ class TestGraphExecution:
             patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), MagicMock(),
+                MagicMock(),
+                _make_session_factory(),
+                MagicMock(),
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -567,7 +592,9 @@ class TestGraphErrorHandling:
             patch("quote_agent.adapters.notification.get_notification_adapter", return_value=mock_adapter),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), MagicMock(),
+                MagicMock(),
+                _make_session_factory(),
+                MagicMock(),
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -592,7 +619,9 @@ class TestGraphErrorHandling:
             patch(_REASON, new_callable=AsyncMock, side_effect=RuntimeError("Search unavailable")),
         ):
             graph = build_agent_graph(
-                MagicMock(), _make_session_factory(), MagicMock(),
+                MagicMock(),
+                _make_session_factory(),
+                MagicMock(),
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)
@@ -627,7 +656,9 @@ class TestGraphErrorHandling:
         ):
             erp = AsyncMock()
             graph = build_agent_graph(
-                MagicMock(), session_factory, erp,
+                MagicMock(),
+                session_factory,
+                erp,
                 _make_settings_mock(),
             )
             result = await graph.ainvoke(state)

@@ -19,6 +19,7 @@ from quote_agent.agent.nodes.confidence_scorer import ConfidenceResult
 from quote_agent.agent.nodes.reasoning_strategy import ReasoningResult
 from quote_agent.agent.nodes.router import RoutingDecision
 from quote_agent.agent.nodes.self_reviewer import SelfReviewResult
+from quote_agent.memory.models import KnowledgeChunk
 from quote_agent.services.extraction_models import ExtractedQuoteRequest
 
 
@@ -34,6 +35,7 @@ class AgentState(TypedDict, total=False):
 
     # --- Processing ---
     classification: ClassificationResult | None
+    industry_context: list[KnowledgeChunk] | None
     reasoning: ReasoningResult | None
     confidence: ConfidenceResult | None
     routing_decision: RoutingDecision | None
@@ -55,6 +57,7 @@ def create_initial_state(request: ExtractedQuoteRequest) -> dict[str, Any]:
     return {
         "raw_request": request,
         "classification": None,
+        "industry_context": None,
         "reasoning": None,
         "confidence": None,
         "routing_decision": None,

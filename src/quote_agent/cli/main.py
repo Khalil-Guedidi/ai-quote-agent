@@ -248,6 +248,36 @@ def seed_odoo_cmd(
     asyncio.run(_seed_odoo_impl(count=count, clean=clean))
 
 
+@app.command(name="kb-ingest")
+def kb_ingest_cmd(
+    file_path: str = typer.Argument(..., help="Path to the document file to ingest (.md or .txt)"),
+    title: str | None = typer.Option(None, "--title", "-t", help="Document title (defaults to filename)"),
+) -> None:
+    """Ingest a document into the industry knowledge base."""
+    from quote_agent.cli.knowledge_base import kb_ingest as _kb_ingest_impl
+
+    asyncio.run(_kb_ingest_impl(file_path=file_path, title=title))
+
+
+@app.command(name="kb-search")
+def kb_search_cmd(
+    query: str = typer.Argument(..., help="Search query for the knowledge base"),
+    top_k: int = typer.Option(5, "--top-k", "-k", help="Number of results to return"),
+) -> None:
+    """Search the industry knowledge base."""
+    from quote_agent.cli.knowledge_base import kb_search as _kb_search_impl
+
+    asyncio.run(_kb_search_impl(query=query, top_k=top_k))
+
+
+@app.command(name="kb-list")
+def kb_list_cmd() -> None:
+    """List all documents in the industry knowledge base."""
+    from quote_agent.cli.knowledge_base import kb_list as _kb_list_impl
+
+    asyncio.run(_kb_list_impl())
+
+
 @app.command()
 def search(
     query: str = typer.Argument(..., help="Product search query"),

@@ -35,7 +35,7 @@
 # - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
 
 generated: 2026-03-15
-last_updated: 2026-03-28  # Story 6.0b done
+last_updated: 2026-03-28  # Story 6.1 done (code review passed)
 project: ai-quote-agent
 project_key: NOKEY
 tracking_system: file-system
@@ -143,7 +143,7 @@ development_status:
   epic-6: in-progress
   6-0a-refactor-asyncio-run-dette-technique: done
   6-0b-fix-voir-dans-erp-cartes-escalade-rejet: done
-  6-1-memoire-industrie-rag-knowledge-base: backlog
+  6-1-memoire-industrie-rag-knowledge-base: done
   6-2-contexte-entreprise-catalogue-regles-workflows: backlog
   6-3-memoire-client-historique-preferences: backlog
   6-4-boucle-de-feedback-capture-des-corrections: backlog

@@ -15,6 +15,7 @@ class TestAgentState:
         expected_fields = {
             "raw_request",
             "classification",
+            "industry_context",
             "reasoning",
             "confidence",
             "routing_decision",
@@ -53,6 +54,7 @@ class TestCreateInitialState:
 
         assert state["raw_request"] is request
         assert state["classification"] is None
+        assert state["industry_context"] is None
         assert state["reasoning"] is None
         assert state["confidence"] is None
         assert state["routing_decision"] is None
