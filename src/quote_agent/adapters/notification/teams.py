@@ -250,11 +250,10 @@ class TeamsAdapter:
         data = payload.data
         suggested_steps = data.get("suggested_next_steps", [])
         step_blocks: list[dict[str, Any]] = [
-            {"type": "TextBlock", "text": f"• {step}", "wrap": True}
-            for step in suggested_steps
+            {"type": "TextBlock", "text": f"• {step}", "wrap": True} for step in suggested_steps
         ]
 
-        return {
+        card: dict[str, Any] = {
             "type": "AdaptiveCard",
             "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
             "version": "1.4",
@@ -325,14 +324,17 @@ class TeamsAdapter:
                     ],
                 },
             ],
-            "actions": [
+        }
+        erp_url = data.get("erp_url")
+        if erp_url:
+            card["actions"] = [
                 {
                     "type": "Action.OpenUrl",
                     "title": "Voir dans l'ERP",
-                    "url": data.get("erp_url", ""),
+                    "url": erp_url,
                 },
-            ],
-        }
+            ]
+        return card
 
     def _build_batch_summary_card(self, payload: NotificationPayload) -> dict[str, Any]:
         """Build a batch summary Adaptive Card with accent bar and tier counts."""

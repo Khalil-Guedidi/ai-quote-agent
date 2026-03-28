@@ -186,11 +186,6 @@ async def notify_escalation(
         uncertain = "Cette demande ne correspond pas au périmètre de l'agent (pas un produit catalogue)"
         steps = ["Traiter la demande manuellement", "Vérifier si le client a besoin d'un autre service"]
         confidence_pct = str(round(routing_decision.confidence * 100))
-    from quote_agent.config import get_settings
-
-    base_url = get_settings().app.base_url
-    erp_url = f"{base_url}/erp/sale-orders"
-
     payload = NotificationPayload(
         title="Escalade",
         message=f"Celui-là est compliqué. {client_name} demande quelque chose que je ne suis pas sûr de comprendre.",
@@ -201,7 +196,6 @@ async def notify_escalation(
             "uncertain": uncertain,
             "suggested_next_steps": steps,
             "confidence_pct": confidence_pct,
-            "erp_url": erp_url,
         },
     )
 
@@ -245,39 +239,31 @@ async def notify_rejection(
     compliance_result = state.get("compliance")
     review_result = state.get("self_review")
 
-    has_compliance_block = (
-        compliance_result is not None
-        and any(f.severity == "block" for f in compliance_result.flags)
-    )
+    has_compliance_block = compliance_result is not None and any(f.severity == "block" for f in compliance_result.flags)
 
     if has_compliance_block:
         title = "Escalade — Blocage conformité"
         blocked_flags = [f for f in compliance_result.flags if f.severity == "block"]  # type: ignore[union-attr]
         uncertain = "; ".join(f.detail for f in blocked_flags)
-        message = (
-            f"J'ai reçu une demande de {client_name} mais le contrôle de conformité a détecté un blocage."
-        )
+        message = f"J'ai reçu une demande de {client_name} mais le contrôle de conformité a détecté un blocage."
     else:
         title = "Escalade — Rejet auto-review"
         failure_reasons = review_result.failure_reasons if review_result else []
         anomaly_flags = review_result.anomaly_flags if review_result else []
         all_reasons = failure_reasons + anomaly_flags
         uncertain = "; ".join(all_reasons) if all_reasons else "Raison inconnue"
-        message = (
-            f"J'ai reçu une demande de {client_name} mais mon auto-vérification a trouvé des problèmes."
-        )
+        message = f"J'ai reçu une demande de {client_name} mais mon auto-vérification a trouvé des problèmes."
 
     # Build understood from raw_request
-    items_summary = ", ".join(
-        f"{item.description} (x{item.quantity})" if item.quantity else item.description
-        for item in raw_request.line_items
-    ) if raw_request.line_items else "Aucun article identifié"
+    items_summary = (
+        ", ".join(
+            f"{item.description} (x{item.quantity})" if item.quantity else item.description
+            for item in raw_request.line_items
+        )
+        if raw_request.line_items
+        else "Aucun article identifié"
+    )
     understood = f"Client: {client_name} — {items_summary}"
-
-    from quote_agent.config import get_settings
-
-    base_url = get_settings().app.base_url
-    erp_url = f"{base_url}/erp/sale-orders"
 
     payload = NotificationPayload(
         title=title,
@@ -293,7 +279,6 @@ async def notify_rejection(
                 "Contacter le client pour clarifier",
             ],
             "confidence_pct": "0",
-            "erp_url": erp_url,
         },
     )
 

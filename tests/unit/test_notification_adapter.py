@@ -736,24 +736,26 @@ def test_build_multi_proposal_card_dispatches_correctly(
 # --- _build_escalation_card() Tests ---
 
 
-def _escalation_payload() -> NotificationPayload:
+def _escalation_payload(*, with_erp_url: bool = False) -> NotificationPayload:
     """Build a standard escalation payload for tests."""
+    data: dict[str, object] = {
+        "client": "Durand",
+        "understood": "Client demande des tubes inox; quantité 100 pièces",
+        "uncertain": "Diamètre et grade exacts non précisés",
+        "suggested_next_steps": [
+            "Demander des precisions au client sur les produits souhaites",
+            "Verifier les references produit avec le client",
+            "Proposer un appel pour clarifier les besoins",
+        ],
+        "confidence_pct": "28",
+    }
+    if with_erp_url:
+        data["erp_url"] = "https://odoo.example.com/web#model=sale.order&view_type=list"
     return NotificationPayload(
         title="Escalade",
         message="Celui-là est compliqué. Durand demande quelque chose que je ne suis pas sûr de comprendre.",
         card_type="escalation",
-        data={
-            "client": "Durand",
-            "understood": "Client demande des tubes inox; quantité 100 pièces",
-            "uncertain": "Diamètre et grade exacts non précisés",
-            "suggested_next_steps": [
-                "Demander des precisions au client sur les produits souhaites",
-                "Verifier les references produit avec le client",
-                "Proposer un appel pour clarifier les besoins",
-            ],
-            "confidence_pct": "28",
-            "erp_url": "https://odoo.example.com/web#model=sale.order&view_type=list",
-        },
+        data=data,
     )
 
 
@@ -809,11 +811,22 @@ def test_build_escalation_card_has_context_sections(
     assert steps_container["items"][1]["text"].startswith("• ")
 
 
-def test_build_escalation_card_has_erp_link(
+def test_build_escalation_card_no_action_when_no_erp_url(
     adapter: TeamsAdapter,
 ) -> None:
-    """AC-1: escalation card has 'Voir dans l'ERP' OpenUrl action."""
-    payload = _escalation_payload()
+    """AC-1 (6.0b): escalation card has no action button when erp_url is absent."""
+    payload = _escalation_payload(with_erp_url=False)
+    envelope = adapter._build_adaptive_card(payload)
+    card = envelope["attachments"][0]["content"]
+
+    assert "actions" not in card
+
+
+def test_build_escalation_card_has_action_when_erp_url_present(
+    adapter: TeamsAdapter,
+) -> None:
+    """AC-3 (6.0b): escalation card has action button when erp_url is provided."""
+    payload = _escalation_payload(with_erp_url=True)
     envelope = adapter._build_adaptive_card(payload)
     card = envelope["attachments"][0]["content"]
 
@@ -865,8 +878,10 @@ def test_build_escalation_card_dispatches_correctly(
 
     # Must have attention style (not accent from generic)
     assert card["body"][0]["style"] == "attention"
-    # Must have actions (generic has none)
-    assert "actions" in card
+    # Escalation cards without erp_url have no actions — distinct from generic which also has none
+    # The distinguishing feature is the attention style + context containers
+    containers = [b for b in card["body"] if b["type"] == "Container"]
+    assert len(containers) == 4  # accent + understood + uncertain + steps
 
 
 # --- _build_batch_summary_card() Tests ---
@@ -1390,7 +1405,7 @@ def test_structural_consistency_timestamp(
     assert timestamp_block["size"] == "Small"
 
 
-_CARD_TYPES_WITH_ACTIONS = {"quote-ready", "multi-proposal", "escalation", "batch-summary", "manager-weekly"}
+_CARD_TYPES_WITH_ACTIONS = {"quote-ready", "multi-proposal", "batch-summary", "manager-weekly"}
 
 
 @pytest.mark.parametrize("card_type", list(_CARD_TYPES_WITH_ACTIONS))
