@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
-
 import typer
 
 from quote_agent.adapters.erp.models import QuoteDraftResult, UniversalQuote, UniversalQuoteLine
@@ -38,7 +36,7 @@ async def _create_draft(
     return await adapter.create_draft_quote(quote)
 
 
-def draft_create(
+async def draft_create(
     client: str,
     product: int,
     quantity: float,
@@ -48,7 +46,7 @@ def draft_create(
 ) -> None:
     """Create a draft quote in Odoo ERP."""
     try:
-        result = asyncio.run(_create_draft(client, product, quantity, price, description))
+        result = await _create_draft(client, product, quantity, price, description)
 
         if json_output:
             typer.echo(result.model_dump_json(indent=2))

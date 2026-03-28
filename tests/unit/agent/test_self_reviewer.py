@@ -13,7 +13,6 @@ import pytest
 
 from quote_agent.agent.nodes.reasoning_strategy import ReasoningResult, ReasoningStep
 from quote_agent.agent.nodes.self_reviewer import (
-    CoherenceCheckResult,
     IntegrityCheckResult,
     ValidationStep,
     self_review,
@@ -93,34 +92,25 @@ def _make_reasoning_result(
 
 
 def _make_adapter_mock(
-    coherence: CoherenceCheckResult | None = None,
     integrity: IntegrityCheckResult | None = None,
-    coherence_error: Exception | None = None,
     integrity_error: Exception | None = None,
 ) -> MagicMock:
-    """Create a mock LLM adapter that returns different results per with_structured_output call."""
-    if coherence is None:
-        coherence = CoherenceCheckResult(
-            is_coherent=True, mismatches=[], reasoning="All products match the request",
-        )
+    """Create a mock LLM adapter that returns results based on requested output class."""
     if integrity is None:
         integrity = IntegrityCheckResult(
             is_clean=True, anomalies=[], reasoning="No anomalies detected",
         )
 
-    # Track which output model is being requested
-    call_count = {"n": 0}
-    responses = [coherence, integrity]
-    errors = [coherence_error, integrity_error]
-
     def _make_structured(output_class: type) -> MagicMock:
-        idx = call_count["n"]
-        call_count["n"] += 1
         mock_structured = MagicMock()
-        if idx < len(errors) and errors[idx] is not None:
-            mock_structured.ainvoke = AsyncMock(side_effect=errors[idx])
+        if output_class is IntegrityCheckResult:
+            if integrity_error is not None:
+                mock_structured.ainvoke = AsyncMock(side_effect=integrity_error)
+            else:
+                mock_structured.ainvoke = AsyncMock(return_value=integrity)
         else:
-            mock_structured.ainvoke = AsyncMock(return_value=responses[idx])
+            # Fallback for any unexpected output class
+            mock_structured.ainvoke = AsyncMock(return_value=MagicMock())
         return mock_structured
 
     mock_model = MagicMock()
@@ -261,46 +251,6 @@ class TestQuantityPlausibility:
         assert qty_step.passed is True
 
 
-class TestCoherenceValidation:
-    """AC-3: Coherence validation via LLM."""
-
-    @pytest.mark.usefixtures("_mock_settings")
-    async def test_coherence_passes_when_coherent_match(self) -> None:
-        """AC-3: Coherent products → pass."""
-        reasoning = _make_reasoning_result()
-        request = _make_request()
-        coherence = CoherenceCheckResult(
-            is_coherent=True, mismatches=[], reasoning="Products match request",
-        )
-        adapter = _make_adapter_mock(coherence=coherence)
-        session = _make_session_mock()
-
-        result = await self_review(reasoning, request, adapter, session)
-
-        coh_step = next(s for s in result.steps if s.step_name == "coherence_validation")
-        assert coh_step.passed is True
-
-    @pytest.mark.usefixtures("_mock_settings")
-    async def test_coherence_fails_when_incoherent(self) -> None:
-        """AC-3: Incoherent products → fail."""
-        reasoning = _make_reasoning_result()
-        request = _make_request()
-        coherence = CoherenceCheckResult(
-            is_coherent=False,
-            mismatches=["Product 1 is a valve, not a tube"],
-            reasoning="Product type mismatch",
-        )
-        adapter = _make_adapter_mock(coherence=coherence)
-        session = _make_session_mock()
-
-        result = await self_review(reasoning, request, adapter, session)
-
-        assert result.approved is False
-        coh_step = next(s for s in result.steps if s.step_name == "coherence_validation")
-        assert coh_step.passed is False
-        assert "incoherence" in coh_step.detail.lower()
-
-
 class TestOutputIntegrity:
     """AC-4: Output integrity (prompt injection layer 3)."""
 
@@ -379,19 +329,19 @@ class TestErrorFallback:
     """AC-5: Error handling — fail-safe (reject on error)."""
 
     @pytest.mark.usefixtures("_mock_settings")
-    async def test_rejected_when_coherence_llm_timeout(self) -> None:
-        """AC-5: LLM timeout during coherence → approved=False."""
+    async def test_rejected_when_integrity_llm_timeout(self) -> None:
+        """AC-5: LLM timeout during integrity check → approved=False."""
         reasoning = _make_reasoning_result()
         request = _make_request()
-        adapter = _make_adapter_mock(coherence_error=TimeoutError("timed out"))
+        adapter = _make_adapter_mock(integrity_error=TimeoutError("timed out"))
         session = _make_session_mock()
 
         result = await self_review(reasoning, request, adapter, session)
 
         assert result.approved is False
-        coh_step = next(s for s in result.steps if s.step_name == "coherence_validation")
-        assert coh_step.passed is False
-        assert "error" in coh_step.detail.lower()
+        int_step = next(s for s in result.steps if s.step_name == "output_integrity")
+        assert int_step.passed is False
+        assert "error" in int_step.detail.lower()
 
     @pytest.mark.usefixtures("_mock_settings")
     async def test_rejected_when_integrity_adapter_error(self) -> None:
@@ -409,10 +359,10 @@ class TestErrorFallback:
 
     @pytest.mark.usefixtures("_mock_settings")
     async def test_rejected_when_llm_timeout_error(self) -> None:
-        """AC-5: LLMTimeoutError during coherence → approved=False."""
+        """AC-5: LLMTimeoutError during integrity → approved=False."""
         reasoning = _make_reasoning_result()
         request = _make_request()
-        adapter = _make_adapter_mock(coherence_error=LLMTimeoutError("LLM timeout"))
+        adapter = _make_adapter_mock(integrity_error=LLMTimeoutError("LLM timeout"))
         session = _make_session_mock()
 
         result = await self_review(reasoning, request, adapter, session)
@@ -433,7 +383,7 @@ class TestValidationStepsDurations:
 
         result = await self_review(reasoning, request, adapter, session)
 
-        assert len(result.steps) == 4
+        assert len(result.steps) == 3
         for step in result.steps:
             assert isinstance(step, ValidationStep)
             assert step.duration_ms >= 0

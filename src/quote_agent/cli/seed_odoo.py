@@ -207,8 +207,12 @@ def _seed_products(
 
             # Idempotency: skip if product with this default_code exists (include archived)
             existing = _exec(
-                obj, uid, db, api_key,
-                "product.product", "search",
+                obj,
+                uid,
+                db,
+                api_key,
+                "product.product",
+                "search",
                 [[("default_code", "=", ref)]],
                 {"limit": 1, "context": {"active_test": False}},
             )
@@ -220,8 +224,12 @@ def _seed_products(
             cat_name = rec.get("category", "Uncategorized")
             if cat_name not in category_ids:
                 existing_cat = _exec(
-                    obj, uid, db, api_key,
-                    "product.category", "search",
+                    obj,
+                    uid,
+                    db,
+                    api_key,
+                    "product.category",
+                    "search",
                     [[("name", "=", cat_name)]],
                     {"limit": 1},
                 )
@@ -229,8 +237,12 @@ def _seed_products(
                     category_ids[cat_name] = existing_cat[0]
                 else:
                     category_ids[cat_name] = _exec(
-                        obj, uid, db, api_key,
-                        "product.category", "create",
+                        obj,
+                        uid,
+                        db,
+                        api_key,
+                        "product.category",
+                        "create",
                         [{"name": cat_name}],
                     )
 
@@ -255,8 +267,12 @@ def _seed_products(
 
         if vals_list:
             ids = _exec(
-                obj, uid, db, api_key,
-                "product.product", "create",
+                obj,
+                uid,
+                db,
+                api_key,
+                "product.product",
+                "create",
                 [vals_list],
             )
             if isinstance(ids, int):
@@ -266,7 +282,10 @@ def _seed_products(
         batch_num = i // _BATCH_SIZE + 1
         logger.info(
             "Products batch %d/%d — %d created, %d skipped so far",
-            batch_num, total_batches, len(created_ids), skipped,
+            batch_num,
+            total_batches,
+            len(created_ids),
+            skipped,
         )
 
     return created_ids
@@ -286,8 +305,12 @@ def _resolve_country_id(
 ) -> int:
     """Resolve country code to Odoo res.country ID."""
     ids = _exec(
-        obj, uid, db, api_key,
-        "res.country", "search",
+        obj,
+        uid,
+        db,
+        api_key,
+        "res.country",
+        "search",
         [[("code", "=", country_code)]],
         {"limit": 1},
     )
@@ -313,8 +336,12 @@ def _seed_clients(
 
         # Idempotency: skip if partner with this ref exists
         existing = _exec(
-            obj, uid, db, api_key,
-            "res.partner", "search",
+            obj,
+            uid,
+            db,
+            api_key,
+            "res.partner",
+            "search",
             [[("ref", "=", ref)]],
             {"limit": 1},
         )
@@ -342,8 +369,12 @@ def _seed_clients(
             "is_company": True,
         }
         partner_id: int = _exec(
-            obj, uid, db, api_key,
-            "res.partner", "create",
+            obj,
+            uid,
+            db,
+            api_key,
+            "res.partner",
+            "create",
             [vals],
         )
         result[ref] = partner_id
@@ -377,8 +408,12 @@ def _seed_orders(
         for order_ref, lines in orders:
             # Idempotency: check if order with this client_order_ref exists
             existing = _exec(
-                obj, uid, db, api_key,
-                "sale.order", "search",
+                obj,
+                uid,
+                db,
+                api_key,
+                "sale.order",
+                "search",
                 [[("client_order_ref", "=", order_ref)]],
                 {"limit": 1},
             )
@@ -395,29 +430,45 @@ def _seed_orders(
                 else:
                     logger.warning("Product index %d out of range, skipping line", product_idx)
                     continue
-                order_lines.append((0, 0, {
-                    "product_id": pid,
-                    "product_uom_qty": qty,
-                    "price_unit": price,
-                }))
+                order_lines.append(
+                    (
+                        0,
+                        0,
+                        {
+                            "product_id": pid,
+                            "product_uom_qty": qty,
+                            "price_unit": price,
+                        },
+                    )
+                )
 
             if not order_lines:
                 continue
 
             order_id: int = _exec(
-                obj, uid, db, api_key,
-                "sale.order", "create",
-                [{
-                    "partner_id": partner_id,
-                    "client_order_ref": order_ref,
-                    "order_line": order_lines,
-                }],
+                obj,
+                uid,
+                db,
+                api_key,
+                "sale.order",
+                "create",
+                [
+                    {
+                        "partner_id": partner_id,
+                        "client_order_ref": order_ref,
+                        "order_line": order_lines,
+                    }
+                ],
             )
 
             # Confirm order (draft → sale)
             _exec(
-                obj, uid, db, api_key,
-                "sale.order", "action_confirm",
+                obj,
+                uid,
+                db,
+                api_key,
+                "sale.order",
+                "action_confirm",
                 [[order_id]],
             )
 
@@ -444,8 +495,12 @@ def _clean_seed_data(
 
     # 1. Delete sale.order.line on seed orders
     seed_order_ids = _exec(
-        obj, uid, db, api_key,
-        "sale.order", "search",
+        obj,
+        uid,
+        db,
+        api_key,
+        "sale.order",
+        "search",
         [[("client_order_ref", "like", _SEED_ORDER_PREFIX)]],
         ctx,
     )
@@ -453,8 +508,14 @@ def _clean_seed_data(
         # Cancel → draft → unlink (each singleton, Odoo requires it)
         for oid in seed_order_ids:
             order_data = _exec(
-                obj, uid, db, api_key,
-                "sale.order", "read", [oid], {"fields": ["state"]},
+                obj,
+                uid,
+                db,
+                api_key,
+                "sale.order",
+                "read",
+                [oid],
+                {"fields": ["state"]},
             )
             state = order_data[0]["state"] if order_data else "unknown"
             if state in ("sale", "done"):
@@ -464,8 +525,12 @@ def _clean_seed_data(
 
         # Count lines before deletion
         line_ids = _exec(
-            obj, uid, db, api_key,
-            "sale.order.line", "search",
+            obj,
+            uid,
+            db,
+            api_key,
+            "sale.order.line",
+            "search",
             [[("order_id", "in", seed_order_ids)]],
             ctx,
         )
@@ -480,8 +545,12 @@ def _clean_seed_data(
 
     # 3. Delete products with [SEED] prefix
     product_ids = _exec(
-        obj, uid, db, api_key,
-        "product.product", "search",
+        obj,
+        uid,
+        db,
+        api_key,
+        "product.product",
+        "search",
         [[("name", "like", _SEED_PREFIX)]],
         ctx,
     )
@@ -491,8 +560,12 @@ def _clean_seed_data(
 
     # 4. Delete partners with [SEED] prefix
     partner_ids = _exec(
-        obj, uid, db, api_key,
-        "res.partner", "search",
+        obj,
+        uid,
+        db,
+        api_key,
+        "res.partner",
+        "search",
         [[("name", "like", _SEED_PREFIX)]],
         ctx,
     )
@@ -533,8 +606,13 @@ async def _seed_impl(count: int, clean: bool) -> None:
     # Fetch existing seed product IDs
     if not product_ids:
         product_ids = await asyncio.to_thread(
-            _exec, obj, uid, db, api_key,
-            "product.product", "search",
+            _exec,
+            obj,
+            uid,
+            db,
+            api_key,
+            "product.product",
+            "search",
             [[("name", "like", _SEED_PREFIX)]],
             {"limit": count},
         )
@@ -553,9 +631,9 @@ async def _seed_impl(count: int, clean: bool) -> None:
     typer.echo(typer.style("\nSeeding complete!", fg=typer.colors.GREEN))
 
 
-def seed_odoo(
-    count: int = typer.Option(_DEFAULT_PRODUCT_COUNT, "--count", "-n", help="Number of products to seed"),
-    clean: bool = typer.Option(False, "--clean", help="Remove all seeded data instead of seeding"),
+async def seed_odoo(
+    count: int = _DEFAULT_PRODUCT_COUNT,
+    clean: bool = False,
 ) -> None:
     """Populate test Odoo with realistic industrial data (products, clients, orders)."""
-    asyncio.run(_seed_impl(count=count, clean=clean))
+    await _seed_impl(count=count, clean=clean)

@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from typing import TYPE_CHECKING
 
@@ -134,24 +133,23 @@ async def _run_score(
         sys.exit(1)
 
 
-def score(
-    description: str = typer.Argument(..., help="Quote request description to score"),
-    quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
-    reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
-    urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
-    limit: int = typer.Option(5, "--limit", "-l", help="Number of search results to score"),
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def score(
+    description: str,
+    *,
+    quantity: float | None,
+    reference: str | None,
+    urgency: str | None,
+    limit: int,
+    json_output: bool,
 ) -> None:
     """Score confidence of product matches and route by tier."""
     try:
-        confidence, decision = asyncio.run(
-            _run_score(
-                description,
-                quantity=quantity,
-                reference=reference,
-                urgency=urgency,
-                limit=limit,
-            )
+        confidence, decision = await _run_score(
+            description,
+            quantity=quantity,
+            reference=reference,
+            urgency=urgency,
+            limit=limit,
         )
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))

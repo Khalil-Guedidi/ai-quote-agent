@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 
 import typer
@@ -81,7 +80,7 @@ def _format_orders(orders: list[dict[str, object]]) -> None:
         )
 
 
-def erp_read(
+async def erp_read(
     client: str | None = None,
     product: int | None = None,
     orders: str | None = None,
@@ -95,21 +94,21 @@ def erp_read(
 
     try:
         if client:
-            data = asyncio.run(_read_client(client))
+            data = await _read_client(client)
             if json_output:
                 typer.echo(json.dumps(data, indent=2))
             else:
                 _format_client(data)
 
         elif product is not None:
-            data = asyncio.run(_read_product(product))
+            data = await _read_product(product)
             if json_output:
                 typer.echo(json.dumps(data, indent=2))
             else:
                 _format_product(data)
 
         elif orders:
-            order_list = asyncio.run(_read_orders(orders, limit))
+            order_list = await _read_orders(orders, limit)
             if json_output:
                 typer.echo(json.dumps(order_list, indent=2))
             else:

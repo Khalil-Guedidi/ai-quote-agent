@@ -310,12 +310,23 @@ class TestWorkerConfig:
 
     def test_default_config_values(self, env_vars: dict[str, str]) -> None:
         """AC-5: Default poll_interval=10, batch_size=5, enabled=false (opt-in)."""
+        import os
+
         from quote_agent.config import Settings
 
-        s = Settings()  # type: ignore[call-arg]
-        assert s.worker.poll_interval == 10
-        assert s.worker.batch_size == 5
-        assert s.worker.enabled is False
+        # Override .env file value — pydantic-settings env vars take priority over .env
+        old = os.environ.get("WORKER__ENABLED")
+        os.environ["WORKER__ENABLED"] = "false"
+        try:
+            s = Settings()  # type: ignore[call-arg]
+            assert s.worker.poll_interval == 10
+            assert s.worker.batch_size == 5
+            assert s.worker.enabled is False
+        finally:
+            if old is not None:
+                os.environ["WORKER__ENABLED"] = old
+            else:
+                os.environ.pop("WORKER__ENABLED", None)
 
     def test_config_overrides_from_env(self, env_vars: dict[str, str]) -> None:
         """AC-5: Config can be overridden via env vars."""

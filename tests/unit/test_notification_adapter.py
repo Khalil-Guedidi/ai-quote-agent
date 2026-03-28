@@ -58,7 +58,7 @@ async def test_health_check_returns_healthy_on_success(
     mock_client = AsyncMock()
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=False)
-    mock_client.post = AsyncMock(return_value=mock_response)
+    mock_client.head = AsyncMock(return_value=mock_response)
     mock_client_cls.return_value = mock_client
 
     result = await adapter.health_check()
@@ -76,7 +76,7 @@ async def test_health_check_returns_unhealthy_on_connection_error(
     mock_client = AsyncMock()
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=False)
-    mock_client.post = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
+    mock_client.head = AsyncMock(side_effect=httpx.ConnectError("Connection refused"))
     mock_client_cls.return_value = mock_client
 
     result = await adapter.health_check()
@@ -94,7 +94,7 @@ async def test_health_check_returns_unhealthy_on_timeout(
     mock_client = AsyncMock()
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=False)
-    mock_client.post = AsyncMock(side_effect=httpx.TimeoutException("Timed out"))
+    mock_client.head = AsyncMock(side_effect=httpx.TimeoutException("Timed out"))
     mock_client_cls.return_value = mock_client
 
     result = await adapter.health_check()
@@ -138,7 +138,7 @@ async def test_health_check_caches_result(
     mock_client = AsyncMock()
     mock_client.__aenter__ = AsyncMock(return_value=mock_client)
     mock_client.__aexit__ = AsyncMock(return_value=False)
-    mock_client.post = AsyncMock(return_value=mock_response)
+    mock_client.head = AsyncMock(return_value=mock_response)
     mock_client_cls.return_value = mock_client
 
     result1 = await adapter.health_check()

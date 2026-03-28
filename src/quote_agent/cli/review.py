@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from typing import TYPE_CHECKING
 
@@ -29,9 +28,7 @@ def _format_review_result(
         typer.echo("Validation Steps:")
         for step in review.steps:
             status_icon = (
-                typer.style("PASS", fg=typer.colors.GREEN)
-                if step.passed
-                else typer.style("FAIL", fg=typer.colors.RED)
+                typer.style("PASS", fg=typer.colors.GREEN) if step.passed else typer.style("FAIL", fg=typer.colors.RED)
             )
             typer.echo(f"  [{step.step_name}] {status_icon} ({step.duration_ms}ms)")
             typer.echo(f"    {step.detail}")
@@ -68,7 +65,7 @@ def _format_review_result(
                 severity_text = typer.style(cflag.severity.upper(), fg=severity_color)
                 typer.echo(f"  [{cflag.flag_type}] {severity_text}: {cflag.detail}")
                 if cflag.matched_term:
-                    typer.echo(f"    Matched: \"{cflag.matched_term}\"")
+                    typer.echo(f'    Matched: "{cflag.matched_term}"')
 
 
 async def _run_review(
@@ -102,8 +99,9 @@ async def _run_review(
         )
 
         if not json_output:
-            typer.echo(f"Confidence: {confidence.overall_confidence:.2f} | "
-                        f"Tier: {decision.tier} | Action: {decision.action}")
+            typer.echo(
+                f"Confidence: {confidence.overall_confidence:.2f} | Tier: {decision.tier} | Action: {decision.action}"
+            )
             typer.echo()
 
         # Build request once for both self-review and compliance
@@ -142,25 +140,24 @@ async def _run_review(
         sys.exit(1)
 
 
-def review(
-    description: str = typer.Argument(..., help="Quote request description to review"),
-    quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
-    reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
-    urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
-    client: str | None = typer.Option(None, "--client", "-c", help="Client name for sanctions check"),
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def review(
+    description: str,
+    *,
+    quantity: float | None,
+    reference: str | None,
+    urgency: str | None,
+    client: str | None,
+    json_output: bool,
 ) -> None:
     """Run full pipeline with self-review validation gate and compliance check."""
     try:
-        review_result, compliance_result = asyncio.run(
-            _run_review(
-                description,
-                quantity=quantity,
-                reference=reference,
-                urgency=urgency,
-                client=client,
-                json_output=json_output,
-            )
+        review_result, compliance_result = await _run_review(
+            description,
+            quantity=quantity,
+            reference=reference,
+            urgency=urgency,
+            client=client,
+            json_output=json_output,
         )
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
@@ -180,9 +177,10 @@ def review(
         # If compliance flags with severity "block", override final message
         if any(f.severity == "block" for f in compliance_result.flags):
             typer.echo()
-            typer.echo(typer.style(
-                "BLOCKED: Compliance check detected blocking issues. "
-                "This request cannot be auto-processed.",
-                fg=typer.colors.RED,
-                bold=True,
-            ))
+            typer.echo(
+                typer.style(
+                    "BLOCKED: Compliance check detected blocking issues. This request cannot be auto-processed.",
+                    fg=typer.colors.RED,
+                    bold=True,
+                )
+            )

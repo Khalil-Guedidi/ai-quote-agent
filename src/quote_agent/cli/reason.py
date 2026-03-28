@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from typing import TYPE_CHECKING
 
@@ -135,8 +134,10 @@ async def _run_reason(
             engine = get_search_engine(session)
             reasoning = await apply_reasoning_strategy(classification, request, adapter, engine)
         if not json_output:
-            typer.echo(f"Strategy: {reasoning.strategy} ({reasoning.reasoning_duration_ms}ms, "
-                        f"{len(reasoning.search_result.results)} results)")
+            typer.echo(
+                f"Strategy: {reasoning.strategy} ({reasoning.reasoning_duration_ms}ms, "
+                f"{len(reasoning.search_result.results)} results)"
+            )
             typer.echo()
 
         # Step 3: Score confidence
@@ -156,23 +157,22 @@ async def _run_reason(
         sys.exit(1)
 
 
-def reason(
-    description: str = typer.Argument(..., help="Quote request description to reason about"),
-    quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
-    reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
-    urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def reason(
+    description: str,
+    *,
+    quantity: float | None,
+    reference: str | None,
+    urgency: str | None,
+    json_output: bool,
 ) -> None:
     """Apply adaptive reasoning strategy and score confidence."""
     try:
-        reasoning, confidence, decision = asyncio.run(
-            _run_reason(
-                description,
-                quantity=quantity,
-                reference=reference,
-                urgency=urgency,
-                json_output=json_output,
-            )
+        reasoning, confidence, decision = await _run_reason(
+            description,
+            quantity=quantity,
+            reference=reference,
+            urgency=urgency,
+            json_output=json_output,
         )
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))

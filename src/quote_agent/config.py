@@ -107,7 +107,7 @@ class ConfidenceScoringSettings(BaseModel):
     """Confidence scoring and tier routing configuration."""
 
     timeout_seconds: int = 30
-    high_threshold: float = 0.70
+    high_threshold: float = 0.85
     low_threshold: float = 0.50
     max_proposals: int = 5
     min_proposals: int = 2

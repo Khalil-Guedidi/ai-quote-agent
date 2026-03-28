@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from typing import Any
@@ -55,9 +54,7 @@ def _format_state(state: dict[str, Any]) -> None:
             f"Confidence:     {confidence.overall_confidence:.2f}"
             f"  | Tier: {typer.style(str(routing.tier), fg=tier_color, bold=True)}"
         )
-        typer.echo(
-            f"Action:         {typer.style(str(routing.action), fg=action_color, bold=True)}"
-        )
+        typer.echo(f"Action:         {typer.style(str(routing.action), fg=action_color, bold=True)}")
 
     # Self-review
     review = state.get("self_review")
@@ -152,7 +149,7 @@ async def _run_process(
     return await graph.ainvoke(initial_state)
 
 
-def process(
+async def process(
     description: str,
     *,
     client: str | None,
@@ -163,14 +160,12 @@ def process(
 ) -> None:
     """Run the full LangGraph agent pipeline end-to-end."""
     try:
-        result: dict[str, Any] = asyncio.run(
-            _run_process(
-                description,
-                client=client,
-                quantity=quantity,
-                reference=reference,
-                urgency=urgency,
-            )
+        result: dict[str, Any] = await _run_process(
+            description,
+            client=client,
+            quantity=quantity,
+            reference=reference,
+            urgency=urgency,
         )
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
@@ -179,7 +174,7 @@ def process(
     # Post-pipeline error notification (Option B — Story 5.5.5)
     error = result.get("error")
     if error:
-        asyncio.run(_send_error_notification(error))
+        await _send_error_notification(error)
 
     if json_output:
         typer.echo(_state_to_json(result))

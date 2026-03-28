@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from typing import TYPE_CHECKING
 
@@ -70,22 +69,21 @@ async def _run_classify(
         sys.exit(1)
 
 
-def classify(
-    description: str = typer.Argument(..., help="Quote request description to classify"),
-    quantity: float | None = typer.Option(None, "--quantity", "-q", help="Requested quantity"),
-    reference: str | None = typer.Option(None, "--reference", "-r", help="Product reference"),
-    urgency: str | None = typer.Option(None, "--urgency", "-u", help="Urgency level"),
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def classify(
+    description: str,
+    *,
+    quantity: float | None,
+    reference: str | None,
+    urgency: str | None,
+    json_output: bool,
 ) -> None:
     """Classify the complexity of a quote request."""
     try:
-        result = asyncio.run(
-            _run_classify(
-                description,
-                quantity=quantity,
-                reference=reference,
-                urgency=urgency,
-            )
+        result = await _run_classify(
+            description,
+            quantity=quantity,
+            reference=reference,
+            urgency=urgency,
         )
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))

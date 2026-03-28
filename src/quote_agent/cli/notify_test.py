@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json as json_lib
 
 import typer
@@ -40,13 +39,14 @@ def _format_result(result: NotificationResult, hostname: str) -> None:
         typer.echo(f"Error:    {result.error}")
 
 
-def notify_test(
-    message: str = typer.Option(_DEFAULT_MESSAGE, "--message", "-m", help="Custom test message"),
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def notify_test(
+    message: str,
+    *,
+    json_output: bool,
 ) -> None:
     """Send a test notification to Teams via the configured webhook."""
     try:
-        result, hostname = asyncio.run(_run_notify_test(message))
+        result, hostname = await _run_notify_test(message)
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
         raise typer.Exit(code=1) from None

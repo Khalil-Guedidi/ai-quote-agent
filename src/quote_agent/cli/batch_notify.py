@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json as json_lib
 from typing import TYPE_CHECKING
 
@@ -81,12 +80,12 @@ def _display_result(result: NotificationResult | None, hostname: str, json_outpu
         raise typer.Exit(code=1)
 
 
-def batch_summary(
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def batch_summary(
+    json_output: bool = False,
 ) -> None:
     """Send a batch summary notification for today's processed quotes."""
     try:
-        result, hostname = asyncio.run(_run_batch_summary())
+        result, hostname = await _run_batch_summary()
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
         raise typer.Exit(code=1) from None
@@ -94,12 +93,12 @@ def batch_summary(
     _display_result(result, hostname, json_output)
 
 
-def weekly_report(
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def weekly_report(
+    json_output: bool = False,
 ) -> None:
     """Send a weekly report notification for the last 7 days."""
     try:
-        result, hostname = asyncio.run(_run_weekly_report())
+        result, hostname = await _run_weekly_report()
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
         raise typer.Exit(code=1) from None
@@ -107,12 +106,12 @@ def weekly_report(
     _display_result(result, hostname, json_output)
 
 
-def manager_stats(
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def manager_stats(
+    json_output: bool = False,
 ) -> None:
     """Send an on-demand manager stats notification."""
     try:
-        result, hostname = asyncio.run(_run_manager_stats())
+        result, hostname = await _run_manager_stats()
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
         raise typer.Exit(code=1) from None

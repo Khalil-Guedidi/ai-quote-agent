@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from typing import TYPE_CHECKING
 
@@ -35,7 +34,7 @@ def _format_compliance_result(result: ComplianceCheckResult) -> None:
             typer.echo(f"  [{flag.flag_type}] {severity_text}")
             typer.echo(f"    Detail: {flag.detail}")
             if flag.matched_term:
-                typer.echo(f"    Matched: \"{flag.matched_term}\"")
+                typer.echo(f'    Matched: "{flag.matched_term}"')
             typer.echo()
     else:
         typer.echo("No compliance flags detected.")
@@ -76,16 +75,15 @@ async def _run_compliance(
         sys.exit(1)
 
 
-def compliance(
-    description: str = typer.Argument(..., help="Product description to check for compliance"),
-    client: str | None = typer.Option(None, "--client", "-c", help="Client name to check against sanctions lists"),
-    json_output: bool = typer.Option(False, "--json", help="Output result as JSON"),
+async def compliance(
+    description: str,
+    *,
+    client: str | None,
+    json_output: bool,
 ) -> None:
     """Run export control and sanctions compliance check."""
     try:
-        result = asyncio.run(
-            _run_compliance(description, client_name=client)
-        )
+        result = await _run_compliance(description, client_name=client)
     except Exception as exc:
         typer.echo(typer.style(f"Error: {exc}", fg=typer.colors.RED))
         raise typer.Exit(code=1) from None

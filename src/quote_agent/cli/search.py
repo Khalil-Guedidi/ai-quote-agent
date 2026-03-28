@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import sys
 from typing import TYPE_CHECKING
 
@@ -84,18 +83,14 @@ async def _run_search(
         sys.exit(1)
 
 
-def search(
-    query: str = typer.Argument(..., help="Product search query"),
-    limit: int = typer.Option(10, "--limit", "-l", help="Maximum number of results"),
-    method: str = typer.Option(
-        "hybrid",
-        "--method",
-        "-m",
-        help="Search method: hybrid, semantic, or keyword",
-    ),
-    no_filter: bool = typer.Option(False, "--no-filter", help="Disable proposability filter"),
-    include_stale: bool = typer.Option(False, "--include-stale", help="Include stale products"),
-    json_output: bool = typer.Option(False, "--json", help="Output results as JSON"),
+async def search(
+    query: str,
+    *,
+    limit: int,
+    method: str,
+    no_filter: bool,
+    include_stale: bool,
+    json_output: bool,
 ) -> None:
     """Search the product catalog and display results."""
     if method not in ("hybrid", "semantic", "keyword"):
@@ -104,14 +99,12 @@ def search(
         raise typer.Exit(code=1)
 
     try:
-        result = asyncio.run(
-            _run_search(
-                query,
-                limit=limit,
-                method=method,
-                no_filter=no_filter,
-                include_stale=include_stale,
-            )
+        result = await _run_search(
+            query,
+            limit=limit,
+            method=method,
+            no_filter=no_filter,
+            include_stale=include_stale,
         )
     except OSError as exc:
         typer.echo(typer.style("Error: Could not connect to PostgreSQL.", fg=typer.colors.RED))
