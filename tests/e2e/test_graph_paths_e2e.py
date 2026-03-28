@@ -104,7 +104,9 @@ async def test_high_confidence_draft_path_e2e() -> None:
 
     logger.info(
         "High-confidence path: final_action=%s, error=%s, current_node=%s",
-        final_action, error, result.get("current_node"),
+        final_action,
+        error,
+        result.get("current_node"),
     )
 
     # High confidence should either draft or route to proposals/escalation
@@ -138,7 +140,9 @@ async def test_medium_confidence_proposals_path_e2e() -> None:
 
     logger.info(
         "Medium-confidence path: final_action=%s, error=%s, current_node=%s",
-        final_action, error, result.get("current_node"),
+        final_action,
+        error,
+        result.get("current_node"),
     )
 
     assert error is None, f"Pipeline error: {error}"
@@ -170,7 +174,9 @@ async def test_low_confidence_escalation_path_e2e() -> None:
 
     logger.info(
         "Low-confidence path: final_action=%s, error=%s, current_node=%s",
-        final_action, error, result.get("current_node"),
+        final_action,
+        error,
+        result.get("current_node"),
     )
 
     assert error is None, f"Pipeline error: {error}"
@@ -199,7 +205,10 @@ async def test_compliance_blocked_path_e2e() -> None:
 
     logger.info(
         "Compliance-blocked path: final_action=%s, error=%s, current_node=%s, compliance=%s",
-        final_action, error, result.get("current_node"), result.get("compliance"),
+        final_action,
+        error,
+        result.get("current_node"),
+        result.get("compliance"),
     )
 
     # The sanctioned entity should be detected either by LLM compliance check or
@@ -263,7 +272,9 @@ async def test_review_rejected_path_e2e() -> None:
 
     logger.info(
         "Review-rejected path: final_action=%s, error=%s, current_node=%s",
-        final_action, error, result.get("current_node"),
+        final_action,
+        error,
+        result.get("current_node"),
     )
 
     assert error is None, f"Pipeline error: {error}"
@@ -313,10 +324,7 @@ async def test_route_fallback_escalation_path_e2e() -> None:
     graph_structure = graph.get_graph()
 
     # The route node should only have edges to: review, notify_proposals, notify_escalation
-    route_edges = [
-        edge for edge in graph_structure.edges
-        if edge.source == "route"
-    ]
+    route_edges = [edge for edge in graph_structure.edges if edge.source == "route"]
     route_targets = {edge.target for edge in route_edges}
     logger.info("Route node targets: %s", route_targets)
 

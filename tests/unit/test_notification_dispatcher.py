@@ -40,9 +40,7 @@ class TestDispatchQuoteNotification:
         batcher = NotificationBatcher(burst_threshold=5, burst_window_seconds=600.0)
         payload = _make_payload()
 
-        result = await dispatch_quote_notification(
-            payload=payload, adapter=adapter, throttle=throttle, batcher=batcher
-        )
+        result = await dispatch_quote_notification(payload=payload, adapter=adapter, throttle=throttle, batcher=batcher)
 
         assert result["sent"] is True
         adapter.send_notification.assert_awaited_once_with(payload)
@@ -58,9 +56,7 @@ class TestDispatchQuoteNotification:
         batcher = NotificationBatcher(burst_threshold=5, burst_window_seconds=600.0)
         payload = _make_payload()
 
-        result = await dispatch_quote_notification(
-            payload=payload, adapter=adapter, throttle=throttle, batcher=batcher
-        )
+        result = await dispatch_quote_notification(payload=payload, adapter=adapter, throttle=throttle, batcher=batcher)
 
         assert result["sent"] is False
         assert result["reason"] == "rate-limited"
@@ -80,9 +76,7 @@ class TestDispatchQuoteNotification:
 
         payload = _make_payload()
 
-        result = await dispatch_quote_notification(
-            payload=payload, adapter=adapter, throttle=throttle, batcher=batcher
-        )
+        result = await dispatch_quote_notification(payload=payload, adapter=adapter, throttle=throttle, batcher=batcher)
 
         assert result["sent"] is False
         assert result["reason"] == "batched"
@@ -98,9 +92,7 @@ class TestDispatchQuoteNotification:
         batcher = NotificationBatcher(burst_threshold=5, burst_window_seconds=600.0)
         payload = _make_payload()
 
-        await dispatch_quote_notification(
-            payload=payload, adapter=adapter, throttle=throttle, batcher=batcher
-        )
+        await dispatch_quote_notification(payload=payload, adapter=adapter, throttle=throttle, batcher=batcher)
 
         assert batcher.get_pending_count("webhook.example.com") == 1
 
@@ -114,9 +106,7 @@ class TestDispatchQuoteNotification:
         batcher = NotificationBatcher(burst_threshold=5, burst_window_seconds=600.0)
         payload = _make_payload()
 
-        await dispatch_quote_notification(
-            payload=payload, adapter=adapter, throttle=throttle, batcher=batcher
-        )
+        await dispatch_quote_notification(payload=payload, adapter=adapter, throttle=throttle, batcher=batcher)
 
         # Now should be rate-limited
         assert throttle.can_send("webhook.example.com") is False
@@ -129,9 +119,7 @@ class TestDispatchQuoteNotification:
         throttle = NotificationThrottle(rate_limit_seconds=60.0)
         batcher = NotificationBatcher(burst_threshold=5, burst_window_seconds=600.0)
 
-        result = await dispatch_quote_notification(
-            payload=None, adapter=adapter, throttle=throttle, batcher=batcher
-        )
+        result = await dispatch_quote_notification(payload=None, adapter=adapter, throttle=throttle, batcher=batcher)
 
         assert result["sent"] is False
         assert result["reason"] == "no-payload"
@@ -147,9 +135,7 @@ class TestDispatchQuoteNotification:
         batcher = NotificationBatcher(burst_threshold=5, burst_window_seconds=600.0)
         payload = _make_payload()
 
-        result = await dispatch_quote_notification(
-            payload=payload, adapter=adapter, throttle=throttle, batcher=batcher
-        )
+        result = await dispatch_quote_notification(payload=payload, adapter=adapter, throttle=throttle, batcher=batcher)
 
         assert result["sent"] is False
         assert result["reason"] == "error"

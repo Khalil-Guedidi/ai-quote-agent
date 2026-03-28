@@ -84,9 +84,7 @@ class TestProposabilitySettings:
         assert s.exclude_inactive is False
         assert s.excluded_categories == ["Obsolete", "Custom"]
 
-    def test_env_var_mapping(
-        self, env_vars: dict[str, str], _clear_settings_cache: None
-    ) -> None:
+    def test_env_var_mapping(self, env_vars: dict[str, str], _clear_settings_cache: None) -> None:
         """AC-5: Env vars map correctly via pydantic-settings nested delimiter."""
         import os
 

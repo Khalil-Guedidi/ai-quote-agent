@@ -94,8 +94,7 @@ async def send_weekly_report(
         base_url = get_settings().app.base_url
         erp_url = f"{base_url}/erp/sale-orders"
         message = (
-            f"Voici le récap de la semaine. "
-            f"{report.total} devis traités, confiance moyenne {report.avg_confidence}%"
+            f"Voici le récap de la semaine. {report.total} devis traités, confiance moyenne {report.avg_confidence}%"
         )
 
         payload = NotificationPayload(

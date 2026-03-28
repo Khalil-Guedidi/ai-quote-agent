@@ -22,7 +22,8 @@ def scheduler_status(
 
     next_daily = seconds_until(schedule.batch_summary_hour, schedule.batch_summary_minute)
     next_weekly = seconds_until(
-        schedule.weekly_report_hour, schedule.weekly_report_minute,
+        schedule.weekly_report_hour,
+        schedule.weekly_report_minute,
         target_weekday=schedule.weekly_report_day,
     )
 
@@ -54,8 +55,7 @@ def scheduler_status(
         typer.echo(f"Daily:        {daily_time} UTC (in {_format_duration(next_daily)})")
         weekly_time = f"{schedule.weekly_report_hour:02d}:{schedule.weekly_report_minute:02d}"
         typer.echo(
-            f"Weekly:       {days[schedule.weekly_report_day]} "
-            f"{weekly_time} UTC (in {_format_duration(next_weekly)})"
+            f"Weekly:       {days[schedule.weekly_report_day]} {weekly_time} UTC (in {_format_duration(next_weekly)})"
         )
 
 

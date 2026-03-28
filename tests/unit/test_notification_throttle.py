@@ -150,9 +150,7 @@ class TestNotificationBatchSettings:
 
     def test_custom_values(self) -> None:
         """AC-1: Custom values can be provided."""
-        settings = NotificationBatchSettings(
-            burst_threshold=10, burst_window_seconds=300, rate_limit_seconds=30
-        )
+        settings = NotificationBatchSettings(burst_threshold=10, burst_window_seconds=300, rate_limit_seconds=30)
         assert settings.burst_threshold == 10
         assert settings.burst_window_seconds == 300
         assert settings.rate_limit_seconds == 30

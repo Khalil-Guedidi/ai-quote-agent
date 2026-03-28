@@ -122,11 +122,13 @@ async def get_weekly_report(session: AsyncSession) -> WeeklyReport:
     for rep_name, confs in sorted(rep_data.items()):
         valid_confs = [c for c in confs if c is not None]
         avg_pct = int(sum(valid_confs) / len(valid_confs) * 100) if valid_confs else 0
-        rep_breakdown.append(RepStats(
-            rep_name=rep_name,
-            quotes_count=len(confs),
-            avg_confidence_pct=avg_pct,
-        ))
+        rep_breakdown.append(
+            RepStats(
+                rep_name=rep_name,
+                quotes_count=len(confs),
+                avg_confidence_pct=avg_pct,
+            )
+        )
 
     # Previous week count for trend
     prev_stmt = (

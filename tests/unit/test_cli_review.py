@@ -22,21 +22,28 @@ def _make_review_result(
     """Build a SelfReviewResult for testing."""
     steps = [
         ValidationStep(
-            step_name="catalog_validation", passed=True,
-            detail="All 2 product IDs verified in catalog", duration_ms=5,
+            step_name="catalog_validation",
+            passed=True,
+            detail="All 2 product IDs verified in catalog",
+            duration_ms=5,
         ),
         ValidationStep(
-            step_name="quantity_plausibility", passed=True,
-            detail="All quantities within plausible range", duration_ms=0,
+            step_name="quantity_plausibility",
+            passed=True,
+            detail="All quantities within plausible range",
+            duration_ms=0,
         ),
         ValidationStep(
-            step_name="coherence_validation", passed=approved,
+            step_name="coherence_validation",
+            passed=approved,
             detail="Products coherent with request" if approved else "Incoherence detected: mismatch",
             duration_ms=120,
         ),
         ValidationStep(
-            step_name="output_integrity", passed=True,
-            detail="Output integrity verified", duration_ms=100,
+            step_name="output_integrity",
+            passed=True,
+            detail="Output integrity verified",
+            duration_ms=100,
         ),
     ]
     return SelfReviewResult(

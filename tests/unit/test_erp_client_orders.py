@@ -380,8 +380,8 @@ def _setup_orders_mock(mock_proxy_cls: MagicMock) -> MagicMock:
     # execute_kw called 3 times: client lookup, orders, order lines
     mock_object.execute_kw.side_effect = [
         [_SAMPLE_CLIENT_RECORD],  # get_client
-        _SAMPLE_ORDERS,           # sale.order
-        _SAMPLE_ORDER_LINES,      # sale.order.line
+        _SAMPLE_ORDERS,  # sale.order
+        _SAMPLE_ORDER_LINES,  # sale.order.line
     ]
 
     def proxy_factory(url: str) -> MagicMock:
@@ -420,7 +420,7 @@ async def test_get_client_orders_empty(
     mock_object = MagicMock()
     mock_object.execute_kw.side_effect = [
         [_SAMPLE_CLIENT_RECORD],  # get_client
-        [],                       # no orders
+        [],  # no orders
     ]
 
     def proxy_factory(url: str) -> MagicMock:

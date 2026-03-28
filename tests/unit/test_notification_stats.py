@@ -45,12 +45,12 @@ def _mock_session_with_rows(rows: list[MagicMock]) -> AsyncMock:
 async def test_daily_summary_groups_by_confidence_tier() -> None:
     """AC-1: get_daily_summary correctly groups quotes by confidence tier."""
     rows = [
-        _make_quote_row(confidence=0.92),   # high (>= 0.85)
-        _make_quote_row(confidence=0.88),   # high
-        _make_quote_row(confidence=0.70),   # medium (>= 0.50)
-        _make_quote_row(confidence=0.55),   # medium
-        _make_quote_row(confidence=0.30),   # low (< 0.50)
-        _make_quote_row(confidence=None),   # low (NULL)
+        _make_quote_row(confidence=0.92),  # high (>= 0.85)
+        _make_quote_row(confidence=0.88),  # high
+        _make_quote_row(confidence=0.70),  # medium (>= 0.50)
+        _make_quote_row(confidence=0.55),  # medium
+        _make_quote_row(confidence=0.30),  # low (< 0.50)
+        _make_quote_row(confidence=None),  # low (NULL)
     ]
     session = _mock_session_with_rows(rows)
 
@@ -94,9 +94,9 @@ async def test_daily_summary_all_high_confidence() -> None:
 async def test_daily_summary_boundary_confidence_values() -> None:
     """AC-1: get_daily_summary correctly classifies boundary values."""
     rows = [
-        _make_quote_row(confidence=0.85),   # high (exactly at threshold)
+        _make_quote_row(confidence=0.85),  # high (exactly at threshold)
         _make_quote_row(confidence=0.8499),  # medium (just below high)
-        _make_quote_row(confidence=0.50),   # medium (exactly at low threshold)
+        _make_quote_row(confidence=0.50),  # medium (exactly at low threshold)
         _make_quote_row(confidence=0.4999),  # low (just below medium)
     ]
     session = _mock_session_with_rows(rows)
@@ -261,7 +261,10 @@ async def test_weekly_report_has_period_fields() -> None:
 def test_daily_summary_dto_fields() -> None:
     """AC-1: DailySummary DTO has all required fields."""
     summary = DailySummary(
-        total=10, high_count=5, medium_count=3, low_count=2,
+        total=10,
+        high_count=5,
+        medium_count=3,
+        low_count=2,
         date=datetime.now(tz=UTC),
     )
     assert summary.total == 10

@@ -315,7 +315,10 @@ class TestProductCoherence:
     """Verify internal coherence: ref, name, and description agree on shape/type."""
 
     _SHAPE_MAP: ClassVar[dict[str, str]] = {
-        "RD": "rond", "CR": "carre", "RECT": "rectangulaire", "OBLONG": "oblong",
+        "RD": "rond",
+        "CR": "carre",
+        "RECT": "rectangulaire",
+        "OBLONG": "oblong",
     }
 
     def test_tube_shape_coherent_across_fields(self, small_catalog: list[ProductRecord]) -> None:
@@ -334,9 +337,7 @@ class TestProductCoherence:
 
             # Check name contains the shape abbreviation
             name_upper = r.name.upper()
-            assert ref_shape in name_upper, (
-                f"Ref shape {ref_shape} not in name '{r.name}' (ref={r.reference})"
-            )
+            assert ref_shape in name_upper, f"Ref shape {ref_shape} not in name '{r.name}' (ref={r.reference})"
 
             # Check description (if not None/truncated) contains the French shape word
             if r.description and len(r.description) > 30:
@@ -372,9 +373,7 @@ class TestProductCoherence:
 
             # Check name starts with the expected profile type
             name_upper = r.name.upper()
-            assert expected_type in name_upper, (
-                f"Expected '{expected_type}' in name '{r.name}' (ref={r.reference})"
-            )
+            assert expected_type in name_upper, f"Expected '{expected_type}' in name '{r.name}' (ref={r.reference})"
 
             # Check description (if present and long enough)
             if r.description and len(r.description) > 20:

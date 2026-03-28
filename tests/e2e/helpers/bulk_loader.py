@@ -58,9 +58,7 @@ async def load_50k_fixture(
     target_count = _get_product_count()
 
     # Idempotency: skip if enough products are already loaded
-    count_result = await session.execute(
-        select(func.count()).select_from(Product).where(Product.is_stale.is_(False))
-    )
+    count_result = await session.execute(select(func.count()).select_from(Product).where(Product.is_stale.is_(False)))
     existing_count = count_result.scalar_one()
     if existing_count >= target_count:
         logger.info(

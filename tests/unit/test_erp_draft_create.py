@@ -270,9 +270,22 @@ class TestCreateDraftQuote:
         # Mock: execute_kw for read returns order data
         mock_proxy.execute_kw.side_effect = [
             # get_client_impl search_read
-            [{"id": 42, "name": "ArcelorMittal", "ref": "AM001", "email": False,
-              "phone": False, "street": False, "city": False, "zip": False,
-              "country_id": False, "vat": False, "active": True, "customer_rank": 1}],
+            [
+                {
+                    "id": 42,
+                    "name": "ArcelorMittal",
+                    "ref": "AM001",
+                    "email": False,
+                    "phone": False,
+                    "street": False,
+                    "city": False,
+                    "zip": False,
+                    "country_id": False,
+                    "vat": False,
+                    "active": True,
+                    "customer_rank": 1,
+                }
+            ],
             # create sale.order
             123,
             # read back order
@@ -320,9 +333,22 @@ class TestCreateDraftQuote:
         # Client resolves fine, but create times out
         mock_proxy.execute_kw.side_effect = [
             # get_client_impl
-            [{"id": 42, "name": "ArcelorMittal", "ref": "AM001", "email": False,
-              "phone": False, "street": False, "city": False, "zip": False,
-              "country_id": False, "vat": False, "active": True, "customer_rank": 1}],
+            [
+                {
+                    "id": 42,
+                    "name": "ArcelorMittal",
+                    "ref": "AM001",
+                    "email": False,
+                    "phone": False,
+                    "street": False,
+                    "city": False,
+                    "zip": False,
+                    "country_id": False,
+                    "vat": False,
+                    "active": True,
+                    "customer_rank": 1,
+                }
+            ],
             # create call times out
             TimeoutError("Timed out"),
         ]
@@ -355,9 +381,22 @@ class TestCreateDraftRetry:
                 raise xmlrpc.client.Error("Temporary failure")
             if call_count == 2:
                 # Second attempt: client found
-                return [{"id": 42, "name": "ArcelorMittal", "ref": "AM001", "email": False,
-                         "phone": False, "street": False, "city": False, "zip": False,
-                         "country_id": False, "vat": False, "active": True, "customer_rank": 1}]
+                return [
+                    {
+                        "id": 42,
+                        "name": "ArcelorMittal",
+                        "ref": "AM001",
+                        "email": False,
+                        "phone": False,
+                        "street": False,
+                        "city": False,
+                        "zip": False,
+                        "country_id": False,
+                        "vat": False,
+                        "active": True,
+                        "customer_rank": 1,
+                    }
+                ]
             if call_count == 3:
                 # create
                 return 123

@@ -465,9 +465,7 @@ class TestSearchCacheSettings:
         assert s.ttl_seconds == 1800
         assert s.max_entries == 5000
 
-    def test_env_var_mapping(
-        self, env_vars: dict[str, str], _clear_settings_cache: None
-    ) -> None:
+    def test_env_var_mapping(self, env_vars: dict[str, str], _clear_settings_cache: None) -> None:
         """AC-5: Env vars map correctly via pydantic-settings nested delimiter."""
         import os
 

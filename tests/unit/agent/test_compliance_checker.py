@@ -245,9 +245,7 @@ class TestFailSafe:
         # First call succeeds (export control - clean), second fails (sanction - error)
         mock_structured = AsyncMock()
         clean_export = _clean_export_result()
-        mock_structured.ainvoke = AsyncMock(
-            side_effect=[clean_export, AdapterError("Sanction check failed")]
-        )
+        mock_structured.ainvoke = AsyncMock(side_effect=[clean_export, AdapterError("Sanction check failed")])
         mock_model = MagicMock()
         mock_model.with_structured_output = MagicMock(return_value=mock_structured)
         mock_adapter = MagicMock()

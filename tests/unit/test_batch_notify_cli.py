@@ -16,7 +16,9 @@ runner = CliRunner()
 def _success_result() -> NotificationResult:
     """Build a successful NotificationResult."""
     return NotificationResult(
-        success=True, status_code=200, timestamp=datetime.now(tz=UTC),
+        success=True,
+        status_code=200,
+        timestamp=datetime.now(tz=UTC),
     )
 
 
@@ -24,9 +26,7 @@ def _mock_adapter(result: NotificationResult | None = None) -> MagicMock:
     """Create a mock adapter with send_notification returning the given result."""
     adapter = MagicMock()
     adapter.hostname = "test.webhook.office.com"
-    adapter.send_notification = AsyncMock(
-        return_value=result or _success_result()
-    )
+    adapter.send_notification = AsyncMock(return_value=result or _success_result())
     return adapter
 
 
@@ -190,7 +190,9 @@ def test_cli_manager_stats_failure(
     from quote_agent.cli.main import app
 
     fail_result = NotificationResult(
-        success=False, error="Connection refused", timestamp=datetime.now(tz=UTC),
+        success=False,
+        error="Connection refused",
+        timestamp=datetime.now(tz=UTC),
     )
     mock_run.return_value = (fail_result, "test.webhook.office.com")
 

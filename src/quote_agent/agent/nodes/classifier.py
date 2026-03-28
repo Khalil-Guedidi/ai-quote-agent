@@ -38,7 +38,7 @@ CLASSIFICATION_SYSTEM_PROMPT = (
     "**simple** : Référence produit claire OU description bien spécifiée "
     "+ quantité présente + aucune condition spéciale\n"
     "**ambiguous** : Description vague, champs clés manquants (quantité, spécifications), "
-    "références relatives (\"comme la dernière fois\"), produit flou\n"
+    'références relatives ("comme la dernière fois"), produit flou\n'
     "**complex** : Plusieurs produits avec interdépendances, conditions spéciales "
     "(spécifications sur mesure, certifications, contraintes de livraison), "
     "grandes quantités nécessitant vérification de stock\n"
@@ -112,11 +112,7 @@ def _build_classification_messages(input_data: ClassificationInput) -> list[obje
     if input_data.notes:
         content_parts.append(f"Notes: {input_data.notes}")
 
-    user_content = (
-        f"{UNTRUSTED_QUOTE_START}\n"
-        f"{chr(10).join(content_parts)}\n"
-        f"{UNTRUSTED_QUOTE_END}"
-    )
+    user_content = f"{UNTRUSTED_QUOTE_START}\n{chr(10).join(content_parts)}\n{UNTRUSTED_QUOTE_END}"
 
     return [
         SystemMessage(content=CLASSIFICATION_SYSTEM_PROMPT),
@@ -152,10 +148,14 @@ async def classify_request(
         )
     except TimeoutError:
         duration_ms = int((time.monotonic() - start_s) * 1000)
-        logger.warning("Classification timed out after %ss", timeout, extra={
-            "component": "agent.nodes.classifier",
-            "context": {"timeout_seconds": timeout, "duration_ms": duration_ms},
-        })
+        logger.warning(
+            "Classification timed out after %ss",
+            timeout,
+            extra={
+                "component": "agent.nodes.classifier",
+                "context": {"timeout_seconds": timeout, "duration_ms": duration_ms},
+            },
+        )
         return ClassificationResult(
             complexity=fallback_complexity,
             reasons=[f"Classification timed out after {timeout}s — using fallback"],
@@ -164,10 +164,14 @@ async def classify_request(
         )
     except (LLMTimeoutError, AdapterError) as exc:
         duration_ms = int((time.monotonic() - start_s) * 1000)
-        logger.warning("Classification failed: %s", exc, extra={
-            "component": "agent.nodes.classifier",
-            "context": {"error": str(exc), "duration_ms": duration_ms},
-        })
+        logger.warning(
+            "Classification failed: %s",
+            exc,
+            extra={
+                "component": "agent.nodes.classifier",
+                "context": {"error": str(exc), "duration_ms": duration_ms},
+            },
+        )
         return ClassificationResult(
             complexity=fallback_complexity,
             reasons=[f"Classification error: {exc} — using fallback"],

@@ -412,7 +412,6 @@ class TestDeepAnalysisStrategy:
             assert step.outcome
             assert step.duration_ms >= 0
 
-
     @pytest.mark.usefixtures("_mock_settings")
     async def test_complex_input_isolation_in_both_llm_calls(self) -> None:
         """AC-5: Deep analysis LLM calls (enrichment + evaluation) both use input isolation."""

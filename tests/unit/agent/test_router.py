@@ -128,16 +128,28 @@ class TestProposalsSorted:
     def test_proposals_sorted_descending_when_medium(self) -> None:
         scores = [
             ProductConfidence(
-                product_id="id-1", reference="R1", name="P1",
-                confidence=0.60, match_quality="ok", rank=1,
+                product_id="id-1",
+                reference="R1",
+                name="P1",
+                confidence=0.60,
+                match_quality="ok",
+                rank=1,
             ),
             ProductConfidence(
-                product_id="id-2", reference="R2", name="P2",
-                confidence=0.80, match_quality="good", rank=2,
+                product_id="id-2",
+                reference="R2",
+                name="P2",
+                confidence=0.80,
+                match_quality="good",
+                rank=2,
             ),
             ProductConfidence(
-                product_id="id-3", reference="R3", name="P3",
-                confidence=0.70, match_quality="fair", rank=3,
+                product_id="id-3",
+                reference="R3",
+                name="P3",
+                confidence=0.70,
+                match_quality="fair",
+                rank=3,
             ),
         ]
         result = _make_confidence_result(overall=0.70, product_scores=scores)
@@ -150,8 +162,12 @@ class TestProposalsSorted:
     def test_proposals_limited_to_max_proposals(self) -> None:
         scores = [
             ProductConfidence(
-                product_id=f"id-{i}", reference=f"R{i}", name=f"P{i}",
-                confidence=round(0.80 - i * 0.05, 2), match_quality="ok", rank=i,
+                product_id=f"id-{i}",
+                reference=f"R{i}",
+                name=f"P{i}",
+                confidence=round(0.80 - i * 0.05, 2),
+                match_quality="ok",
+                rank=i,
             )
             for i in range(8)
         ]
@@ -170,8 +186,12 @@ class TestProposalsMinCount:
     def test_includes_all_when_fewer_than_min_proposals(self) -> None:
         scores = [
             ProductConfidence(
-                product_id="id-1", reference="R1", name="P1",
-                confidence=0.70, match_quality="ok", rank=1,
+                product_id="id-1",
+                reference="R1",
+                name="P1",
+                confidence=0.70,
+                match_quality="ok",
+                rank=1,
             ),
         ]
         result = _make_confidence_result(overall=0.70, product_scores=scores)

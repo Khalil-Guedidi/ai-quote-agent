@@ -76,8 +76,16 @@ class TestProcessCommand:
         """AC-7: Process command supports --json flag."""
         mock_state = _mock_result()
         # Replace Pydantic-like mocks with simple dicts for JSON serialization
-        for key in ["classification", "reasoning", "confidence", "routing_decision",
-                     "self_review", "compliance", "draft_result", "raw_request"]:
+        for key in [
+            "classification",
+            "reasoning",
+            "confidence",
+            "routing_decision",
+            "self_review",
+            "compliance",
+            "draft_result",
+            "raw_request",
+        ]:
             m = mock_state[key]
             if m is not None:
                 m.model_dump_json = MagicMock(return_value='{"mock": true}')
@@ -94,13 +102,21 @@ class TestProcessCommand:
         """AC-7: Process supports --quantity, --reference, --urgency."""
         mock_state = _mock_result()
         with patch("quote_agent.cli.process._run_process", new_callable=AsyncMock, return_value=mock_state) as mock_run:
-            result = runner.invoke(app, [
-                "process", "tubes inox",
-                "--client", "ACME",
-                "--quantity", "100",
-                "--reference", "REF-001",
-                "--urgency", "high",
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "process",
+                    "tubes inox",
+                    "--client",
+                    "ACME",
+                    "--quantity",
+                    "100",
+                    "--reference",
+                    "REF-001",
+                    "--urgency",
+                    "high",
+                ],
+            )
 
         assert result.exit_code == 0
         mock_run.assert_called_once()

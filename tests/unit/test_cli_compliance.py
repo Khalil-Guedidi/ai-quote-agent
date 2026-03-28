@@ -110,9 +110,7 @@ class TestComplianceFormattedOutputBlocked:
         """AC-8: Blocked result displays BLOCKED verdict."""
         mock = AsyncMock(return_value=_make_blocked_result())
         with patch("quote_agent.cli.compliance._run_compliance", mock):
-            result = runner.invoke(
-                app, ["compliance", "Steel plates", "--client", "DPRK Trading Corp"]
-            )
+            result = runner.invoke(app, ["compliance", "Steel plates", "--client", "DPRK Trading Corp"])
 
         assert result.exit_code == 0
         assert "BLOCKED" in result.output
@@ -121,9 +119,7 @@ class TestComplianceFormattedOutputBlocked:
         """AC-8: Sanctioned entity flag shows type, severity, detail."""
         mock = AsyncMock(return_value=_make_blocked_result())
         with patch("quote_agent.cli.compliance._run_compliance", mock):
-            result = runner.invoke(
-                app, ["compliance", "Steel plates", "--client", "DPRK Trading Corp"]
-            )
+            result = runner.invoke(app, ["compliance", "Steel plates", "--client", "DPRK Trading Corp"])
 
         assert "sanctioned_entity" in result.output
         assert "BLOCK" in result.output

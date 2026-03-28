@@ -173,7 +173,8 @@ class TestErpReadErrorHandling:
     def test_not_found_exits_with_code_1(self) -> None:
         """AC-6: Not found exits with code 1."""
         mock_adapter = _mock_adapter_with(
-            "get_client", side_effect=ValueError("Client not found: 999"),
+            "get_client",
+            side_effect=ValueError("Client not found: 999"),
         )
         with patch(_PATCH_TARGET, return_value=mock_adapter):
             result = runner.invoke(app, ["erp-read", "--client", "999"])
@@ -184,7 +185,8 @@ class TestErpReadErrorHandling:
     def test_connection_error_exits_with_code_1(self) -> None:
         """AC-6: Connection error exits with code 1."""
         mock_adapter = _mock_adapter_with(
-            "get_client", side_effect=ConnectionRefusedError("Connection refused"),
+            "get_client",
+            side_effect=ConnectionRefusedError("Connection refused"),
         )
         with patch(_PATCH_TARGET, return_value=mock_adapter):
             result = runner.invoke(app, ["erp-read", "--client", "42"])

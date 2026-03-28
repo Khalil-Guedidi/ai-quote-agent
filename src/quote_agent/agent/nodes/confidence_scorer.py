@@ -136,8 +136,7 @@ def _build_scoring_messages(input_data: ScoringInput) -> list[object]:
     )
     if input_data.classification_complexity == "ambiguous":
         classification_context += (
-            "\nATTENTION : Demande ambigue — sois plus strict dans le scoring, "
-            "considere des alternatives multiples."
+            "\nATTENTION : Demande ambigue — sois plus strict dans le scoring, considere des alternatives multiples."
         )
 
     system_prompt = SCORING_SYSTEM_PROMPT.format(classification_context=classification_context)
@@ -203,10 +202,14 @@ async def score_confidence(
         )
     except TimeoutError:
         duration_ms = int((time.monotonic() - start_s) * 1000)
-        logger.warning("Confidence scoring timed out after %ss", timeout, extra={
-            "component": "agent.nodes.confidence_scorer",
-            "context": {"timeout_seconds": timeout, "duration_ms": duration_ms},
-        })
+        logger.warning(
+            "Confidence scoring timed out after %ss",
+            timeout,
+            extra={
+                "component": "agent.nodes.confidence_scorer",
+                "context": {"timeout_seconds": timeout, "duration_ms": duration_ms},
+            },
+        )
         return ConfidenceResult(
             overall_confidence=0.0,
             tier=fallback_tier,
@@ -216,10 +219,14 @@ async def score_confidence(
         )
     except (LLMTimeoutError, AdapterError) as exc:
         duration_ms = int((time.monotonic() - start_s) * 1000)
-        logger.warning("Confidence scoring failed: %s", exc, extra={
-            "component": "agent.nodes.confidence_scorer",
-            "context": {"error": str(exc), "duration_ms": duration_ms},
-        })
+        logger.warning(
+            "Confidence scoring failed: %s",
+            exc,
+            extra={
+                "component": "agent.nodes.confidence_scorer",
+                "context": {"error": str(exc), "duration_ms": duration_ms},
+            },
+        )
         return ConfidenceResult(
             overall_confidence=0.0,
             tier=fallback_tier,

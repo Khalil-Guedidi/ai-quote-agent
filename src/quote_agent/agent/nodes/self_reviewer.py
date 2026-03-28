@@ -165,9 +165,7 @@ def _validate_quantity_plausibility(
         if item.quantity is None:
             continue
         if item.quantity <= settings.min_quantity:
-            issues.append(
-                f"Item '{item.description}': quantity {item.quantity} is not positive"
-            )
+            issues.append(f"Item '{item.description}': quantity {item.quantity} is not positive")
         elif item.quantity > settings.max_quantity:
             issues.append(
                 f"Item '{item.description}': quantity {item.quantity} exceeds maximum {settings.max_quantity}"
@@ -269,10 +267,7 @@ async def _validate_output_integrity(
     start = time.monotonic()
 
     # Build reasoning trace
-    steps_text = "\n".join(
-        f"  [{s.step_name}] {s.description} -> {s.outcome}"
-        for s in reasoning_result.steps
-    )
+    steps_text = "\n".join(f"  [{s.step_name}] {s.description} -> {s.outcome}" for s in reasoning_result.steps)
 
     products_text = "\n".join(
         f"  Produit {i + 1}: {p.name} (ref: {p.reference}, cat: {p.category})"
@@ -359,12 +354,14 @@ async def self_review(
             failure_reasons.append(catalog_step.detail)
     except Exception as exc:
         duration_ms = int((time.monotonic() - overall_start) * 1000)
-        steps.append(ValidationStep(
-            step_name="catalog_validation",
-            passed=False,
-            detail=f"Error during catalog validation: {exc}",
-            duration_ms=duration_ms,
-        ))
+        steps.append(
+            ValidationStep(
+                step_name="catalog_validation",
+                passed=False,
+                detail=f"Error during catalog validation: {exc}",
+                duration_ms=duration_ms,
+            )
+        )
         failure_reasons.append(f"Catalog validation error: {exc}")
 
     # Step 2: Quantity plausibility
@@ -376,7 +373,9 @@ async def self_review(
     # Step 3: Output integrity (LLM - prompt injection layer 3)
     try:
         integrity_step, detected_anomalies = await _validate_output_integrity(
-            reasoning_result, llm_adapter, timeout,
+            reasoning_result,
+            llm_adapter,
+            timeout,
         )
         steps.append(integrity_step)
         anomaly_flags.extend(detected_anomalies)
@@ -384,16 +383,22 @@ async def self_review(
             failure_reasons.append(integrity_step.detail)
     except (TimeoutError, LLMTimeoutError, AdapterError) as exc:
         duration_ms = int((time.monotonic() - overall_start) * 1000)
-        logger.warning("Output integrity check failed: %s", exc, extra={
-            "component": "agent.nodes.self_reviewer",
-            "context": {"error": str(exc)},
-        })
-        steps.append(ValidationStep(
-            step_name="output_integrity",
-            passed=False,
-            detail=f"Output integrity error: {exc}",
-            duration_ms=duration_ms,
-        ))
+        logger.warning(
+            "Output integrity check failed: %s",
+            exc,
+            extra={
+                "component": "agent.nodes.self_reviewer",
+                "context": {"error": str(exc)},
+            },
+        )
+        steps.append(
+            ValidationStep(
+                step_name="output_integrity",
+                passed=False,
+                detail=f"Output integrity error: {exc}",
+                duration_ms=duration_ms,
+            )
+        )
         failure_reasons.append(f"Output integrity error: {exc}")
 
     review_duration_ms = int((time.monotonic() - overall_start) * 1000)

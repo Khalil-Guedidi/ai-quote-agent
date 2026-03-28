@@ -39,9 +39,18 @@ class TestDraftCreateSuccess:
         """AC-6: Displays draft result in formatted output."""
         mock_adapter = _mock_adapter_with_create(return_value=_make_result())
         with patch(_PATCH_TARGET, return_value=mock_adapter):
-            result = runner.invoke(app, [
-                "draft-create", "--client", "42", "--product", "55", "--quantity", "100",
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "draft-create",
+                    "--client",
+                    "42",
+                    "--product",
+                    "55",
+                    "--quantity",
+                    "100",
+                ],
+            )
 
         assert result.exit_code == 0
         assert "SO042" in result.output
@@ -52,9 +61,19 @@ class TestDraftCreateSuccess:
         """AC-6: Displays draft result as JSON."""
         mock_adapter = _mock_adapter_with_create(return_value=_make_result())
         with patch(_PATCH_TARGET, return_value=mock_adapter):
-            result = runner.invoke(app, [
-                "draft-create", "--client", "42", "--product", "55", "--quantity", "100", "--json",
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "draft-create",
+                    "--client",
+                    "42",
+                    "--product",
+                    "55",
+                    "--quantity",
+                    "100",
+                    "--json",
+                ],
+            )
 
         assert result.exit_code == 0
         data = json.loads(result.output)
@@ -67,10 +86,20 @@ class TestDraftCreateSuccess:
         """AC-6: Supports --price optional flag."""
         mock_adapter = _mock_adapter_with_create(return_value=_make_result())
         with patch(_PATCH_TARGET, return_value=mock_adapter):
-            result = runner.invoke(app, [
-                "draft-create", "--client", "42", "--product", "55",
-                "--quantity", "100", "--price", "0.50",
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "draft-create",
+                    "--client",
+                    "42",
+                    "--product",
+                    "55",
+                    "--quantity",
+                    "100",
+                    "--price",
+                    "0.50",
+                ],
+            )
 
         assert result.exit_code == 0
         # Verify the quote was built with the price
@@ -81,10 +110,20 @@ class TestDraftCreateSuccess:
         """AC-6: Supports --description optional flag."""
         mock_adapter = _mock_adapter_with_create(return_value=_make_result())
         with patch(_PATCH_TARGET, return_value=mock_adapter):
-            result = runner.invoke(app, [
-                "draft-create", "--client", "42", "--product", "55",
-                "--quantity", "100", "--description", "Grade 8.8",
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "draft-create",
+                    "--client",
+                    "42",
+                    "--product",
+                    "55",
+                    "--quantity",
+                    "100",
+                    "--description",
+                    "Grade 8.8",
+                ],
+            )
 
         assert result.exit_code == 0
         call_args = mock_adapter.create_draft_quote.call_args[0][0]
@@ -118,9 +157,18 @@ class TestDraftCreateErrors:
         """AC-6: ValueError (client/product not found) exits with code 1."""
         mock_adapter = _mock_adapter_with_create(side_effect=ValueError("Client not found: 999"))
         with patch(_PATCH_TARGET, return_value=mock_adapter):
-            result = runner.invoke(app, [
-                "draft-create", "--client", "999", "--product", "55", "--quantity", "100",
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "draft-create",
+                    "--client",
+                    "999",
+                    "--product",
+                    "55",
+                    "--quantity",
+                    "100",
+                ],
+            )
 
         assert result.exit_code == 1
         assert "Not found" in result.output
@@ -129,9 +177,18 @@ class TestDraftCreateErrors:
         """AC-6: Connection error exits with code 1."""
         mock_adapter = _mock_adapter_with_create(side_effect=ConnectionRefusedError("Connection refused"))
         with patch(_PATCH_TARGET, return_value=mock_adapter):
-            result = runner.invoke(app, [
-                "draft-create", "--client", "42", "--product", "55", "--quantity", "100",
-            ])
+            result = runner.invoke(
+                app,
+                [
+                    "draft-create",
+                    "--client",
+                    "42",
+                    "--product",
+                    "55",
+                    "--quantity",
+                    "100",
+                ],
+            )
 
         assert result.exit_code == 1
         assert "Error" in result.output

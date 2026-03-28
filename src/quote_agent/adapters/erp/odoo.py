@@ -186,7 +186,10 @@ def _map_odoo_client(record: dict[str, Any]) -> Client:
 
 
 def _map_odoo_order_line(
-    line: dict[str, Any], order_name: str, order_date: str, order_state: str,
+    line: dict[str, Any],
+    order_name: str,
+    order_date: str,
+    order_state: str,
 ) -> ClientOrderHistory:
     """Map an Odoo sale.order.line record to a ClientOrderHistory DTO."""
     product = line.get("product_id")
@@ -568,7 +571,9 @@ class OdooAdapter:
             msg = f"Product not found: {product_id}"
             raise ValueError(msg)
 
-        logger.info("Product fetched successfully", extra={"context": ctx},
+        logger.info(
+            "Product fetched successfully",
+            extra={"context": ctx},
         )
         return _map_odoo_product(records[0])
 

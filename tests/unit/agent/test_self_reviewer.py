@@ -98,7 +98,9 @@ def _make_adapter_mock(
     """Create a mock LLM adapter that returns results based on requested output class."""
     if integrity is None:
         integrity = IntegrityCheckResult(
-            is_clean=True, anomalies=[], reasoning="No anomalies detected",
+            is_clean=True,
+            anomalies=[],
+            reasoning="No anomalies detected",
         )
 
     def _make_structured(output_class: type) -> MagicMock:
@@ -260,7 +262,9 @@ class TestOutputIntegrity:
         reasoning = _make_reasoning_result()
         request = _make_request()
         integrity = IntegrityCheckResult(
-            is_clean=True, anomalies=[], reasoning="Output is clean",
+            is_clean=True,
+            anomalies=[],
+            reasoning="Output is clean",
         )
         adapter = _make_adapter_mock(integrity=integrity)
         session = _make_session_mock()

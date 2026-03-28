@@ -94,9 +94,11 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.info("Notification scheduler started")
     else:
         scheduler = None
-        logger.info("Notification scheduler disabled (scheduler_enabled=%s, webhook=%s)",
-                     settings.notification_schedule.scheduler_enabled,
-                     bool(settings.notification.teams_webhook_url))
+        logger.info(
+            "Notification scheduler disabled (scheduler_enabled=%s, webhook=%s)",
+            settings.notification_schedule.scheduler_enabled,
+            bool(settings.notification.teams_webhook_url),
+        )
 
     yield
 

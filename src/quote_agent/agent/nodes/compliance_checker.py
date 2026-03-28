@@ -138,11 +138,7 @@ async def _check_export_control(
         if item.reference:
             request_parts.append(f"Reference: {item.reference}")
 
-    user_content = (
-        f"{UNTRUSTED_QUOTE_START}\n"
-        f"{chr(10).join(request_parts)}\n"
-        f"{UNTRUSTED_QUOTE_END}"
-    )
+    user_content = f"{UNTRUSTED_QUOTE_START}\n{chr(10).join(request_parts)}\n{UNTRUSTED_QUOTE_END}"
 
     system_prompt = EXPORT_CONTROL_SYSTEM_PROMPT.format(keywords=", ".join(keywords))
 
@@ -193,11 +189,7 @@ async def _check_sanctioned_entity(
         entity_parts.append(f"Client (extrait): {request.client_name}")
     entity_parts.append(f"Texte de la demande: {request.raw_text}")
 
-    user_content = (
-        f"{UNTRUSTED_QUOTE_START}\n"
-        f"{chr(10).join(entity_parts)}\n"
-        f"{UNTRUSTED_QUOTE_END}"
-    )
+    user_content = f"{UNTRUSTED_QUOTE_START}\n{chr(10).join(entity_parts)}\n{UNTRUSTED_QUOTE_END}"
 
     system_prompt = SANCTION_SYSTEM_PROMPT.format(keywords=", ".join(keywords))
 
@@ -258,14 +250,21 @@ async def check_compliance(
     # Check 1: Export control
     try:
         export_flags = await _check_export_control(
-            request, llm_adapter, timeout, compliance_settings.export_control_keywords,
+            request,
+            llm_adapter,
+            timeout,
+            compliance_settings.export_control_keywords,
         )
         all_flags.extend(export_flags)
     except (TimeoutError, LLMTimeoutError, AdapterError) as exc:
-        logger.warning("Export control check failed: %s", exc, extra={
-            "component": "agent.nodes.compliance_checker",
-            "context": {"error": str(exc)},
-        })
+        logger.warning(
+            "Export control check failed: %s",
+            exc,
+            extra={
+                "component": "agent.nodes.compliance_checker",
+                "context": {"error": str(exc)},
+            },
+        )
         all_flags.append(
             ComplianceFlag(
                 flag_type="error",
@@ -278,15 +277,22 @@ async def check_compliance(
     # Check 2: Sanctioned entity
     try:
         sanction_flags = await _check_sanctioned_entity(
-            request, llm_adapter, timeout, compliance_settings.sanctioned_entity_keywords,
+            request,
+            llm_adapter,
+            timeout,
+            compliance_settings.sanctioned_entity_keywords,
             client_name=client_name,
         )
         all_flags.extend(sanction_flags)
     except (TimeoutError, LLMTimeoutError, AdapterError) as exc:
-        logger.warning("Sanctioned entity check failed: %s", exc, extra={
-            "component": "agent.nodes.compliance_checker",
-            "context": {"error": str(exc)},
-        })
+        logger.warning(
+            "Sanctioned entity check failed: %s",
+            exc,
+            extra={
+                "component": "agent.nodes.compliance_checker",
+                "context": {"error": str(exc)},
+            },
+        )
         all_flags.append(
             ComplianceFlag(
                 flag_type="error",
@@ -313,10 +319,7 @@ async def check_compliance(
             "context": {
                 "is_compliant": is_compliant,
                 "flag_count": len(all_flags),
-                "flags": [
-                    {"type": f.flag_type, "severity": f.severity, "detail": f.detail}
-                    for f in all_flags
-                ],
+                "flags": [{"type": f.flag_type, "severity": f.severity, "detail": f.detail} for f in all_flags],
                 "check_duration_ms": check_duration_ms,
             },
         },

@@ -47,7 +47,10 @@ async def test_send_batch_summary_success(
 ) -> None:
     """AC-1: send_batch_summary sends notification with correct card type."""
     mock_get_daily.return_value = DailySummary(
-        total=5, high_count=2, medium_count=2, low_count=1,
+        total=5,
+        high_count=2,
+        medium_count=2,
+        low_count=1,
         date=datetime.now(tz=UTC),
     )
 
@@ -71,7 +74,10 @@ async def test_send_batch_summary_skips_when_no_quotes(
 ) -> None:
     """AC-1: send_batch_summary returns None when no quotes processed (silence principle)."""
     mock_get_daily.return_value = DailySummary(
-        total=0, high_count=0, medium_count=0, low_count=0,
+        total=0,
+        high_count=0,
+        medium_count=0,
+        low_count=0,
         date=datetime.now(tz=UTC),
     )
 
@@ -140,9 +146,13 @@ async def test_send_weekly_report_skips_when_no_quotes(
     """AC-2: send_weekly_report returns None when no quotes processed (silence principle)."""
     now = datetime.now(tz=UTC)
     mock_get_weekly.return_value = WeeklyReport(
-        total=0, avg_confidence=0, rep_breakdown=[],
-        trend_pct=0, trend_direction="stable",
-        period_start=now, period_end=now,
+        total=0,
+        avg_confidence=0,
+        rep_breakdown=[],
+        trend_pct=0,
+        trend_direction="stable",
+        period_start=now,
+        period_end=now,
     )
 
     result = await send_weekly_report(mock_session, mock_adapter)
@@ -179,13 +189,20 @@ async def test_send_manager_stats_success(
     """AC-3: send_manager_stats sends notification with correct card type and real avg_confidence."""
     now = datetime.now(tz=UTC)
     mock_get_daily.return_value = DailySummary(
-        total=8, high_count=3, medium_count=3, low_count=2,
+        total=8,
+        high_count=3,
+        medium_count=3,
+        low_count=2,
         date=now,
     )
     mock_get_weekly.return_value = WeeklyReport(
-        total=8, avg_confidence=78, rep_breakdown=[],
-        trend_pct=0, trend_direction="stable",
-        period_start=now, period_end=now,
+        total=8,
+        avg_confidence=78,
+        rep_breakdown=[],
+        trend_pct=0,
+        trend_direction="stable",
+        period_start=now,
+        period_end=now,
     )
 
     result = await send_manager_stats(mock_session, mock_adapter)

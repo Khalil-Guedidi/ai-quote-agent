@@ -141,10 +141,7 @@ async def scale_50k_catalog() -> int:
             logger.info("Trimming %d excess products (have %d, target %d)", excess, total_in_db, target)
             # Delete products beyond the target count (keep oldest by created_at)
             excess_ids_subq = (
-                select(Product.id)
-                .where(Product.is_stale.is_(False))
-                .order_by(Product.created_at.desc())
-                .limit(excess)
+                select(Product.id).where(Product.is_stale.is_(False)).order_by(Product.created_at.desc()).limit(excess)
             ).scalar_subquery()
             await session.execute(delete(Product).where(Product.id.in_(excess_ids_subq)))
             await session.commit()
@@ -180,7 +177,9 @@ async def scale_50k_catalog() -> int:
     # Step 3: Verify product count with vectors
     async with factory() as session:
         count_result = await session.execute(
-            select(func.count()).select_from(Product).where(
+            select(func.count())
+            .select_from(Product)
+            .where(
                 Product.vector.isnot(None),
                 Product.is_stale.is_(False),
             )
@@ -406,8 +405,7 @@ async def test_confidence_tier_diversity_50k_e2e(scale_50k_catalog: int) -> None
     )
 
     assert len(triggered_actions) >= 2, (
-        f"Expected at least 2 distinct actions, got {triggered_actions}. "
-        f"Results: {results}"
+        f"Expected at least 2 distinct actions, got {triggered_actions}. Results: {results}"
     )
 
 
@@ -455,9 +453,7 @@ async def test_nfr_report_50k_e2e(scale_50k_catalog: int) -> None:
 
     # Measure HNSW index size
     async with factory() as session:
-        index_size_result = await session.execute(
-            select(func.pg_relation_size("ix_products_vector_hnsw"))
-        )
+        index_size_result = await session.execute(select(func.pg_relation_size("ix_products_vector_hnsw")))
         hnsw_index_bytes = index_size_result.scalar_one_or_none() or 0
 
     # Build NFR report
