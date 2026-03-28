@@ -330,28 +330,33 @@ class TestCreateDraftQuote:
         """AC-3: TimeoutError when ERP is too slow."""
         mock_proxy = MagicMock()
         mock_proxy.authenticate.return_value = 1
-        # Client resolves fine, but create times out
-        mock_proxy.execute_kw.side_effect = [
-            # get_client_impl
-            [
-                {
-                    "id": 42,
-                    "name": "ArcelorMittal",
-                    "ref": "AM001",
-                    "email": False,
-                    "phone": False,
-                    "street": False,
-                    "city": False,
-                    "zip": False,
-                    "country_id": False,
-                    "vat": False,
-                    "active": True,
-                    "customer_rank": 1,
-                }
-            ],
-            # create call times out
-            TimeoutError("Timed out"),
-        ]
+        # Client resolves fine, but create times out.
+        # Use a function (not a list) as side_effect to avoid StopIteration
+        # leaking from the iterator into asyncio.to_thread on Python 3.12+.
+        call_count = 0
+        client_record = {
+            "id": 42,
+            "name": "ArcelorMittal",
+            "ref": "AM001",
+            "email": False,
+            "phone": False,
+            "street": False,
+            "city": False,
+            "zip": False,
+            "country_id": False,
+            "vat": False,
+            "active": True,
+            "customer_rank": 1,
+        }
+
+        def execute_kw_side_effect(*args: object, **kwargs: object) -> list[dict[str, object]]:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                return [client_record]
+            raise TimeoutError("Timed out")
+
+        mock_proxy.execute_kw.side_effect = execute_kw_side_effect
 
         with (
             patch("xmlrpc.client.ServerProxy", return_value=mock_proxy),

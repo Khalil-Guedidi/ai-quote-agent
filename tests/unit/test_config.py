@@ -44,8 +44,14 @@ class TestSettingsValidation:
     """Settings fail fast on missing or invalid configuration."""
 
     def test_settings_fail_on_missing_required(self) -> None:
-        with pytest.raises(ValidationError):
-            Settings(_env_file=None)  # type: ignore[call-arg]
+        # Temporarily remove env vars set by autouse fixture so Settings() fails
+        keys_to_clear = [k for k in os.environ if k.startswith(("LLM__", "ERP__", "EMAIL__"))]
+        saved = {k: os.environ.pop(k) for k in keys_to_clear}
+        try:
+            with pytest.raises(ValidationError):
+                Settings(_env_file=None)  # type: ignore[call-arg]
+        finally:
+            os.environ.update(saved)
 
     def test_settings_fail_on_invalid_database_url(self, env_vars: dict[str, str]) -> None:
         os.environ["DATABASE__URL"] = "mysql://bad:url@localhost/db"
